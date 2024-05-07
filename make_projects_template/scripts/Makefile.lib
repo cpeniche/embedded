@@ -1,0 +1,25 @@
+subdir-ym := $(sort $(subdir-y) \
+			$(patsubst %/,%, $(filter %/, $(obj-y))))
+
+# Expand $(foo-objs) $(foo-y) etc. by replacing their individuals
+suffix-search = $(strip $(foreach s, $3, $($(1:%$(strip $2)=%$s))))
+
+# List primitive targets that are compiled from source files
+real-search = $(foreach m, $1, $(if $(call suffix-search, $m, $2, $3 -), $(call suffix-search, $m, $2, $3), $m))
+
+# Replace multi-part objects by their individual parts,
+# including built-in.a from subdirectories
+real-obj-y := $(call real-search, $(obj-y), .o, -objs -y)
+
+ifdef need-builtin
+obj-y		:= $(patsubst %/, %/built-in.a, $(obj-y))
+else
+obj-y		:= $(filter-out %/, $(obj-y))
+endif
+
+subdir-ym  := $(addprefix $(obj)/,$(subdir-ym))
+targets	   := $(addprefix $(obj)/,$(targets))
+real-obj-y := $(addprefix $(obj)/,$(obj-y))
+obj-dep    := $(addprefix $(obj)/,$(obj-y:%.o=%.d))
+
+    
