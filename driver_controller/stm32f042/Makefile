@@ -15,15 +15,15 @@ PROJECT_NAME := driver_controller
 export AR := $(CROSS_COMPILE)ar
 export CFLAGS := -mcpu=$(CPU) -march=$(ARCH) -mthumb -O0 \
 		   -fmessage-length=0 -fsigned-char -ffunction-sections \
-		   -fdata-sections -g3 -DCORE_M3 -D__NO_SYSTEM_INIT -D__STARTUP_CLEAR_BSS_MULTIPLE
+		   -fdata-sections -g3 -DSTM32F042x6 -D__NO_SYSTEM_INIT -D__STARTUP_CLEAR_BSS_MULTIPLE
 
 LDFLAGS = -mcpu=$(CPU)  \
-		--specs=nosys.specs -Wl,-Map="app.map" -Wl,--gc-sections -static \
+		--specs=nosys.specs -Wl,-Map="$(PROJECT_NAME).map" -Wl,--gc-sections -static \
 		--specs=nano.specs
 
 SHELL:=/bin/bash
 
-export LIBS_DIR = $(LIB_PATH)/cmsis/
+export LIBS_DIR =  $(LIB_PATH)/STM32F0xx_HAL_Driver/
 
 BUILD_BUILTIN := 1
 
@@ -59,23 +59,23 @@ export Q
 export VERBOSE
 export INCLUDES
 
-ifeq ($(findstring liblpc,$(MAKECMDGOALS)),liblpc)
-include sources.mk
-VPATH += $(CURDIR)/$(LPC_DIR)/src
-$(shell mkdir -p $(OBJDIR)/$(LIBS_DIR))
-endif
+#ifeq ($(findstring liblpc,$(MAKECMDGOALS)),liblpc)
+#include sources.mk
+#VPATH += $(CURDIR)/$(LPC_DIR)/src
+#$(shell mkdir -p $(OBJDIR)/$(LIBS_DIR))
+#endif
 
 export cmd_file := application/$(LINKER_FILE)
-_dirs := application/ $(LIBS_DIR)
+_dirs := Core/ $(LIBS_DIR) application/ 
 
 built-ins := $(patsubst %/,%/built-in.a, $(_dirs))
 
 PHONY = $(built-ins) FORCE
 
-app.hex : app.elf
+$(PROJECT_NAME).hex : $(PROJECT_NAME).elf
 	$(Q)$(OBJCOPY) -O ihex $< $@ 
 
-app.elf : $(built-ins) FORCE
+$(PROJECT_NAME).elf : $(built-ins) FORCE
 	$(Q) echo "Linking Application:  $@"
 	$(Q)$(CPP) -Wl,--start-group $(built-ins) -Wl,--end-group  -T $(cmd_file) $(LDFLAGS) -o $@ 
 

@@ -1,11 +1,8 @@
-
-ARCH := cortex-m3
-TOOL := gnu
-
-#INCLUDES = -Iapplication/inc
-#INCLUDES += -Ilib/Azure/threadx/common/inc -Ilib/Azure/threadx/ports/$(ARCH)/$(TOOL)/inc
-#INCLUDES += -Ilib/Azure/guix/ports/$(ARCH)/$(TOOL)/inc -Ilib/Azure/guix/common/inc
-#INCLUDES += -Ilib/$(LPC_DIR)/inc
+INCLUDES = -Iapplication/include
+INCLUDES += -Ilib/STM32F0xx_HAL_Driver/include 
+INCLUDES += -Ilib/CMSIS/Device/ST/STM32F0xx/include
+INCLUDES += -Ilib/CMSIS/include
+INCLUDES += -ICore/include
 
 #CFLAGS += -Wa,-adhln -g
 
