@@ -12,8 +12,8 @@ build := -f $(srctree)/scripts/Makefile.build obj
 clean := -f $(srctree)/scripts/Makefile.clean obj
 
 define dependencies
-  echo "[DEP]   $(1)";\
-  $(CC) -MM -MT$(1) -MT$(2) $(CFLAGS) $(INCLUDES) $< > $(1)
+	echo "[DEP]   $(1)"; mkdir -p $(dir $(1))dep;\
+	$(CC) -MM -MT$(1) -MT$(2) $(CFLAGS) $(INCLUDES) $< > $(join $(dir $(1))dep/, $(notdir $(1)))
 endef
 
 define compile

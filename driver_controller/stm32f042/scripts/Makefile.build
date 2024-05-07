@@ -46,7 +46,7 @@ $(obj)/%.o : $(src)/%.cpp
 
 #--------  dependency files -----------------
 ifneq ($(filter %.o, $(real-obj-y)),)
-$(info including file = $(real-obj-y:%.o=%.d))
+#$(info including file = $(real-obj-y:%.o=%.d))
 -include $(real-obj-y:%.o=%.d)
 endif
 
