@@ -45,21 +45,23 @@ $(obj)/%.o : $(src)/%.cpp
 	$(Q)$(call compile,$(CPP),$<,$@)
 
 #--------  dependency files -----------------
+
 ifneq ($(filter %.o, $(real-obj-y)),)
-#$(info including file = $(real-obj-y:%.o=%.d))
--include $(real-obj-y:%.o=%.d)
+#$(info including file = $(subst /src,/src/dep, $(real-obj-y:%.o=%.d)))
+-include $(subst /src,/src/dep, $(real-obj-y:%.o=%.d))
 endif
 
-$(obj)/%.d : $(src)/%.c
+
+$(obj)/dep/%.d : $(src)/%.c
 	$(Q)$(call dependencies,$@,$(@:%.d=%.o))
 
-$(obj)/%.d : $(src)/%.S
+$(obj)/dep/%.d : $(src)/%.S
 	$(Q)$(call dependencies,$@,$(@:%.d=%.o))
 	
-$(obj)/%.d : $(src)/%.s
+$(obj)/dep/%.d : $(src)/%.s
 	$(Q)$(call dependencies,$@,$(@:%.d=%.o))	
 
-$(obj)/%.d : $(src)/%.cpp
+$(obj)/dep/%.d : $(src)/%.cpp
 	$(Q)$(call dependencies,$@,$(@:%.d=%.o))
 
 #----------------------------------------------------

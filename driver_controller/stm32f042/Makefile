@@ -59,12 +59,6 @@ export Q
 export VERBOSE
 export INCLUDES
 
-#ifeq ($(findstring liblpc,$(MAKECMDGOALS)),liblpc)
-#include sources.mk
-#VPATH += $(CURDIR)/$(LPC_DIR)/src
-#$(shell mkdir -p $(OBJDIR)/$(LIBS_DIR))
-#endif
-
 export cmd_file := application/$(LINKER_FILE)
 _dirs := Core/ $(LIBS_DIR) application/ 
 
@@ -86,7 +80,7 @@ $(built-ins): FORCE
 FORCE:
 
 clean: 
-	@rm -f *.map *.elf
+	@rm -f *.map *.elf *.hex
 	@find -name '*.[aod]' -type f -print | xargs rm -f
 
 clean_app:
