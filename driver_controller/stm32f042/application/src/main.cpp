@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "mcu.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -40,6 +40,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+#ifdef __cplusplus
+extern "C" {
+#endif
 CAN_HandleTypeDef hcan;
 
 SPI_HandleTypeDef hspi1;
@@ -69,10 +72,11 @@ static void MX_SPI1_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+#if 0
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
 
@@ -111,7 +115,7 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
-
+#endif
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -312,3 +316,25 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+#ifdef __cplusplus
+}
+#endif
+
+
+int main()
+{
+	MCU* mcu = MCU::get_instance();
+	mcu->clock->Set_Init(SystemClock_Config);
+	mcu->spi->Set_Driver()
+
+
+
+	mcu->clock->Init();
+}
+
+
+
+
+
+
