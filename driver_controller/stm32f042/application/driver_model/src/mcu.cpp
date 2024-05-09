@@ -11,15 +11,20 @@ MCU *MCU::instance_ = nullptr;
 
 MCU::MCU ()
 {
-	clock = new Clock();
-	spi = new Spi();
+//	this->clock=nullptr;
+//	this->spi=nullptr;
+}
+
+
+void MCU::Set_Clock (Clock &clock)
+{
+	this->clock=&clock;
 }
 
 MCU::~MCU ()
 {
 
 }
-
 
 MCU *MCU::get_instance()
 {
@@ -30,4 +35,7 @@ MCU *MCU::get_instance()
 	return instance_;
 }
 
-
+void MCU::Register_Spi (Spi &spi_drv)
+{
+	this->spi=&spi_drv;
+}

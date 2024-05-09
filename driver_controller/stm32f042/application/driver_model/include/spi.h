@@ -7,20 +7,20 @@
 
 #ifndef APPLICATION_DRIVER_MODEL_SRC_SPI_H_
 #define APPLICATION_DRIVER_MODEL_SRC_SPI_H_
+#include "driver.h"
+#include "stm32f0xx_hal.h"
+#include "stm32f0xx_hal_spi.h"
 
-class Spi
+class Spi: public Driver
 {
 public:
-	Spi ();
-	virtual
-	~Spi ();
-	void Set_Driver(void (*)(void));
+	void Init() override;
+	void Read() override;
+	void Write() override;
+	SPI_HandleTypeDef *get_handle();
 
-
-protected:
-	void (*driver)(void);
-	void (*Init)(void);
-
+private:
+	SPI_HandleTypeDef drv_handle;
 };
 
 #endif /* APPLICATION_DRIVER_MODEL_SRC_SPI_H_ */

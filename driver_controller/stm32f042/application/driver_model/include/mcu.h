@@ -17,6 +17,8 @@ public:
 	MCU(MCU &other)=delete;
 	void operator=(const MCU &)=delete;
 	static MCU *get_instance();
+	void Set_Clock(Clock &);
+	void Register_Spi(Spi &);
 	Clock *clock;
 	Spi	*spi;
 

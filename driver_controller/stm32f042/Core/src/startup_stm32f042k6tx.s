@@ -31,6 +31,7 @@
 
 .global g_pfnVectors
 .global Default_Handler
+.global SysTick_Handler
 
 /* start address for the initialization values of the .data section.
 defined in linker script */
@@ -139,6 +140,7 @@ Default_Handler:
 Infinite_Loop:
   b Infinite_Loop
   .size Default_Handler, .-Default_Handler
+
 /******************************************************************************
 *
 * The minimal vector table for a Cortex M0.  Note that the proper constructs
@@ -152,22 +154,22 @@ Infinite_Loop:
 
 
 g_pfnVectors:
-  .word  _estack
-  .word  Reset_Handler
-  .word  NMI_Handler
-  .word  HardFault_Handler
-  .word  0
-  .word  0
-  .word  0
-  .word  0
-  .word  0
-  .word  0
-  .word  0
-  .word  SVC_Handler
-  .word  0
-  .word  0
-  .word  PendSV_Handler
-  .word  SysTick_Handler
+  .word  _estack              /*0000*/
+  .word  Reset_Handler        /*0004*/
+  .word  NMI_Handler          /*0008*/
+  .word  HardFault_Handler    /*000C*/
+  .word  0                    /*0010*/
+  .word  0                    /*0014*/
+  .word  0                    /*0018*/
+  .word  0                    /*001C*/
+  .word  0                    /*0020*/
+  .word  0                    /*0024*/
+  .word  0                    /*0028*/
+  .word  SVC_Handler          /*002C*/
+  .word  0                    /*0030*/
+  .word  0                    /*0034*/
+  .word  PendSV_Handler       /*0038*/
+  .word  SysTick_Handler      /*003C*/
   .word  WWDG_IRQHandler                   /* Window WatchDog              */
   .word  PVD_VDDIO2_IRQHandler             /* PVD and VDDIO2 through EXTI Line detect */
   .word  RTC_IRQHandler                    /* RTC through the EXTI line    */
@@ -221,8 +223,8 @@ g_pfnVectors:
   .weak      PendSV_Handler
   .thumb_set PendSV_Handler,Default_Handler
 
-  .weak      SysTick_Handler
-  .thumb_set SysTick_Handler,Default_Handler
+ // .weak      SysTick_Handler
+ // .thumb_set SysTick_Handler,SysTick_Handler
 
   .weak      WWDG_IRQHandler
   .thumb_set WWDG_IRQHandler,Default_Handler

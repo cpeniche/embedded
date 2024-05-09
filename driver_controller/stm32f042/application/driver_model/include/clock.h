@@ -3,19 +3,21 @@
 
 #include "driver.h"
 
-class Clock : public Driver{
+class Clock{
 
 public:
 
-	//Clock();
-	//virtual ~Clock(){};
-	void Set_Init(void (*)(void));
+	Clock(){};
+	virtual ~Clock(){};
+  virtual void Init() const =0;
 
-  void Init(){init();}
+};
 
-private:
-	void (*driver)(void);
-	void (*init)(void);
+
+class HSI_Clock: public Clock{
+
+public:
+	void Init() const override;
 
 };
 

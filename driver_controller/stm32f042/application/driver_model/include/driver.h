@@ -16,10 +16,9 @@ public:
 		init=nullptr;
 	};
 	virtual ~Driver(){};
-  virtual void Init()  const = 0;
-  virtual void Read()  const = 0;
-  virtual void Write() const = 0;
-	virtual void Set_Init(void (*)(void)) const = 0;
+  virtual void Init() = 0;
+  virtual void Read() = 0;
+  virtual void Write() = 0;
 
 private:
 
