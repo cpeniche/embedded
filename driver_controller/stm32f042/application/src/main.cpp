@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "mcu.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -237,7 +238,9 @@ int main()
 {
 	MCU* mcu = MCU::get_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
-	Spi *spi = new Spi();
+	Spi<uint8_t,HAL_StatusTypeDef> *spi = new Spi<uint8_t,HAL_StatusTypeDef>();
+	uint8_t rx_data[16] = {0};
+	uint32_t tickstart = 0;
 
 	HAL_Init();
 
@@ -245,13 +248,14 @@ int main()
 	mcu->clock->Init();
 	mcu->Register_Spi(*spi);
 	mcu->spi->Init();
+	mcu->spi->set_data_lenght(sizeof(rx_data));
+	mcu->spi->set_timeout(2);
 
-
-	while(1)
+	do
 	{
-
-
-	}
+	    tickstart = HAL_GetTick();
+	    mcu->spi->Read(rx_data);
+	}while(HAL_GetTick() > 10*tickstart);
 }
 
 

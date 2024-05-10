@@ -4,31 +4,47 @@
  *  Created on: May 8, 2024
  *      Author: carlo
  */
+#ifndef _spi_cpp_
+#define _spi_cpp_
 
+#include <cstdlib>
+#include "stdint.h"
 #include "spi.h"
 
 
 static void MX_SPI1_Init(void *drv);
 
-void Spi::Init()
+template<class datatype, class errortype> void
+Spi<datatype, errortype>::Init()
 {
 	MX_SPI1_Init((void *)&drv_handle);
 }
 
-void Spi::Read ()
+template<class datatype, class errortype> void
+Spi<datatype, errortype>::Read(datatype *buffer)
 {
+
+  error = HAL_SPI_Receive(&drv_handle,buffer,size,timeout);
 }
 
-void Spi::Write ()
+template<class datatype, class errortype> void
+Spi<datatype, errortype>::Write (datatype *)
 {
+
 }
 
-
-SPI_HandleTypeDef *Spi::get_handle()
+template<class datatype, class errortype> SPI_HandleTypeDef*
+Spi<datatype, errortype>::get_handle()
 {
 	return &drv_handle;
 }
 
+
+template<class datatype, class errortype> errortype
+Spi<datatype, errortype>::GetError ()
+{
+	return error;
+}
 /**
   * @brief SPI1 Initialization Function
   * @param None
@@ -62,3 +78,5 @@ static void MX_SPI1_Init(void *drv)
 
   /* USER CODE END SPI1_Init 2 */
 }
+
+#endif

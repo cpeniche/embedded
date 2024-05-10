@@ -35,7 +35,8 @@ MCU *MCU::get_instance()
 	return instance_;
 }
 
-void MCU::Register_Spi (Spi &spi_drv)
+void MCU::Register_Spi (Spi<uint8_t, HAL_StatusTypeDef> &spi_drv)
 {
 	this->spi=&spi_drv;
 }
+
