@@ -5,7 +5,8 @@
  *      Author: carlo
  */
 
-#include <scheduler.h>
+#include "scheduler.h"
+#include "stm32f0xx_hal.h"
 
 
 Scheduler::Scheduler ()
@@ -31,7 +32,7 @@ Scheduler::running (void)
         it!=task_list.end();++it)
   {
     if((_cntr=it->getCntr())>0)
-      it->setCntr(_cntr--);
+      it->setCntr(--_cntr);
     else
     {
       (it->getTask())();
@@ -53,20 +54,21 @@ void Scheduler::stop (void)
 void Scheduler::exec(void)
 {
 
-  typedef void (Scheduler::*_task_ptr)(void);
-  Scheduler *temp= new Scheduler();
-
+  typedef void (Scheduler::* _task_ptr)(void);
   _task_ptr _task=nullptr;
+  unsigned long prev_tick=HAL_GetTick();
 
   while(1)
   {
-    if(scheduler_tick)
+    if(prev_tick != HAL_GetTick())
     {
-        _task=Scheduler::state_func[state];
-        if(_task != nullptr)
-        {
-            temp->*_task_ptr();
-        }
+		_task=this->state_func[this->state];
+      if(_task != nullptr)
+      {
+        (this->*_task)();
+      }
+      prev_tick=HAL_GetTick();
     }
+
   }
 }

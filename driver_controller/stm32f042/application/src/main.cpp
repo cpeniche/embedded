@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "mcu.h"
+#include "scheduler.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -229,6 +230,19 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
+
+static void Spi_task()
+{
+
+  uint8_t rx_data[2] = {0xAA,0xAA};
+
+  MCU* _mcu = MCU::get_instance();
+  _mcu->spi->set_data_lenght(sizeof(rx_data)/sizeof(uint8_t));
+  _mcu->spi->set_timeout(10);
+  _mcu->spi->Read(rx_data);
+
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -239,23 +253,26 @@ int main()
 	MCU* mcu = MCU::get_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
 	Spi<uint8_t,HAL_StatusTypeDef> *spi = new Spi<uint8_t,HAL_StatusTypeDef>();
-	uint8_t rx_data[16] = {0};
+
 	uint32_t tickstart = 0;
 
 	HAL_Init();
 
 	mcu->Set_Clock(*hsi_clock);
 	mcu->clock->Init();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
 	mcu->Register_Spi(*spi);
 	mcu->spi->Init();
-	mcu->spi->set_data_lenght(sizeof(rx_data));
-	mcu->spi->set_timeout(2);
+
+	Scheduler *sched = new Scheduler();
+	Task *spi_task=new Task(&Spi_task,1000);
+	sched->add_task(*spi_task);
 
 	do
 	{
-	    tickstart = HAL_GetTick();
-	    mcu->spi->Read(rx_data);
-	}while(HAL_GetTick() > 10*tickstart);
+	  sched->exec();
+	}while(1);
 }
 
 

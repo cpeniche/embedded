@@ -60,20 +60,29 @@ export VERBOSE
 export INCLUDES
 
 export cmd_file := application/$(LINKER_FILE)
-_dirs := Core/ $(LIBS_DIR) application/ 
+_dirs := $(LIBS_DIR) application/
+_dirs_whole_archive := Core/ 
 
 built-ins := $(patsubst %/,%/built-in.a, $(_dirs))
+#Needed when the archive needs to override weak definitions on other 
+#files that do not   
+built-ins_whole_archive := $(patsubst %/,%/built-in.a, $(_dirs_whole_archive))
 
-PHONY = $(built-ins) FORCE
+PHONY = $(built-ins_whole_archive) $(built-ins) FORCE
 
 $(PROJECT_NAME).hex : $(PROJECT_NAME).elf
 	$(Q)$(OBJCOPY) -O ihex $< $@ 
 
-$(PROJECT_NAME).elf : $(built-ins) FORCE
+$(PROJECT_NAME).elf : $(built-ins_whole_archive) $(built-ins) FORCE
 	$(Q) echo "Linking Application:  $@"
-	$(Q)$(CPP) -Wl,--start-group $(built-ins) -Wl,--end-group  -T $(cmd_file) $(LDFLAGS) -o $@ 
+	$(Q)$(CPP) -Wl,--start-group -Wl,--whole-archive $(built-ins_whole_archive) \
+	           -Wl,--no-whole-archive $(built-ins) -Wl,--end-group  -T $(cmd_file) $(LDFLAGS) -o $@ 
 
 $(built-ins): FORCE
+	$(Q)$(MAKE) $(build)=$(patsubst %/,%,$(dir $@)) \
+	need-builtin=1
+	
+$(built-ins_whole_archive): FORCE
 	$(Q)$(MAKE) $(build)=$(patsubst %/,%,$(dir $@)) \
 	need-builtin=1
 

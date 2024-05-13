@@ -11,7 +11,6 @@
 #include "stdint.h"
 #include "spi.h"
 
-
 static void MX_SPI1_Init(void *drv);
 
 template<class datatype, class errortype> void
@@ -28,9 +27,9 @@ Spi<datatype, errortype>::Read(datatype *buffer)
 }
 
 template<class datatype, class errortype> void
-Spi<datatype, errortype>::Write (datatype *)
+Spi<datatype, errortype>::Write (datatype *buffer)
 {
-
+  error = HAL_SPI_Transmit(&drv_handle,buffer,size,timeout);
 }
 
 template<class datatype, class errortype> SPI_HandleTypeDef*
@@ -58,12 +57,12 @@ static void MX_SPI1_Init(void *drv)
 
   hspi1->Instance = SPI1;
   hspi1->Init.Mode = SPI_MODE_MASTER;
-  hspi1->Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
-  hspi1->Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1->Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1->Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1->Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1->Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1->Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi1->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1->Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1->Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

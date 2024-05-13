@@ -20,8 +20,9 @@ public:
     this->period=period;
 
     cntr=0;
-  };
-  virtual ~Task();
+  }
+
+  virtual ~Task(){};
 
   unsigned int
   getCntr () const
