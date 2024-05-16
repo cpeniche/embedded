@@ -40,7 +40,7 @@ spi_bus_config_t buscfg=
 spi_device_interface_config_t devcfg=
 {
   .clock_speed_hz=1*1000*1000,           //Clock out at 1 MHz
-  .mode=1,                               //SPI mode 0
+  .mode=2,                               //SPI mode 0
   .spics_io_num=-1,                     //CS pin
   .queue_size=1,                          //We want to be able to queue 7 transactions at a time
   .pre_cb=NULL,                           //Specify pre-transfer callback to handle D/C line
