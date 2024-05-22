@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "clock.h"
 #include "stm32f0xx_hal.h"
 

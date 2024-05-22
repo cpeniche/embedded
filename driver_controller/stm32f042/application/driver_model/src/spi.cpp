@@ -42,7 +42,7 @@ Spi<datatype, errortype>::get_handle()
 template<class datatype, class errortype> errortype
 Spi<datatype, errortype>::GetError ()
 {
-	return error;
+	return (errortype)drv_handle.ErrorCode;
 }
 /**
   * @brief SPI1 Initialization Function

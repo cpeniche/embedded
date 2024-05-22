@@ -10,6 +10,7 @@
 #include "stdint.h"
 #include "clock.h"
 #include "spi.h"
+#include "can.h"
 
 class MCU
 {
@@ -19,9 +20,17 @@ public:
 	void operator=(const MCU &)=delete;
 	static MCU *get_instance();
 	void Set_Clock(Clock &);
-	void Register_Spi(Spi<uint8_t,HAL_StatusTypeDef> &);
+	void Register_Spi(Spi<uint8_t,uint32_t> &);
+	void Register_Can(Can<CAN_HandleTypeDef,
+	                  Can_Tx_Msg<CAN_TxHeaderTypeDef>  ,
+	                  CAN_RxHeaderTypeDef,
+	                  CAN_FilterTypeDef> &);
 	Clock *clock;
-	Spi<uint8_t,HAL_StatusTypeDef>*spi;
+	Spi<uint8_t,uint32_t>*spi;
+	Can<CAN_HandleTypeDef,
+	 Can_Tx_Msg<CAN_TxHeaderTypeDef>,
+	    CAN_RxHeaderTypeDef,
+	    CAN_FilterTypeDef>*can;
 
 protected:
 	MCU();

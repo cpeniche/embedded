@@ -45,7 +45,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-CAN_HandleTypeDef hcan;
+//CAN_HandleTypeDef hcan;
 
 //SPI_HandleTypeDef hspi1;
 
@@ -124,6 +124,7 @@ int main(void)
   * @param None
   * @retval None
   */
+#if 0
 static void MX_CAN_Init(void)
 {
 
@@ -155,7 +156,7 @@ static void MX_CAN_Init(void)
   /* USER CODE END CAN_Init 2 */
 
 }
-
+#endif
 
 
 /**
@@ -252,7 +253,14 @@ int main()
 {
 	MCU* mcu = MCU::get_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
-	Spi<uint8_t,HAL_StatusTypeDef> *spi = new Spi<uint8_t,HAL_StatusTypeDef>();
+	Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
+  Can<CAN_HandleTypeDef,
+  Can_Tx_Msg<CAN_TxHeaderTypeDef>,
+  CAN_RxHeaderTypeDef,
+  CAN_FilterTypeDef> *can = new Can<CAN_HandleTypeDef,
+                                Can_Tx_Msg<CAN_TxHeaderTypeDef>,
+                                CAN_RxHeaderTypeDef,
+                                CAN_FilterTypeDef>();
 
 	uint32_t tickstart = 0;
 
@@ -263,7 +271,9 @@ int main()
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	mcu->Register_Spi(*spi);
+	mcu->Register_Can(*can);
 	mcu->spi->Init();
+	mcu->can->Init();
 
 	Scheduler *sched = new Scheduler();
 	Task *spi_task=new Task(&Spi_task,1000);
