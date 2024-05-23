@@ -9,7 +9,7 @@
 #define _can_cpp_
 
 #include <cstdint>
-#include "../include/can.h"
+#include "can.h"
 
 static void MX_CAN_Init(CAN_HandleTypeDef *);
 
@@ -22,7 +22,7 @@ void Can<handletype, cantxbase, canrxbase, canfilterbase>::Init ()
 
 template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
-void Can<handletype, cantxbase, canrxbase, canfilterbase>::Read (canrxbase*)
+void Can<handletype, cantxbase, canrxbase, canfilterbase>::Read (Can_Rx_Msg<canrxbase>* msg)
 {
 
 
@@ -35,10 +35,10 @@ void Can<handletype, cantxbase, canrxbase, canfilterbase>::Write (Can_Tx_Msg<can
 {
   uint32_t mailbox;
 
-  HAL_CAN_AddTxMessage(&(this->drv_handle),
+ /* HAL_CAN_AddTxMessage(&(this->drv_handle),
                        static_cast<cantxbase>(&(msg->header)),
                        msg->tx_data,
-                       &mailbox);
+                       &mailbox);*/
 }
 
 template<class handletype, class cantxbase,
@@ -47,8 +47,6 @@ uint32_t Can<handletype, cantxbase, canrxbase, canfilterbase>::GetError()
 {
   return error;
 }
-
-
 
 
 static void MX_CAN_Init(CAN_HandleTypeDef *hcan)
@@ -66,6 +64,7 @@ static void MX_CAN_Init(CAN_HandleTypeDef *hcan)
   hcan->Init.AutoRetransmission = DISABLE;
   hcan->Init.ReceiveFifoLocked = DISABLE;
   hcan->Init.TransmitFifoPriority = DISABLE;
+  hcan->State = HAL_CAN_STATE_RESET;
   if (HAL_CAN_Init(hcan) != HAL_OK)
   {
     //Error_Handler();

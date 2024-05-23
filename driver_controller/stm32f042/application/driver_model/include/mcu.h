@@ -18,19 +18,13 @@ class MCU
 public:
 	MCU(MCU &other)=delete;
 	void operator=(const MCU &)=delete;
-	static MCU *get_instance();
+	static MCU *get_mcu_instance();
 	void Set_Clock(Clock &);
 	void Register_Spi(Spi<uint8_t,uint32_t> &);
-	void Register_Can(Can<CAN_HandleTypeDef,
-	                  Can_Tx_Msg<CAN_TxHeaderTypeDef>  ,
-	                  CAN_RxHeaderTypeDef,
-	                  CAN_FilterTypeDef> &);
+	void Register_Can(Can_Obj &);
 	Clock *clock;
 	Spi<uint8_t,uint32_t>*spi;
-	Can<CAN_HandleTypeDef,
-	 Can_Tx_Msg<CAN_TxHeaderTypeDef>,
-	    CAN_RxHeaderTypeDef,
-	    CAN_FilterTypeDef>*can;
+	Can_Obj *can;
 
 protected:
 	MCU();

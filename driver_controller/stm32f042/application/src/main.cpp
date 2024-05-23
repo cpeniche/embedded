@@ -237,7 +237,7 @@ static void Spi_task()
 
   uint8_t rx_data[2] = {0xAA,0xAA};
 
-  MCU* _mcu = MCU::get_instance();
+  MCU* _mcu = MCU::get_mcu_instance();
   _mcu->spi->set_data_lenght(sizeof(rx_data)/sizeof(uint8_t));
   _mcu->spi->set_timeout(10);
   _mcu->spi->Read(rx_data);
@@ -251,17 +251,11 @@ static void Spi_task()
 
 int main()
 {
-	MCU* mcu = MCU::get_instance();
+
+	MCU* mcu = MCU::get_mcu_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
 	Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
-  Can<CAN_HandleTypeDef,
-  Can_Tx_Msg<CAN_TxHeaderTypeDef>,
-  CAN_RxHeaderTypeDef,
-  CAN_FilterTypeDef> *can = new Can<CAN_HandleTypeDef,
-                                Can_Tx_Msg<CAN_TxHeaderTypeDef>,
-                                CAN_RxHeaderTypeDef,
-                                CAN_FilterTypeDef>();
-
+	Can_Obj* can = new Can_Obj();
 	uint32_t tickstart = 0;
 
 	HAL_Init();
@@ -273,7 +267,7 @@ int main()
 	mcu->Register_Spi(*spi);
 	mcu->Register_Can(*can);
 	mcu->spi->Init();
-	mcu->can->Init();
+	mcu->can->driver.Init();
 
 	Scheduler *sched = new Scheduler();
 	Task *spi_task=new Task(&Spi_task,1000);
