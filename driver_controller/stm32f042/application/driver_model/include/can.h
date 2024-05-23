@@ -16,8 +16,19 @@ template<class tx_header>
 class Can_Tx_Msg{
 
 public:
+  Can_Tx_Msg(){
+    header.StdId=0xA;
+    header.ExtId=0x0;
+    header.IDE=0x0;
+    header.RTR=0x0;
+    header.DLC=8;
+    header.TransmitGlobalTime=DISABLE;
+  };
+  virtual ~Can_Tx_Msg(){};
   tx_header header;
   uint8_t data[8];
+  tx_header *get_header() {return &header;};
+  uint8_t  *get_data_ptr() {return data;};
 
 };
 
@@ -42,12 +53,19 @@ class Can_Driver
 {
 public:
 
-  Can_Driver(){};
   virtual ~Can_Driver(){};
   virtual void Init() = 0;
-  virtual void Read(Can_Rx_Msg<rxbase> *) = 0;
-  virtual void Write(Can_Tx_Msg<txbase>*) = 0;
+  virtual void Read(Can_Rx_Msg<rxbase> &) = 0;
+  virtual void Write(Can_Tx_Msg<txbase> &) = 0;
   virtual uint32_t GetError()=0;
+
+private:
+  Can_Driver(const Can_Driver&)=delete;
+  const Can_Driver& operator=(const Can_Driver&)=delete;
+
+
+protected:
+  Can_Driver(){};
 
 };
 
@@ -57,17 +75,21 @@ class Can: public Can_Driver<cantxbase,canrxbase>
 {
 public:
 
+  Can(): error(0){};
+  virtual ~Can(){};
   void Init() override;
-  void Read(Can_Rx_Msg<canrxbase> *) override;
-  void Write(Can_Tx_Msg<cantxbase>*) override;
+  void Read(Can_Rx_Msg<canrxbase> &) override;
+  void Write(Can_Tx_Msg<cantxbase> &)override;
+
   uint32_t GetError() override;
 
 private:
+
   handletype drv_handle;
   uint32_t error;
-  Can_Tx_Msg<cantxbase> tx;
-  Can_Rx_Msg<canrxbase> rx;
-  Can_Filter_Msg<canfilterbase> filter;
+  //Can_Tx_Msg<cantxbase> tx;
+  //Can_Rx_Msg<canrxbase> rx;
+  //Can_Filter_Msg<canfilterbase> filter;
 
 };
 
@@ -79,9 +101,9 @@ public:
   Can_Obj(){};
   virtual ~Can_Obj(){};
   Can<CAN_HandleTypeDef,
-  Can_Tx_Msg<CAN_TxHeaderTypeDef>,
-  Can_Rx_Msg<CAN_RxHeaderTypeDef>,
-  Can_Filter_Msg<CAN_FilterTypeDef> > driver;
+      CAN_TxHeaderTypeDef,
+      CAN_RxHeaderTypeDef,
+      CAN_FilterTypeDef> driver;
 
 };
 

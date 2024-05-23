@@ -22,24 +22,26 @@ void Can<handletype, cantxbase, canrxbase, canfilterbase>::Init ()
 
 template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
-void Can<handletype, cantxbase, canrxbase, canfilterbase>::Read (Can_Rx_Msg<canrxbase>* msg)
+void Can<handletype, cantxbase, canrxbase, canfilterbase>::Read (Can_Rx_Msg<canrxbase> &msg)
 {
 
 
 
 }
+
 
 template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
-void Can<handletype, cantxbase, canrxbase, canfilterbase>::Write (Can_Tx_Msg<cantxbase>* msg)
+void Can<handletype, cantxbase, canrxbase, canfilterbase>::Write (Can_Tx_Msg<cantxbase> &msg)
 {
   uint32_t mailbox;
 
- /* HAL_CAN_AddTxMessage(&(this->drv_handle),
-                       static_cast<cantxbase>(&(msg->header)),
-                       msg->tx_data,
-                       &mailbox);*/
+  HAL_CAN_AddTxMessage(&(this->drv_handle),
+                       msg.get_header(),
+                       msg.get_data_ptr(),
+                       &mailbox);
 }
+
 
 template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
@@ -53,18 +55,18 @@ static void MX_CAN_Init(CAN_HandleTypeDef *hcan)
 {
 
   hcan->Instance = CAN;
-  hcan->Init.Prescaler = 16;
-  hcan->Init.Mode = CAN_MODE_NORMAL;
-  hcan->Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan->Init.TimeSeg1 = CAN_BS1_1TQ;
-  hcan->Init.TimeSeg2 = CAN_BS2_1TQ;
-  hcan->Init.TimeTriggeredMode = DISABLE;
-  hcan->Init.AutoBusOff = DISABLE;
-  hcan->Init.AutoWakeUp = DISABLE;
-  hcan->Init.AutoRetransmission = DISABLE;
-  hcan->Init.ReceiveFifoLocked = DISABLE;
-  hcan->Init.TransmitFifoPriority = DISABLE;
-  hcan->State = HAL_CAN_STATE_RESET;
+   hcan->Init.Prescaler = 32;
+   hcan->Init.Mode = CAN_MODE_NORMAL;
+   hcan->Init.SyncJumpWidth = CAN_SJW_1TQ;
+   hcan->Init.TimeSeg1 = CAN_BS1_4TQ;
+   hcan->Init.TimeSeg2 = CAN_BS2_1TQ;
+   hcan->Init.TimeTriggeredMode = DISABLE;
+   hcan->Init.AutoBusOff = DISABLE;
+   hcan->Init.AutoWakeUp = DISABLE;
+   hcan->Init.AutoRetransmission = DISABLE;
+   hcan->Init.ReceiveFifoLocked = DISABLE;
+   hcan->Init.TransmitFifoPriority = DISABLE;
+   hcan->State = HAL_CAN_STATE_RESET;
   if (HAL_CAN_Init(hcan) != HAL_OK)
   {
     //Error_Handler();

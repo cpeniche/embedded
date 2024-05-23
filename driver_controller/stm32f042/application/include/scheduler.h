@@ -14,12 +14,12 @@ class Task
 {
 
 public:
-  Task(void(*task)(void),unsigned int period)
+  Task(void(*task)(void),unsigned int period,unsigned int init_delay)
   {
     this->task= task;
     this->period=period;
 
-    cntr=0;
+    cntr=init_delay;
   }
 
   virtual ~Task(){};

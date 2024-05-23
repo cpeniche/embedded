@@ -244,6 +244,20 @@ static void Spi_task()
 
 }
 
+
+static void Can_task()
+{
+
+  static MCU* _mcu = MCU::get_mcu_instance();
+  static Can_Tx_Msg<CAN_TxHeaderTypeDef> driver_module;
+  driver_module.data[0]=0xAA;
+  driver_module.data[1]=0xBB;
+  driver_module.data[2]=0xCC;
+  driver_module.data[3]=0xDD;
+  _mcu->can->driver.Write(driver_module);
+
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -254,7 +268,7 @@ int main()
 
 	MCU* mcu = MCU::get_mcu_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
-	Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
+	//Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
 	Can_Obj* can = new Can_Obj();
 	uint32_t tickstart = 0;
 
@@ -264,14 +278,16 @@ int main()
 	mcu->clock->Init();
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
-	mcu->Register_Spi(*spi);
+	//mcu->Register_Spi(*spi);
 	mcu->Register_Can(*can);
-	mcu->spi->Init();
+	//mcu->spi->Init();
 	mcu->can->driver.Init();
 
 	Scheduler *sched = new Scheduler();
-	Task *spi_task=new Task(&Spi_task,1000);
-	sched->add_task(*spi_task);
+	//Task *spi_task=new Task(&Spi_task,1000,20);
+	Task *can_task=new Task(&Can_task,500,0);
+	//sched->add_task(*spi_task);
+	sched->add_task(*can_task);
 
 	do
 	{
