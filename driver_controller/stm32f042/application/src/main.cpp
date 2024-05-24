@@ -248,14 +248,25 @@ static void Spi_task()
 static void Can_task()
 {
 
-  static MCU* _mcu = MCU::get_mcu_instance();
-  static Can_Tx_Msg<CAN_TxHeaderTypeDef> driver_module;
-  driver_module.data[0]=0xAA;
-  driver_module.data[1]=0xBB;
-  driver_module.data[2]=0xCC;
-  driver_module.data[3]=0xDD;
-  _mcu->can->driver.Write(driver_module);
+  uint8_t *data;
 
+  static MCU* _mcu = MCU::get_mcu_instance();
+  static Can_Rx_Msg<CAN_RxHeaderTypeDef> rx_driver_module;
+//  static Can_Tx_Msg<CAN_TxHeaderTypeDef> tx_driver_module;
+//
+//  tx_driver_module.data[0]=0xAA;
+//  tx_driver_module.data[1]=0xBB;
+//  tx_driver_module.data[2]=0xCC;
+//  tx_driver_module.data[3]=0xDD;
+  //_mcu->can->driver.Write(tx_driver_module);
+
+
+  _mcu->can->driver.Read(rx_driver_module);
+
+  if(_mcu->can->driver.GetError() != 0x1 )
+  {
+    data = rx_driver_module.get_data_ptr();
+  }
 }
 
 #ifdef __cplusplus

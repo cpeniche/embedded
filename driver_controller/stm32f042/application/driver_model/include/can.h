@@ -38,6 +38,8 @@ class Can_Rx_Msg{
 public:
   rx_header header;
   uint8_t data[8];
+  rx_header *get_header() {return &header;};
+  uint8_t  *get_data_ptr() {return data;};
 
 };
 
