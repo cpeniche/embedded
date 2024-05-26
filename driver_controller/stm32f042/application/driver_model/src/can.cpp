@@ -23,6 +23,10 @@ void Can<handletype, cantxbase, canrxbase, canfilterbase>::Init ()
 
   MX_CAN_Init(&drv_handle);
   HAL_CAN_ConfigFilter(&(this->drv_handle),&filter);
+  HAL_CAN_ActivateNotification(&(this->drv_handle),CAN_IT_RX_FIFO0_MSG_PENDING|
+                                                   CAN_IT_RX_FIFO0_FULL|
+                                                   CAN_IT_RX_FIFO0_OVERRUN);
+  Set_Interrupt_Routine(HAL_CAN_IRQHandler);
   HAL_CAN_Start(&drv_handle);
 
 }
@@ -64,7 +68,18 @@ uint32_t Can<handletype, cantxbase, canrxbase, canfilterbase>::GetError()
 {
   return error;
 }
-
+template<class handletype, class cantxbase,
+         class canrxbase, class canfilterbase>
+uint32_t Can<handletype, cantxbase, canrxbase, canfilterbase>::QueueRxMessage(Can_Rx_Msg<canrxbase>& msg)
+{
+  if(MAX_RX_QUEUE_SIZE > rx_queue.size())
+  {
+    rx_queue.push_back(msg);
+    return 0;
+  }
+  else
+    return -1;
+}
 
 static void MX_CAN_Init(CAN_HandleTypeDef *hcan)
 {

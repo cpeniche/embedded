@@ -20,6 +20,7 @@
 #include "main.h"
 #include "mcu.h"
 #include "scheduler.h"
+#include "stm32f0xx_hal_can.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -248,6 +249,7 @@ static void Spi_task()
 static void Can_task()
 {
 
+#if 0
   uint8_t *data;
 
   static MCU* _mcu = MCU::get_mcu_instance();
@@ -267,6 +269,7 @@ static void Can_task()
   {
     data = rx_driver_module.get_data_ptr();
   }
+#endif
 }
 
 #ifdef __cplusplus
@@ -307,6 +310,23 @@ int main()
 }
 
 
+extern "C" void CEC_CAN_IRQHandler()
+{
 
+  MCU* mcu = MCU::get_mcu_instance();
+
+  mcu->can->driver.Call_Interrupt_Handle();
+}
+
+
+extern "C" void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+
+  MCU* mcu = MCU::get_mcu_instance();
+  Can_Rx_Msg<CAN_RxHeaderTypeDef> rx_msg;
+  mcu->can->driver.Read(rx_msg);
+  mcu->can->driver.QueueRxMessage(rx_msg);
+
+}
 
 

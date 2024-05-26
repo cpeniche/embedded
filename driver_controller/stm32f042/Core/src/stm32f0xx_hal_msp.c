@@ -108,7 +108,7 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* hcan)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN CAN_MspInit 1 */
-
+    NVIC->ISER[0] |= (1<<30);
   /* USER CODE END CAN_MspInit 1 */
   }
 

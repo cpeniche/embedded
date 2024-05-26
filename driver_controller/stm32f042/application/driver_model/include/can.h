@@ -8,9 +8,14 @@
 #ifndef APPLICATION_DRIVER_MODEL_SRC_CAN_H_
 #define APPLICATION_DRIVER_MODEL_SRC_CAN_H_
 
+#include <list>
 #include "driver.h"
 #include "stm32f0xx_hal.h"
 #include "stm32f0xx_hal_can.h"
+
+extern "C" void CEC_CAN_IRQHandler();
+extern "C" void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
+
 
 template<class tx_header>
 class Can_Tx_Msg{
@@ -75,6 +80,8 @@ template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
 class Can: public Can_Driver<cantxbase,canrxbase>
 {
+
+  static constexpr uint32_t MAX_RX_QUEUE_SIZE=10;
 public:
 
   Can(): error(0){};
@@ -83,15 +90,19 @@ public:
   void Read(Can_Rx_Msg<canrxbase> &) override;
   void Write(Can_Tx_Msg<cantxbase> &)override;
 
+  void Set_Interrupt_Routine(void (*func)(handletype* )){Interrupt_Handle=func;};
+  void Call_Interrupt_Handle(){Interrupt_Handle(&drv_handle);};
+  uint32_t QueueRxMessage(Can_Rx_Msg<canrxbase>&);
   uint32_t GetError() override;
+  friend void CEC_CAN_IRQHandler();
+  friend void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 
 private:
 
+  std::list<Can_Rx_Msg<canrxbase>>rx_queue;
+  void (*Interrupt_Handle)(handletype *);
   handletype drv_handle;
   uint32_t error;
-  //Can_Tx_Msg<cantxbase> tx;
-  //Can_Rx_Msg<canrxbase> rx;
-  //Can_Filter_Msg<canfilterbase> filter;
 
 };
 
