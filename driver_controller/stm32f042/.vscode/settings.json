@@ -1,0 +1,17 @@
+{
+  "makefile.launchConfigurations": [
+    {
+      "cwd": "/home/carlo/projects/embedded/driver_controller/stm32f042",
+      "binaryPath": "/home/carlo/projects/embedded/driver_controller/stm32f042/driver_controller.elf",
+      "binaryArgs": []
+    }
+  ],
+  "files.associations": {
+    "list": "cpp",
+    "array": "cpp",
+    "deque": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp"
+  },
+  "cortex-debug.variableUseNaturalFormat": false
+}

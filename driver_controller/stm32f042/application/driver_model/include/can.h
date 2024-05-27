@@ -94,6 +94,12 @@ public:
   void Call_Interrupt_Handle(){Interrupt_Handle(&drv_handle);};
   uint32_t QueueRxMessage(Can_Rx_Msg<canrxbase>&);
   uint32_t GetError() override;
+  uint32_t Get_RxQueue_Size(){return rx_queue.size();}
+  Can_Rx_Msg<canrxbase> Get_Queue_Msg(){
+    Can_Rx_Msg<canrxbase> msg=rx_queue.front();
+    rx_queue.pop_front();
+    return msg;
+    }
   friend void CEC_CAN_IRQHandler();
   friend void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 

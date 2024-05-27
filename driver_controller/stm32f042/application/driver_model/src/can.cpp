@@ -68,6 +68,8 @@ uint32_t Can<handletype, cantxbase, canrxbase, canfilterbase>::GetError()
 {
   return error;
 }
+
+
 template<class handletype, class cantxbase,
          class canrxbase, class canfilterbase>
 uint32_t Can<handletype, cantxbase, canrxbase, canfilterbase>::QueueRxMessage(Can_Rx_Msg<canrxbase>& msg)

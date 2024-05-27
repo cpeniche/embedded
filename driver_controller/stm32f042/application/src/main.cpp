@@ -21,6 +21,7 @@
 #include "mcu.h"
 #include "scheduler.h"
 #include "stm32f0xx_hal_can.h"
+#include "motor.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -248,28 +249,35 @@ static void Spi_task()
 
 static void Can_task()
 {
-
-#if 0
-  uint8_t *data;
-
-  static MCU* _mcu = MCU::get_mcu_instance();
-  static Can_Rx_Msg<CAN_RxHeaderTypeDef> rx_driver_module;
-//  static Can_Tx_Msg<CAN_TxHeaderTypeDef> tx_driver_module;
-//
-//  tx_driver_module.data[0]=0xAA;
-//  tx_driver_module.data[1]=0xBB;
-//  tx_driver_module.data[2]=0xCC;
-//  tx_driver_module.data[3]=0xDD;
-  //_mcu->can->driver.Write(tx_driver_module);
-
-
-  _mcu->can->driver.Read(rx_driver_module);
-
-  if(_mcu->can->driver.GetError() != 0x1 )
+  static MCU* mcu = MCU::get_mcu_instance();
+  Can_Rx_Msg<CAN_RxHeaderTypeDef> rx_msg;
+  
+  while(mcu->can->driver.Get_RxQueue_Size() != 0)
   {
-    data = rx_driver_module.get_data_ptr();
+    rx_msg=mcu->can->driver.Get_Queue_Msg();
+    for(std::list<Dictionary>:: iterator it=dictionary.begin();
+        it != dictionary.end(); it++)
+    {
+       if ((rx_msg.header.StdId & 0x7FF) == (it->Module_Id & 0x7FF))
+       {
+          
+          switch(it->dataType)
+          {
+            case UINT8:            
+            *((uint8_t *)it->data_ptr)=rx_msg.data[0];
+            break;
+
+            case UINT16:
+            *((uint16_t *)it->data_ptr)=*((uint8_t *)(rx_msg.data));
+            break;
+          
+            default:
+              break;
+          }          
+          it->Callback(WRITE);
+       }
+    }
   }
-#endif
 }
 
 #ifdef __cplusplus
@@ -299,7 +307,7 @@ int main()
 
 	Scheduler *sched = new Scheduler();
 	//Task *spi_task=new Task(&Spi_task,1000,20);
-	Task *can_task=new Task(&Can_task,500,0);
+	Task *can_task=new Task(&Can_task,10,0);
 	//sched->add_task(*spi_task);
 	sched->add_task(*can_task);
 
