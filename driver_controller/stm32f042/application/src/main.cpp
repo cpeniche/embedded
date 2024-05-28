@@ -52,6 +52,7 @@ extern "C" {
 //SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
+TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 
@@ -63,6 +64,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CAN_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -73,53 +75,63 @@ static void MX_SPI1_Init(void);
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
   */
-#if 0
-int main(void)
+static void MX_TIM3_Init(void)
 {
 
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN TIM3_Init 0 */
 
-  /* USER CODE END 1 */
+  /* USER CODE END TIM3_Init 0 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+  /* USER CODE BEGIN TIM3_Init 1 */
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  MX_CAN_Init();
-  MX_SPI1_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 1;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 4800;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+    //Error_Handler();
   }
-  /* USER CODE END 3 */
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
 }
-#endif
 
 /**
   * @brief CAN Initialization Function
@@ -188,7 +200,7 @@ static void MX_USART2_UART_Init(void)
   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
 
@@ -203,12 +215,24 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PB3 PB5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -304,12 +328,16 @@ int main()
 	mcu->Register_Can(*can);
 	//mcu->spi->Init();
 	mcu->can->driver.Init();
+   MX_TIM3_Init();
 
 	Scheduler *sched = new Scheduler();
 	//Task *spi_task=new Task(&Spi_task,1000,20);
 	Task *can_task=new Task(&Can_task,10,0);
+  Task *motor_task=new Task(&Motor_task,200,20);
 	//sched->add_task(*spi_task);
 	sched->add_task(*can_task);
+  sched->add_task(*motor_task);
+ 
 
 	do
 	{

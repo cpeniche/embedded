@@ -4,8 +4,19 @@
 
 #include <stdint.h>
 #include "dictionary.h"
+#include "stm32f0xx_hal.h"
+
+enum MOTOR_DIR
+{
+  STOP=0,
+  UP,
+  DOWN
+};
 
 extern void Motor_Callback(mode_type mode);
-extern uint8_t lock_position;
+extern void Motor_task();
+extern MOTOR_DIR window_dir;
+extern "C" TIM_HandleTypeDef htim3;
+
 
 #endif
