@@ -53,7 +53,7 @@ void setting_up_move()
 {
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_SET);
-  HAL_TIM_PWM_Start(&htim3,1);
+  HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
   state = RUNNING;
   new_movement=false;
 }
@@ -62,7 +62,7 @@ void setting_down_move()
 {  
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
-  HAL_TIM_PWM_Start(&htim3,1);
+  HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
   state = RUNNING;
   new_movement=false;
   
@@ -72,7 +72,7 @@ void running()
 {
   if(new_movement)
   {
-    HAL_TIM_PWM_Stop(&htim3,1);
+    HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1);
     if(window_dir == UP )
       state=SETTING_UP_MOVE;
     else if(window_dir == DOWN)

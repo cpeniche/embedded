@@ -79,6 +79,7 @@ static void MX_TIM3_Init(void);
   * @param None
   * @retval None
   */
+
 static void MX_TIM3_Init(void)
 {
 
@@ -94,37 +95,37 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 1;
+  htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 4800;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
   if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 2400;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
   /* USER CODE BEGIN TIM3_Init 2 */
 
@@ -133,45 +134,16 @@ static void MX_TIM3_Init(void)
 
 }
 
-/**
-  * @brief CAN Initialization Function
-  * @param None
-  * @retval None
-  */
-#if 0
-static void MX_CAN_Init(void)
+void Error_Handler(void)
 {
-
-  /* USER CODE BEGIN CAN_Init 0 */
-
-  /* USER CODE END CAN_Init 0 */
-
-  /* USER CODE BEGIN CAN_Init 1 */
-
-  /* USER CODE END CAN_Init 1 */
-  hcan.Instance = CAN;
-  hcan.Init.Prescaler = 16;
-  hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_1TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_1TQ;
-  hcan.Init.TimeTriggeredMode = DISABLE;
-  hcan.Init.AutoBusOff = DISABLE;
-  hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
-  hcan.Init.ReceiveFifoLocked = DISABLE;
-  hcan.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
   {
-    Error_Handler();
   }
-  /* USER CODE BEGIN CAN_Init 2 */
-
-  /* USER CODE END CAN_Init 2 */
-
+  /* USER CODE END Error_Handler_Debug */
 }
-#endif
-
 
 /**
   * @brief USART2 Initialization Function
@@ -328,7 +300,8 @@ int main()
 	mcu->Register_Can(*can);
 	//mcu->spi->Init();
 	mcu->can->driver.Init();
-   MX_TIM3_Init();
+  MX_TIM3_Init();
+
 
 	Scheduler *sched = new Scheduler();
 	//Task *spi_task=new Task(&Spi_task,1000,20);
