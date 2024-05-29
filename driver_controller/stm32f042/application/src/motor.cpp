@@ -51,7 +51,7 @@ void idle()
 
 void setting_up_move()
 {
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
   state = RUNNING;
@@ -61,7 +61,7 @@ void setting_up_move()
 void setting_down_move()
 {  
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
+  //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
   state = RUNNING;
   new_movement=false;
@@ -85,8 +85,8 @@ void running()
 void stop()
 {
   HAL_TIM_PWM_Stop(&htim3,1);
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_5,GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
   state=IDLE;
 }
 
