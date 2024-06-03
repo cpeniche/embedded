@@ -30,6 +30,17 @@
 #include "driver/twai.h"
 #include "soc/twai_periph.h"    // For GPIO matrix signal index
 
+/* lcd panel includes*/
+#include "esp_timer.h"
+#include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_vendor.h"
+#include "esp_lcd_panel_ops.h"
+#include "esp_err.h"
+#include "lvgl.h"
+
+
+extern void Init_Display();
+
 /* --------------------- SPI Definitions and static variables ------------------ */
 
 #define LCD_HOST    HSPI_HOST
@@ -39,6 +50,7 @@
 #define PARALLEL_LINES 16
 //static const char *TAG = "Spi_Task";
 
+#if 0
 gpio_config_t io_conf = {
     .intr_type = GPIO_INTR_DISABLE,
     .mode = GPIO_MODE_OUTPUT,
@@ -212,13 +224,22 @@ void Configure_Can_Module()
   ESP_LOGI(EXAMPLE_TAG, "Driver started");
 
 }
-
+#endif
 
 void app_main(void)
 {
 
-  Configure_Can_Module();
-  xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, 4, NULL);
+  //Configure_Can_Module();
+  //xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, 4, NULL);
+
+  Init_Display();
+  while(1)
+  {
+  // raise the task priority of LVGL and/or reduce the handler period can improve the performance
+  vTaskDelay(pdMS_TO_TICKS(10));
+  // The task running lv_timer_handler should have lower priority than that running `lv_tick_inc`
+  lv_timer_handler();
+  }
 
 }
 
