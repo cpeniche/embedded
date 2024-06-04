@@ -74,10 +74,11 @@ static const char *TAG = "example";
 #define EXAMPLE_LVGL_TICK_PERIOD_MS    2
 #define EXAMPLE_LVGL_TASK_MAX_DELAY_MS 500
 #define EXAMPLE_LVGL_TASK_MIN_DELAY_MS 1
-#define EXAMPLE_LVGL_TASK_STACK_SIZE   (4 * 1024)
+#define EXAMPLE_LVGL_TASK_STACK_SIZE   (8 * 1024)
 #define EXAMPLE_LVGL_TASK_PRIORITY     2
 
-static SemaphoreHandle_t lvgl_mux = NULL;
+//static SemaphoreHandle_t lvgl_mux = NULL;
+static lv_mutex_t mutex;
 extern void lvgl_display();
 
 // we use two semaphores to sync the VSYNC event and the LVGL task, to avoid potential tearing effect
@@ -98,9 +99,9 @@ static bool example_on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_r
 }
 
 
-static void example_lvgl_flush_cb(lv_disp_drv_t *display, const lv_area_t *area, lv_color_t *color_map)
+static void example_lvgl_flush_cb(lv_display_t *display, const lv_area_t *area, lv_color_t *color_map)
 {
-    esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)display->user_data; 
+    esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(display); 
       
     int offsetx1 = area->x1;
     int offsetx2 = area->x2;
@@ -117,16 +118,16 @@ static void example_lvgl_flush_cb(lv_disp_drv_t *display, const lv_area_t *area,
 
 
 /*Read the touchpad*/
-void example_touchpad_read( lv_indev_drv_t *tp, lv_indev_data_t *data )
+void example_touchpad_read( lv_indev_t *tp, lv_indev_data_t *data )
 {
     uint16_t touchpad_x[1] = {0};
     uint16_t touchpad_y[1] = {0};
     uint8_t touchpad_cnt = 0;
     /* Read touch controller data */
-    esp_lcd_touch_read_data((esp_lcd_touch_handle_t)tp->user_data);
+    esp_lcd_touch_read_data((esp_lcd_touch_handle_t)lv_indev_get_user_data(tp));
 
     /* Get coordinates */
-    bool touchpad_pressed = esp_lcd_touch_get_coordinates(tp->user_data, touchpad_x, touchpad_y, NULL, &touchpad_cnt, 1);
+    bool touchpad_pressed = esp_lcd_touch_get_coordinates((esp_lcd_touch_handle_t)lv_indev_get_user_data(tp), touchpad_x, touchpad_y, NULL, &touchpad_cnt, 1);
 
     if (touchpad_pressed && touchpad_cnt > 0) {
         data->point.x = touchpad_x[0];
@@ -142,6 +143,11 @@ static void example_increase_lvgl_tick(void *arg)
 {
     /* Tell LVGL how many milliseconds has elapsed */
     lv_tick_inc(EXAMPLE_LVGL_TICK_PERIOD_MS);   
+}
+
+lv_tick_get_cb_t tick_get_cb()
+{
+    return esp_timer_get_time()/1000;
 }
 
 /**
@@ -165,6 +171,7 @@ static esp_err_t i2c_master_init(void)
     return i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
+#if 0
 bool lvgl_lock(int timeout_ms)
 {
     // Convert timeout in milliseconds to FreeRTOS ticks
@@ -177,6 +184,7 @@ void lvgl_unlock(void)
 {
     xSemaphoreGiveRecursive(lvgl_mux);
 }
+#endif
 
 static void lvgl_display_task(void *arg)
 {
@@ -184,12 +192,12 @@ static void lvgl_display_task(void *arg)
     uint32_t task_delay_ms = EXAMPLE_LVGL_TASK_MAX_DELAY_MS;
     while (1) {
         // Lock the mutex due to the LVGL APIs are not thread-safe
-        if (lvgl_lock(-1)) {
-            //ESP_LOGI(TAG, "Task mutex taken");
+        if (lv_mutex_lock(&mutex)) {
+            
             task_delay_ms = lv_timer_handler();
             // Release the mutex
-            lvgl_unlock();
-            //ESP_LOGI(TAG, "Task mutex given");
+           lv_mutex_unlock(&mutex);
+           
         }
         if (task_delay_ms > EXAMPLE_LVGL_TASK_MAX_DELAY_MS) {
             task_delay_ms = EXAMPLE_LVGL_TASK_MAX_DELAY_MS;
@@ -202,10 +210,7 @@ static void lvgl_display_task(void *arg)
 
 void app_main(void)
 {
-
-    static lv_disp_draw_buf_t disp_buf; // contains internal graphic buffer(s) called draw buffer(s)
-    static lv_disp_drv_t disp_drv;      // contains callback functions
-    
+        
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
     
@@ -297,34 +302,34 @@ void app_main(void)
         .on_vsync = example_on_vsync_event,
     };
     ESP_LOGI(TAG, "Initialize LVGL library");
+
+    lv_tick_set_cb(tick_get_cb);
     
+    /* Initialize LVGL*/
     lv_init();
+
+    /*Create Display object*/
+    lv_display_t *display = lv_display_create(EXAMPLE_LCD_H_RES,EXAMPLE_LCD_V_RES);
+
+    /* Declare a buffer for 1/10 screen size */
+    static lv_color_t buffer[EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES/10]; 
+
     // alloc draw buffers used by LVGL
     // it's recommended to choose the size of the draw buffer(s) to be at least 1/10 screen sized
-    lv_color_t *buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
-    assert(buf1);
-    lv_color_t *buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
-    assert(buf2);
-    // initialize LVGL draw buffers
-    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 20);
+    lv_display_set_buffers(display,buffer,NULL,sizeof(buffer),LV_DISP_RENDER_MODE_PARTIAL);
+    lv_display_set_flush_cb(display,example_lvgl_flush_cb);
 
-    ESP_LOGI(TAG, "Register display driver to LVGL");
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = EXAMPLE_LCD_H_RES;
-    disp_drv.ver_res = EXAMPLE_LCD_V_RES;
-    disp_drv.flush_cb = example_lvgl_flush_cb;
-    //disp_drv.drv_update_cb = example_lvgl_port_update_callback;
-    disp_drv.draw_buf = &disp_buf;
-    disp_drv.user_data = panel_handle;
-    lv_disp_t *disp = lv_disp_drv_register(&disp_drv);
+    ESP_LOGI(TAG, "Register display driver to LVGL");    
 
-    ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(panel_handle, &cbs, &disp_drv));
+    /* Register panel callbacks*/
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(panel_handle, &cbs,display));
 
     ESP_LOGI(TAG, "Initialize RGB LCD panel");
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
    
     ESP_LOGI(TAG, "Install LVGL tick timer");
+
     // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
     const esp_timer_create_args_t lvgl_tick_timer_args = {
         .callback = &example_increase_lvgl_tick,
@@ -336,23 +341,33 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, EXAMPLE_LVGL_TICK_PERIOD_MS * 1000));
 
     ESP_LOGI(TAG,"Register display indev to LVGL");
-    static lv_indev_drv_t indev_drv;    // Input device driver (Touch)
-    lv_indev_drv_init(&indev_drv);
-    indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.disp = disp;
-    indev_drv.read_cb = example_touchpad_read;
-    indev_drv.user_data = tp;
-    lv_indev_drv_register(&indev_drv);
-    lvgl_mux = xSemaphoreCreateRecursiveMutex();
-    assert(lvgl_mux);
-    ESP_LOGI(TAG, "Create LVGL task");
-    xTaskCreate(lvgl_display_task, "LVGL", EXAMPLE_LVGL_TASK_STACK_SIZE, NULL, EXAMPLE_LVGL_TASK_PRIORITY, NULL);
 
+    /*********** Input device driver (Touch) *************/
+     /*Create an input device*/
+    lv_indev_t * indev = lv_indev_create();    
+
+    /*Touch pad is a pointer-like device*/
+    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); 
+
+    /*Set your driver function*/
+    lv_indev_set_read_cb(indev, example_touchpad_read);  
+   
+    /*Add user data for the touch panel*/
+    lv_indev_set_user_data(indev,tp);
+
+    ESP_LOGI(TAG, "Create LVGL task");
+    lv_thread_t lv_task;
+    lv_res_t result;
+    
+    result=lv_thread_init(&lv_task,EXAMPLE_LVGL_TASK_PRIORITY,lvgl_display_task,EXAMPLE_LVGL_TASK_STACK_SIZE,NULL);
+    assert(result==LV_RESULT_OK);
+   
+    lv_mutex_init(&mutex);
     // Lock the mutex due to the LVGL APIs are not thread-safe
-    if (lvgl_lock(-1)) {
+    if (lv_mutex_lock(&mutex)) {
         ESP_LOGI(TAG, "Display Started");
         lvgl_display();
         // Release the mutex
-        lvgl_unlock();
+        lv_mutex_unlock(&mutex);
     }
 }
