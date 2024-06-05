@@ -356,12 +356,7 @@ void app_main(void)
     lv_indev_set_user_data(indev,tp);
 
     ESP_LOGI(TAG, "Create LVGL task");
-    lv_thread_t lv_task;
-    lv_res_t result;
-    
-    result=lv_thread_init(&lv_task,EXAMPLE_LVGL_TASK_PRIORITY,lvgl_display_task,EXAMPLE_LVGL_TASK_STACK_SIZE,NULL);
-    assert(result==LV_RESULT_OK);
-   
+       
     lv_mutex_init(&mutex);
     // Lock the mutex due to the LVGL APIs are not thread-safe
     if (lv_mutex_lock(&mutex)) {
@@ -370,4 +365,9 @@ void app_main(void)
         // Release the mutex
         lv_mutex_unlock(&mutex);
     }
+    lv_thread_t lv_task;
+    lv_res_t result;
+    
+    result=lv_thread_init(&lv_task,EXAMPLE_LVGL_TASK_PRIORITY,lvgl_display_task,EXAMPLE_LVGL_TASK_STACK_SIZE,NULL);
+    assert(result==LV_RESULT_OK);
 }
