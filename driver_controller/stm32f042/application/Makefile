@@ -4,6 +4,8 @@ INCLUDES += -Ilib/CMSIS/Device/ST/STM32F0xx/include
 INCLUDES += -Ilib/CMSIS/include
 INCLUDES += -ICore/include
 INCLUDES += -Iapplication/driver_model/include
+INCLUDES += -Ilib/FreeRTOSv202210.01-LTS/FreeRTOS-LTS/FreeRTOS/FreeRTOS-Kernel/include
+INCLUDES += -Ilib/FreeRTOSv202210.01-LTS/FreeRTOS-LTS/FreeRTOS/FreeRTOS-Kernel/portable/GCC/ARM_CM0
 
 #CFLAGS += -Wa,-adhln -g
 
