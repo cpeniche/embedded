@@ -29,7 +29,7 @@ LDFLAGS=-Wl,-Map="$(PROJECT_NAME).map" \
 
 SHELL:=/bin/bash
 
-export LIBS_DIR =  $(LIB_PATH)/STM32F0xx_HAL_Driver/
+export LIBS_DIR =  $(LIB_PATH)/STM32F0xx_HAL_Driver/ $(LIB_PATH)/FreeRTOSv202210.01-LTS/
 
 BUILD_BUILTIN := 1
 

@@ -25,6 +25,8 @@
 #include "scheduler.h"
 #include "halIncludes.h"
 #include "motor.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -56,6 +58,9 @@ extern "C" {
 
 UART_HandleTypeDef huart2;
 TIM_HandleTypeDef htim3;
+
+
+#define mainQUEUE_RECEIVE_TASK_PRIORITY     ( tskIDLE_PRIORITY + 2 )
 
 /* USER CODE BEGIN PV */
 
@@ -272,7 +277,17 @@ int main()
 	mcu->can->driver.Init();
   MX_TIM3_Init();
 
+  xTaskCreate(Can_task,                   /* The function that implements the task. */
+              "Can Recevie Task",                                   /* The text name assigned to the task - for debug only as it is not used by the kernel. */
+              4 * configMINIMAL_STACK_SIZE,           /* The size of the stack to allocate to the task. */
+              NULL, /* The parameter passed to the task - just to check the functionality. */
+              mainQUEUE_RECEIVE_TASK_PRIORITY,        /* The priority assigned to the task. */
+              NULL );       
+  /* Start the tasks and timer running. */
+  vTaskStartScheduler();
+  while(1);
 
+#if 0
 	Scheduler *sched = new Scheduler();
 	Task *spi_task=new Task(&Spi_task,1000,20);
 	Task *can_task=new Task(vCanTask,10,0);
@@ -280,12 +295,14 @@ int main()
 	sched->add_task(*spi_task);
 	sched->add_task(*can_task);
   sched->add_task(*motor_task);
- 
 
 	do
 	{
 	  sched->exec();
 	}while(1);
+#endif
+
+
 }
 
 
