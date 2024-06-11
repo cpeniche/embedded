@@ -6,6 +6,7 @@ export ARCH ?= armv6-m
 export APPDIR := application
 export TOOL ?= gnu
 export OBJCOPY := $(CROSS_COMPILE)objcopy
+export SIZE := $(CROSS_COMPILE)size
 export LIB_PATH := lib
 export LINKER_FILE := gcc_arm.ld
 
@@ -13,13 +14,18 @@ export LINKER_FILE := gcc_arm.ld
 PROJECT_NAME := driver_controller
 
 export AR := $(CROSS_COMPILE)ar
-export CFLAGS := -mcpu=$(CPU) -march=$(ARCH) -mthumb -O0 \
-		   -fmessage-length=0 -fsigned-char -ffunction-sections \
+export CFLAGS := -mcpu=$(CPU) -march=$(ARCH) -mthumb -O0 -specs=nosys.specs  \
+		   -fmessage-length=0 -fsigned-char -ffunction-sections --specs=nano.specs \
 		   -fdata-sections -g3 -DSTM32F042x6 -D__NO_SYSTEM_INIT -D__STARTUP_CLEAR_BSS_MULTIPLE
 
-LDFLAGS = -mcpu=$(CPU)  \
-		--specs=nosys.specs -Wl,-Map="$(PROJECT_NAME).map" -Wl,--gc-sections -static \
-		--specs=nano.specs
+#LDFLAGS = -mcpu=$(CPU)  \
+
+#		--specs=nosys.specs \   
+LDFLAGS=-Wl,-Map="$(PROJECT_NAME).map" \
+		-Wl,--gc-sections \
+		-Wl,--static
+#		--specs=nano.specs    
+
 
 SHELL:=/bin/bash
 
@@ -70,8 +76,11 @@ built-ins_whole_archive := $(patsubst %/,%/built-in.a, $(_dirs_whole_archive))
 
 PHONY = $(built-ins_whole_archive) $(built-ins) FORCE
 
+
+
 $(PROJECT_NAME).hex : $(PROJECT_NAME).elf
-	$(Q)$(OBJCOPY) -O ihex $< $@ 
+	$(Q)$(OBJCOPY) -O ihex $< $@;
+	$(Q)$(SIZE) $(PROJECT_NAME).elf
 
 $(PROJECT_NAME).elf : $(built-ins_whole_archive) $(built-ins) FORCE
 	$(Q) echo "Linking Application:  $@"

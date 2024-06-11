@@ -1,0 +1,44 @@
+src := $(obj)
+
+PHONY := __clean
+__clean:
+
+include $(PROGDIR)/scripts/Makefile.include
+build-dir := $(if $(filter /%,$(src)),$(src),$(srctree)/$(src))
+#$(info Entering Makefile.build)
+include $(build-dir)/Makefile
+
+
+# Figure out what we need to build from the various variables
+# ==========================================================================
+subdir-ymn := $(sort $(subdir-y) $(subdir-)\
+		$(patsubst %/,%, $(filter %/, $(obj-y))))
+
+# Add subdir path
+
+subdir-ymn	:= $(addprefix $(obj)/,$(subdir-ymn))
+
+__clean-files := $(targets)
+
+__clean-files   := $(wildcard                                               \
+		   $(addprefix $(obj)/, $(filter-out $(objtree)/%, $(__clean-files))) \
+		   $(filter $(objtree)/%, $(__clean-files)))
+
+
+__clean: $(subdir-ymn)
+ifneq ($(strip $(__clean-files)),)
+	rm -rf $(__clean-files)
+endif
+	@:
+
+# ===========================================================================
+# Generic stuff
+# ===========================================================================
+
+# Descending
+# ---------------------------------------------------------------------------
+PHONY += $(subdir-ymn)
+$(subdir-ymn):
+	$(Q)$(MAKE) $(clean)=$@
+
+.PHONY: $(PHONY)
