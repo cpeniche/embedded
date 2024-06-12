@@ -64,7 +64,7 @@ TIM_HandleTypeDef htim3;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
+//static void MX_USART2_UART_Init(void);
 static void MX_CAN_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
@@ -148,6 +148,7 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
+#if 0
 /**
   * @brief USART2 Initialization Function
   * @param None
@@ -182,7 +183,7 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE END USART2_Init 2 */
 
 }
-
+#endif
 /**
   * @brief GPIO Initialization Function
   * @param None

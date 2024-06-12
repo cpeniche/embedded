@@ -17,7 +17,8 @@ export AR := $(CROSS_COMPILE)ar
 export CFLAGS := -mcpu=$(CPU) -march=$(ARCH) -mthumb -O0 -specs=nosys.specs  \
 		   -fmessage-length=0 -fsigned-char -ffunction-sections --specs=nano.specs \
 		   -fdata-sections -g3 -DSTM32G431xx -D__NO_SYSTEM_INIT -D__STARTUP_CLEAR_BSS_MULTIPLE \
-		   -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+		   -mfpu=fpv4-sp-d16 
+#			 -mfloat-abi=hard
 
 #LDFLAGS = -mcpu=$(CPU)  \
 

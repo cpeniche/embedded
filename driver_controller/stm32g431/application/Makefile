@@ -1,6 +1,6 @@
 INCLUDES = -Iapplication/include
-INCLUDES += -Ilib/STM32F0xx_HAL_Driver/include 
-INCLUDES += -Ilib/CMSIS/Device/ST/STM32F0xx/include
+INCLUDES += -Ilib/STM32G4xx_HAL_Driver/include 
+INCLUDES += -Ilib/CMSIS/Device/ST/STM32G4xx/include
 INCLUDES += -Ilib/CMSIS/include
 INCLUDES += -ICore/include
 INCLUDES += -Iapplication/driver_model/include

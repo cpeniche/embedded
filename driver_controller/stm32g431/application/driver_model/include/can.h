@@ -13,29 +13,30 @@
 #include "halIncludes.h"
 /* Hal type redefinitions*/
 
-#define stCanHandleType         CAN_HandleTypeDef 
-#define stCanTransmitHeaderType CAN_TxHeaderTypeDef 
-#define stCanReceiveHeadetType  CAN_RxHeaderTypeDef 
-#define stCanFilterType         CAN_FilterTypeDef
+#define stCanHandleType         FDCAN_HandleTypeDef 
+#define stCanTransmitHeaderType FDCAN_TxHeaderTypeDef 
+#define stCanReceiveHeadetType  FDCAN_RxHeaderTypeDef 
+#define stCanFilterType         FDCAN_FilterTypeDef
 
 
 /* Hal function redefinitions */
-#define vCanInit                      MX_CAN_Init
-#define xCanConfigureFilter           HAL_CAN_ConfigFilter          
-#define xCanActivateNotification      HAL_CAN_ActivateNotification  
-#define vCanInterruptHandlerHook      HAL_CAN_IRQHandler
-#define xCanStart                     HAL_CAN_Start                 
-#define xCanGetReceiveMessage         HAL_CAN_GetRxMessage          
-#define xCanTransmitMessage           HAL_CAN_AddTxMessage
-#define vCanMessagePendingCallBack    HAL_CAN_RxFifo0MsgPendingCallback
-#define vCanInterruptRoutine          CEC_CAN_IRQHandler
+#define vCanInit                      MX_FDCAN_Init
+#define xCanConfigureFilter           HAL_FDCAN_ConfigFilter          
+#define xCanActivateNotification      HAL_FDCAN_ActivateNotification  
+#define vCanInterruptHandlerHook      HAL_FDCAN_IRQHandler
+#define xCanStart                     HAL_FDCAN_Start                 
+#define xCanGetReceiveMessage         HAL_FDCAN_GetRxMessage          
+#define xCanTransmitMessage           HAL_FDCAN_AddMessageToTxFifoQ
+#define vCanGetReceiveFifoZeroCallBack    HAL_FDCAN_RxFifo0Callback
+#define vCanInterruptRoutineZero      FDCAN1_IT0_IRQHandler
+#define vCanInterruptRoutineOne       FDCAN1_IT1_IRQHandler
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
   void vCanInterruptRoutine();
-  void vCanMessagePendingCallBack(stCanHandleType *hcan);
+  void vCanGetReceiveFifoZeroCallBack(stCanHandleType *hcan, uint32_t );
   void vCanTask(void);
 
 #ifdef __cplusplus
@@ -47,12 +48,7 @@ class Can_Tx_Msg{
 
 public:
   Can_Tx_Msg(){
-    header.StdId=0xA;
-    header.ExtId=0x0;
-    header.IDE=0x0;
-    header.RTR=0x0;
-    header.DLC=8;
-    header.TransmitGlobalTime=DISABLE;
+    header={0};
   };
   virtual ~Can_Tx_Msg(){};
   tx_header header;
@@ -153,9 +149,6 @@ public:
       stCanFilterType> driver;
 
   void vCanTask(void);
-
-
-  
 
 };
 

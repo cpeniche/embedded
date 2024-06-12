@@ -199,7 +199,7 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32g4xx.s).                    */
 /******************************************************************************/
-
+#if 0
 /**
   * @brief This function handles FDCAN1 interrupt 0.
   */
@@ -227,7 +227,7 @@ void FDCAN1_IT1_IRQHandler(void)
 
   /* USER CODE END FDCAN1_IT1_IRQn 1 */
 }
-
+#endif
 /**
   * @brief This function handles TIM1 update interrupt and TIM16 global interrupt.
   */

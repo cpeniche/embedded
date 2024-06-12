@@ -304,6 +304,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
 
 }
 
+#if 0
 /**
 * @brief UART MSP Initialization
 * This function configures the hardware resources used in this example
@@ -380,6 +381,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
 }
 
+#endif
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
