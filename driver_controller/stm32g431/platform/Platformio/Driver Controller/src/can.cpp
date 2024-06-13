@@ -107,6 +107,7 @@ static void MX_FDCAN_Init(stCanHandleType *hfdcan1)
   hfdcan1->Init.StdFiltersNbr = 0;
   hfdcan1->Init.ExtFiltersNbr = 0;
   hfdcan1->Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hfdcan1->State = HAL_FDCAN_STATE_RESET;
   
   if (HAL_FDCAN_Init(hfdcan1) != HAL_OK)
   {

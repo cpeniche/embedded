@@ -38,7 +38,15 @@ class Can_Tx_Msg{
 
 public:
   Can_Tx_Msg(){
-    header={0};
+    header.Identifier = 0x55;
+    header.IdType = FDCAN_STANDARD_ID;
+    header.TxFrameType = FDCAN_DATA_FRAME;
+    header.DataLength = FDCAN_DLC_BYTES_3;
+    header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+    header.BitRateSwitch = FDCAN_BRS_OFF;
+    header.FDFormat = FDCAN_CLASSIC_CAN;
+    header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    header.MessageMarker = 0;
   };
   virtual ~Can_Tx_Msg(){};
   tx_header header;
@@ -141,7 +149,23 @@ public:
   void vCanTask(void)
   {
     Can_Rx_Msg<stCanReceiveHeadetType> rx_msg;
+    // Can_Tx_Msg<stCanTransmitHeaderType> tx_msg;
 
+    // tx_msg.header.Identifier = 0x55;
+    // tx_msg.header.IdType = FDCAN_STANDARD_ID;
+    // tx_msg.header.TxFrameType = FDCAN_DATA_FRAME;
+    // tx_msg.header.DataLength = FDCAN_DLC_BYTES_3;
+    // tx_msg.header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+    // tx_msg.header.BitRateSwitch = FDCAN_BRS_OFF;
+    // tx_msg.header.FDFormat = FDCAN_CLASSIC_CAN;
+    // tx_msg.header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    // tx_msg.header.MessageMarker = 0;
+
+
+    // tx_msg.data[0]=0xAA;
+    // tx_msg.data[1]=0xBB;
+    // tx_msg.data[2]=0xCC;
+    // Can_Obj::driver.Write(tx_msg);
   
       while(this->driver.Get_RxQueue_Size() != 0)
       {

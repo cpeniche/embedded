@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "can.h": "c",
-        "mcu.h": "c"
+        "mcu.h": "c",
+        "freertos.h": "c"
     }
 }

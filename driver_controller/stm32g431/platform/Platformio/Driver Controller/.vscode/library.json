@@ -1,0 +1,10 @@
+{
+  "name": "FreeRTOS",
+  "build": {
+    "flags": [
+      "-mfloat-abi=hard",
+      "-mfpu=fpv4-sp-d16"
+    ],
+    "unflags":["-mthumb"]
+  }
+}
