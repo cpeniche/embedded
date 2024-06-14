@@ -57,7 +57,7 @@ extern "C" {
 //SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
-TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
@@ -69,7 +69,7 @@ static void MX_GPIO_Init(void);
 //static void MX_USART2_UART_Init(void);
 //static void MX_CAN_Init(void);
 //static void MX_SPI1_Init(void);
-static void MX_TIM3_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -80,62 +80,61 @@ static void MX_TIM3_Init(void);
 /* USER CODE END 0 */
 
 /**
-  * @brief TIM3 Initialization Function
+  * @brief TIM2 Initialization Function
   * @param None
   * @retval None
   */
-
-static void MX_TIM3_Init(void)
+static void MX_TIM2_Init(void)
 {
 
-  /* USER CODE BEGIN TIM3_Init 0 */
+  /* USER CODE BEGIN TIM2_Init 0 */
 
-  /* USER CODE END TIM3_Init 0 */
+  /* USER CODE END TIM2_Init 0 */
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
-  /* USER CODE BEGIN TIM3_Init 1 */
+  /* USER CODE BEGIN TIM2_Init 1 */
 
-  /* USER CODE END TIM3_Init 1 */
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 4800;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 8;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 40;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 2400;
+  sConfigOC.Pulse = 20;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM3_Init 2 */
+  /* USER CODE BEGIN TIM2_Init 2 */
 
-  /* USER CODE END TIM3_Init 2 */
-  //HAL_TIM_MspPostInit(&htim3);
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -182,7 +181,7 @@ GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
+  * @note   This function is called  when TIM3 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -193,7 +192,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
+  if (htim->Instance == TIM3) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -224,15 +223,16 @@ void assert_failed(uint8_t *file, uint32_t line)
 static void vSpiTask(void *pvParameters)
 {
 
-  uint8_t rx_data[2] = {0xAA,0xAA};
+   uint8_t rx_data[2] = {0xAA,0xAA};
 
-  MCU* _mcu = MCU::get_mcu_instance();
-  _mcu->spi->set_data_lenght(sizeof(rx_data)/sizeof(uint8_t));
-  _mcu->spi->set_timeout(10);
+   MCU* _mcu = MCU::get_mcu_instance();
+   _mcu->spi->set_data_lenght(sizeof(rx_data)/sizeof(uint8_t));
+   _mcu->spi->set_timeout(10);
 
   while(1){
 
     _mcu->spi->Read(rx_data);
+    vTaskDelay(20/portTICK_PERIOD_MS);
   }
 
 }
@@ -259,7 +259,7 @@ int main()
 	HSI_Clock *hsi_clock = new HSI_Clock();
 	Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
 	Can_Obj* can = new Can_Obj();
-	//uint32_t tickstart = 0;
+	
 
 	HAL_Init();
 
@@ -271,8 +271,15 @@ int main()
 	mcu->Register_Can(*can);
 	mcu->spi->Init();
 	mcu->can->driver.Init();
-  MX_TIM3_Init();
 
+  /* Use to generate PWM to motors*/
+  MX_TIM2_Init();
+
+  xTaskCreate(vSpiTask,"Spi Task",
+              configMINIMAL_STACK_SIZE,
+              (void *)0,
+              configMAX_PRIORITIES,
+              NULL);         
   
   xTaskCreate(vCanTask,"Can Task",
               configMINIMAL_STACK_SIZE,
@@ -280,25 +287,7 @@ int main()
               configMAX_PRIORITIES,
               NULL);
 
-  xTaskCreate(vSpiTask,"Spi Task",
-              configMINIMAL_STACK_SIZE,
-              (void *)0,
-              configMAX_PRIORITIES,
-              NULL);              
-
-	// Scheduler *sched = new Scheduler();
-	// Task *spi_task=new Task(&Spi_task,1000,20);
-	// Task *can_task=new Task(vCanTask,10,0);
-  // Task *motor_task=new Task(&Motor_task,200,20);
-	// sched->add_task(*spi_task);
-	// sched->add_task(*can_task);
-  // sched->add_task(*motor_task);
- 
-
-	// do
-	// {
-	//   sched->exec();
-	// }while(1);
+       
 
   vTaskStartScheduler();
 

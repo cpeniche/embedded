@@ -12,7 +12,9 @@
 #include "driver.h"
 #include "dictionary.h"
 #include "halIncludes.h"
-/* Hal type redefinitions*/
+#include "FreeRTOS.h"
+#include "task.h"
+
 
 #define stCanHandleType         FDCAN_HandleTypeDef 
 #define stCanTransmitHeaderType FDCAN_TxHeaderTypeDef 
@@ -148,11 +150,11 @@ public:
 
   void vCanTask(void)
   {
+        
     Can_Rx_Msg<stCanReceiveHeadetType> rx_msg;
 
     while(1)
     {
-
       while(this->driver.Get_RxQueue_Size() != 0)
       {
         rx_msg=this->driver.Get_Queue_Msg();
@@ -179,7 +181,8 @@ public:
           }
         }
       }
-    }  
+      vTaskDelay(5/portTICK_PERIOD_MS);
+    }    
   }
 };
 
