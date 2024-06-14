@@ -2,6 +2,7 @@
     "files.associations": {
         "can.h": "c",
         "mcu.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "cmsis_os2.h": "c"
     }
 }

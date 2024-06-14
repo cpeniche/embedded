@@ -149,24 +149,10 @@ public:
   void vCanTask(void)
   {
     Can_Rx_Msg<stCanReceiveHeadetType> rx_msg;
-    // Can_Tx_Msg<stCanTransmitHeaderType> tx_msg;
 
-    // tx_msg.header.Identifier = 0x55;
-    // tx_msg.header.IdType = FDCAN_STANDARD_ID;
-    // tx_msg.header.TxFrameType = FDCAN_DATA_FRAME;
-    // tx_msg.header.DataLength = FDCAN_DLC_BYTES_3;
-    // tx_msg.header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-    // tx_msg.header.BitRateSwitch = FDCAN_BRS_OFF;
-    // tx_msg.header.FDFormat = FDCAN_CLASSIC_CAN;
-    // tx_msg.header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-    // tx_msg.header.MessageMarker = 0;
+    while(1)
+    {
 
-
-    // tx_msg.data[0]=0xAA;
-    // tx_msg.data[1]=0xBB;
-    // tx_msg.data[2]=0xCC;
-    // Can_Obj::driver.Write(tx_msg);
-  
       while(this->driver.Get_RxQueue_Size() != 0)
       {
         rx_msg=this->driver.Get_Queue_Msg();
@@ -176,23 +162,24 @@ public:
           if ((rx_msg.header.Identifier & 0x7FF) == (it->Module_Id & 0x7FF))
           {
               
-              switch(it->dataType)
-              {
-                case UINT8:            
-                *((uint8_t *)it->data_ptr)=rx_msg.data[0];
-                break;
+            switch(it->dataType)
+            {
+              case UINT8:            
+              *((uint8_t *)it->data_ptr)=rx_msg.data[0];
+              break;
 
-                case UINT16:
-                *((uint16_t *)it->data_ptr)=*((uint8_t *)(rx_msg.data));
+              case UINT16:
+              *((uint16_t *)it->data_ptr)=*((uint8_t *)(rx_msg.data));
+              break;
+            
+              default:
                 break;
-              
-                default:
-                  break;
-              }          
-              it->Callback(WRITE);
+            }          
+            it->Callback(WRITE);
           }
         }
-      }    
+      }
+    }  
   }
 };
 

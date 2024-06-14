@@ -25,6 +25,8 @@
 #include "scheduler.h"
 #include "halIncludes.h"
 #include "motor.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -219,7 +221,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 #endif /* USE_FULL_ASSERT */
 
 
-static void Spi_task()
+static void vSpiTask(void *pvParameters)
 {
 
   uint8_t rx_data[2] = {0xAA,0xAA};
@@ -227,12 +229,16 @@ static void Spi_task()
   MCU* _mcu = MCU::get_mcu_instance();
   _mcu->spi->set_data_lenght(sizeof(rx_data)/sizeof(uint8_t));
   _mcu->spi->set_timeout(10);
-  _mcu->spi->Read(rx_data);
+
+  while(1){
+
+    _mcu->spi->Read(rx_data);
+  }
 
 }
 
 /************* C Interface Function ***********/
-void vCanTask(void)
+void vCanTask(void *pvParameters)
 {
 
   static MCU* mcu = MCU::get_mcu_instance();
@@ -248,7 +254,8 @@ void vCanTask(void)
 int main()
 {
 
-	MCU* mcu = MCU::get_mcu_instance();
+	
+  MCU* mcu = MCU::get_mcu_instance();
 	HSI_Clock *hsi_clock = new HSI_Clock();
 	Spi<uint8_t,uint32_t> *spi = new Spi<uint8_t,uint32_t>();
 	Can_Obj* can = new Can_Obj();
@@ -266,20 +273,36 @@ int main()
 	mcu->can->driver.Init();
   MX_TIM3_Init();
 
+  
+  xTaskCreate(vCanTask,"Can Task",
+              configMINIMAL_STACK_SIZE,
+              (void *)0,
+              configMAX_PRIORITIES,
+              NULL);
 
-	Scheduler *sched = new Scheduler();
-	Task *spi_task=new Task(&Spi_task,1000,20);
-	Task *can_task=new Task(vCanTask,10,0);
-  Task *motor_task=new Task(&Motor_task,200,20);
-	sched->add_task(*spi_task);
-	sched->add_task(*can_task);
-  sched->add_task(*motor_task);
+  xTaskCreate(vSpiTask,"Spi Task",
+              configMINIMAL_STACK_SIZE,
+              (void *)0,
+              configMAX_PRIORITIES,
+              NULL);              
+
+	// Scheduler *sched = new Scheduler();
+	// Task *spi_task=new Task(&Spi_task,1000,20);
+	// Task *can_task=new Task(vCanTask,10,0);
+  // Task *motor_task=new Task(&Motor_task,200,20);
+	// sched->add_task(*spi_task);
+	// sched->add_task(*can_task);
+  // sched->add_task(*motor_task);
  
 
-	do
-	{
-	  sched->exec();
-	}while(1);
+	// do
+	// {
+	//   sched->exec();
+	// }while(1);
+
+  vTaskStartScheduler();
+
+  while(1);
 }
 
 
