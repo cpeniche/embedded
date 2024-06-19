@@ -17,16 +17,18 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+
 #include "can.h"
 #include "can.cpp"
 #include "mcu.h"
 #include "spi.cpp"
 #include "scheduler.h"
 #include "halIncludes.h"
-#include "motor.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
+#include "motor.h"
+#include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -166,10 +168,10 @@ GPIO_InitTypeDef GPIO_InitStruct = {0};
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_3|GPIO_PIN_5||GPIO_PIN_6, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PB3 PB5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_5;
+  /*Configure GPIO pins : PB0 PB1 PB3 PB5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_3|GPIO_PIN_5|GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -219,7 +221,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-
+/************* vSpiTask ***********/
 static void vSpiTask(void *pvParameters)
 {
 
@@ -237,7 +239,7 @@ static void vSpiTask(void *pvParameters)
 
 }
 
-/************* C Interface Function ***********/
+/************* vCanTask ***********/
 void vCanTask(void *pvParameters)
 {
 
@@ -245,6 +247,41 @@ void vCanTask(void *pvParameters)
   mcu->can->vCanTask();
 
 }
+
+/************* vLatchTask ***********/
+void vLatchTask(void *pvParameters)
+{
+
+  eLATCHPOSITION peBuffer;
+  xLatchQueue = xQueueCreateStatic(QUEUE_LENGTH,
+                                    ITEM_SIZE,
+                                    ucQueueStorageArea,
+                                    &xStaticQueue );
+
+  configASSERT(xLatchQueue);
+
+  while(1)
+  {
+    
+    if (xQueueReceive(xLatchQueue,&peBuffer,portMAX_DELAY)== pdPASS)
+    {      
+      if(eOPEN == peBuffer )
+      {        
+        xSetPinState(GPIOB,GPIO_PIN_6,GPIO_PIN_RESET);
+      }
+      else
+      {        
+        xSetPinState(GPIOB,GPIO_PIN_6,GPIO_PIN_SET);
+      }
+      xSetPinState(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);
+      vTaskDelay(100/portTICK_PERIOD_MS);
+
+      xSetPinState(GPIOB,GPIO_PIN_0,GPIO_PIN_RESET);
+      
+    }
+  }
+}
+
 
 #ifdef __cplusplus
 }
@@ -287,8 +324,13 @@ int main()
               configMAX_PRIORITIES,
               NULL);
 
+  
+  xTaskCreate(vLatchTask,"Latch Position Task",
+              configMINIMAL_STACK_SIZE,
+              (void *)0,
+              configMAX_PRIORITIES,
+              NULL);
        
-
   vTaskStartScheduler();
 
   while(1);

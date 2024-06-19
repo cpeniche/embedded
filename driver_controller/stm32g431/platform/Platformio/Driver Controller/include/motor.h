@@ -6,17 +6,36 @@
 #include "dictionary.h"
 #include "halIncludes.h"
 
-enum MOTOR_DIR
+#define xSetPinState HAL_GPIO_WritePin
+#define xPwmStart    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1)  
+#define xPwmStop     HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1)
+
+#define QUEUE_LENGTH  5
+#define ITEM_SIZE     sizeof(eLATCHPOSITION)
+
+enum eMOTORDIRECTION
 {
-  STOP=0,
-  UP,
-  DOWN
+  eSTOP,
+  eMOVEUP,
+  eMOVEDOWN
 };
 
-extern void Motor_Callback(mode_type mode);
+enum eLATCHPOSITION
+{
+  eOPEN,
+  eCLOSE
+};
+
+extern void vMotorCallback(eReadWrite mode);
+extern void vDoorLatchCallback(eReadWrite mode);
 extern void Motor_task();
-extern MOTOR_DIR window_dir;
+extern eMOTORDIRECTION eWindowDirection;
+extern eLATCHPOSITION eLatchPosition;
 extern "C" TIM_HandleTypeDef htim3;
+extern StaticQueue_t xStaticQueue;
+extern QueueHandle_t xLatchQueue;
+extern uint8_t ucQueueStorageArea[ QUEUE_LENGTH * ITEM_SIZE ];
+
 
 
 #endif

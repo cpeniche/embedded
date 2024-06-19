@@ -1,5 +1,8 @@
 #include "dictionary.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "motor.h"
+
 
 
 enum motor_state
@@ -26,12 +29,40 @@ void (*func_state[5])(void)=
   stop
 };
 
-motor_state state=IDLE;
 
-bool new_movement=false;
-MOTOR_DIR window_dir=STOP;
-MOTOR_DIR prev_window_dir=STOP;
+eMOTORDIRECTION eWindowDirection=eSTOP;
+eMOTORDIRECTION ePreviousWindowDirection=eSTOP;
+StaticQueue_t xStaticQueue;
+QueueHandle_t xLatchQueue;
+eLATCHPOSITION eLatchPosition;
+uint8_t ucQueueStorageArea[ QUEUE_LENGTH * ITEM_SIZE ];
 
+void vMotorCallback(eReadWrite mode)
+{
+  
+  /* Stop Pwm signal*/
+  xPwmStop;
+
+  /* if the direction is different from previous one
+     change to new direction*/
+  if(eWindowDirection != ePreviousWindowDirection)
+  {
+    ePreviousWindowDirection = eWindowDirection;
+    if(eWindowDirection == eMOVEDOWN)
+       xSetPinState(GPIOB,GPIO_PIN_5,GPIO_PIN_SET);
+    else
+      if(eWindowDirection == eMOVEUP)
+        xSetPinState(GPIOB,GPIO_PIN_5,GPIO_PIN_RESET);
+    xPwmStart;
+  }
+}
+
+void vDoorLatchCallback(eReadWrite mode)
+{
+  xQueueSend(xLatchQueue,&eLatchPosition, 10);
+}
+
+#if 0
 bool start_pwm=false;
 
 void Motor_task()
@@ -89,12 +120,4 @@ void stop()
   //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
   state=IDLE;
 }
-
-void Motor_Callback(mode_type mode)
-{
-  if(window_dir != prev_window_dir)
-  {
-    new_movement=true;
-    prev_window_dir=window_dir;
-  }
-}
+#endif

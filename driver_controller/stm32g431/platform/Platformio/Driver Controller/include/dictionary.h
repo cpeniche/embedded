@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <list>
 
-enum data_type
+enum eDataType
 {
   UINT8=0,
   UINT16,
@@ -13,7 +13,7 @@ enum data_type
   FLOAT
 };
 
-enum mode_type
+enum eReadWrite
 {
   READ,
   WRITE
@@ -23,12 +23,12 @@ class Dictionary
 {
  
 public:
-  Dictionary(uint16_t ID, data_type TYPE, void *data , void (*FUNC)(mode_type mode)):
+  Dictionary(uint16_t ID, eDataType TYPE, void *data , void (*FUNC)(eReadWrite mode)):
             Module_Id{ID},dataType{TYPE},data_ptr{data},Callback{FUNC}{}
   uint16_t Module_Id;
-  data_type dataType;
+  eDataType dataType;
   void *data_ptr = nullptr;
-  void (*Callback)(mode_type mode);
+  void (*Callback)(eReadWrite mode);
 
 };
 
