@@ -1,2 +1,2 @@
-idf_component_register(SRCS "display.c" "main.c"
+idf_component_register(SRCS "main.c" "espNow.c"
                     INCLUDE_DIRS ".")
