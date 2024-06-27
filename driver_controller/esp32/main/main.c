@@ -169,6 +169,6 @@ void app_main(void)
   vWifiConfigureESPNow();
 
   /* Create Button Read spi task */
-  xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, 4, NULL);
+  xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, tskIDLE_PRIORITY, NULL);
 }
 

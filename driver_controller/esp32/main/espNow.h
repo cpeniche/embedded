@@ -28,6 +28,8 @@
 #define CONFIG_ESPNOW_PMK "pmk1234567890123"
 #define CONFIG_ESPNOW_LMK "lmk1234567890123"
 #define configESPNOW_RETRANSMIT_MAX_RETRIES 3
+
+extern uint8_t uBroadCastMAC[ESP_NOW_ETH_ALEN];
 extern uint8_t uDriverControlMAC[ESP_NOW_ETH_ALEN];
 extern uint8_t uPassengerControlMAC[ESP_NOW_ETH_ALEN];
 

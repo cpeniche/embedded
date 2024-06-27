@@ -21,7 +21,7 @@
 #define PIN_NUM_CLK   26
 #define PIN_NUM_MISO  27
 /*********************** */
-#define PARALLEL_LINES 16
+#define NUM_BITS 16
 static const char *TAG = "Spi_Task";
 
 
@@ -46,7 +46,7 @@ spi_bus_config_t buscfg=
   .sclk_io_num=PIN_NUM_CLK,
   .quadwp_io_num=-1,
   .quadhd_io_num=-1,
-  .max_transfer_sz=PARALLEL_LINES
+  .max_transfer_sz=NUM_BITS
 };
 
 /* define spi device configuration */
@@ -59,9 +59,11 @@ spi_device_interface_config_t devcfg=
   .pre_cb=NULL,                           //Specify pre-transfer callback to handle D/C line
 };
 
+/*********** vSpiTask* ***************/
+
 void vSpiTask(void *pvParameters)
 {
-  esp_err_t ret;
+  esp_err_t pxReturnCode;
   EventBits_t pxESPNowEvents;
   uint8_t uprvRetry=0;
 
@@ -69,12 +71,12 @@ void vSpiTask(void *pvParameters)
   gpio_set_level(PARALLEL_LOAD, 1);
 
   //Initialize the SPI bus
-  ret=spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO);
-  ESP_ERROR_CHECK(ret);
+  pxReturnCode=spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO);
+  ESP_ERROR_CHECK(pxReturnCode);
 
   //Attach the spi device to the SPI bus
-  ret=spi_bus_add_device(LCD_HOST, &devcfg, &spi);
-  ESP_ERROR_CHECK(ret);
+  pxReturnCode=spi_bus_add_device(LCD_HOST, &devcfg, &spi);
+  ESP_ERROR_CHECK(pxReturnCode);
 
   spi_transaction_t prvxSpiTransaction;
   memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction));       //Zero out the transaction
@@ -87,35 +89,50 @@ void vSpiTask(void *pvParameters)
   ESP_LOGI(TAG, "SPI Task Started");
   while(1)
   {
+    
+    /* Latch parallel inputs*/
     gpio_set_level(PARALLEL_LOAD, 0);
-    vTaskDelay(20 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
-    ret =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-    assert(ret==ESP_OK);
+
+    /* send spi command to read inputs*/
+    pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+    assert(pxReturnCode==ESP_OK);
 
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 
     if(*((uint16_t *)uPreviousDriverControllerButtons) != *((uint16_t *)uDriverControllerButtons))
     {
-      ESP_LOGI(TAG, "SPI Buttons Changed : %x", *((uint16_t *)uPreviousDriverControllerButtons));
+      ESP_LOGI(TAG, "SPI Buttons Changed to : %x %x", uDriverControllerButtons[0], uDriverControllerButtons[1]);
       *((uint16_t *)uPreviousDriverControllerButtons) = *((uint16_t *)uDriverControllerButtons);
 
-      /* Send Data over ESP Now*/      
-      if(ESP_NOW_SEND_SUCCESS == esp_now_send(uDriverControlMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons)))
+      /* Send Data over ESP Now*/  
+      pxReturnCode = esp_now_send(uBroadCastMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons));
+      ESP_LOGI(TAG, "esp_now_send function return code : %d", pxReturnCode);    
+      
+      
+      /* if send function return sucess*/
+      if(ESP_NOW_SEND_SUCCESS == pxReturnCode)
       {
         
+        /* Check with callback function for the 
+           receiver to acknowledge the message
+        */
         while(pxESPNowEvents != (1<<eESPNOW_SEND_CB | 1<<eESPNOW_INIT_DONE))
         {
           pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
-          /* if we received an error, we retry */
+
+          /* if we received an error, we retry configESPNOW_RETRANSMIT_MAX_RETRIES times*/
           if(pxESPNowEvents == (1<<eESPNOW_TRANSMIT_ERROR | 1<<eESPNOW_INIT_DONE))
           {
             ESP_LOGI(TAG, "ESP_NOW Transmit Error, Retry");
             esp_now_send(uDriverControlMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons));
             xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_TRANSMIT_ERROR); 
             uprvRetry++;
+            vTaskDelay(pdMS_TO_TICKS(2000));
           }
-          vTaskDelay(pdMS_TO_TICKS(2000));
+          
+          /* Max retries reached, message lost */
           if(configESPNOW_RETRANSMIT_MAX_RETRIES == uprvRetry) 
           {
             uprvRetry=0;
