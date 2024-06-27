@@ -2,5 +2,7 @@
   "idf.adapterTargetName": "esp32",
   "files.associations": {
     "cstdint": "c"
-  }
+  },
+  "idf.port": "/dev/ttyUSB1",
+  "idf.flashType": "UART"
 }

@@ -27,6 +27,7 @@
 #define CONFIG_ESPNOW_SEND_LEN      2
 #define CONFIG_ESPNOW_PMK "pmk1234567890123"
 #define CONFIG_ESPNOW_LMK "lmk1234567890123"
+#define configESPNOW_RETRANSMIT_MAX_RETRIES 3
 extern uint8_t uDriverControlMAC[ESP_NOW_ETH_ALEN];
 extern uint8_t uPassengerControlMAC[ESP_NOW_ETH_ALEN];
 
@@ -35,7 +36,8 @@ extern uint8_t uPassengerControlMAC[ESP_NOW_ETH_ALEN];
 typedef enum {
     eESPNOW_INIT_DONE,
     eESPNOW_SEND_CB,
-    eESPNOW_RECV_CB,    
+    eESPNOW_RECV_CB, 
+    eESPNOW_TRANSMIT_ERROR   
 } espnow_event_id_t;
 
 typedef struct {

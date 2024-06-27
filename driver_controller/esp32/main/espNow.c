@@ -18,13 +18,13 @@
 
 #define ESPNOW_MAXDELAY 512
 
-static const char *TAG = "espnow_example";
+static const char *TAG = "espnow";
 
 QueueHandle_t xESPNowQueue;
 
 //static uint8_t prvBroadCastMAC[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-uint8_t uDriverControlMAC[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-uint8_t uPassengerControlMAC[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+uint8_t uDriverControlMAC[ESP_NOW_ETH_ALEN] = { 0x0a, 0xb6, 0x1f, 0x72, 0x07, 0x33 };
+uint8_t uPassengerControlMAC[ESP_NOW_ETH_ALEN] = { 0x0a, 0xb6, 0x1f, 0x72, 0x07, 0x32 };
 static uint16_t prvESPNowSequenceNumber[ESPNOW_DATA_MAX] = { 0, 0 };
 
 static void prvESPNowDeinitilize(void);
@@ -45,7 +45,7 @@ static void vWirelessInterfaceInitialize(void)
     ESP_ERROR_CHECK( esp_wifi_start());
     ESP_ERROR_CHECK( esp_wifi_set_channel(CONFIG_ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE));
     esp_wifi_get_mac(ESPNOW_WIFI_MODE,uprvMACAddress);
-    ESP_LOGE(TAG,"My MAC Address" MACSTR, MAC2STR(uprvMACAddress));
+    ESP_LOGE(TAG,"My MAC Address : " MACSTR, MAC2STR(uprvMACAddress));
 
 #if CONFIG_ESPNOW_ENABLE_LONG_RANGE
     ESP_ERROR_CHECK( esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
@@ -57,6 +57,20 @@ static void vWirelessInterfaceInitialize(void)
  * necessary data to a queue and handle it from a lower priority task. */
 static void vESPNowSendCallback(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
+    
+    if(ESP_NOW_SEND_SUCCESS==status)
+    {
+        xEventGroupSetBits(xESPnowEventGroupHandle,1<<eESPNOW_SEND_CB);
+        xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_TRANSMIT_ERROR);
+        ESP_LOGI(TAG,"CallBack send Succesfully %x",status);
+    }
+    else
+    {
+        xEventGroupSetBits(xESPnowEventGroupHandle,1<<eESPNOW_TRANSMIT_ERROR);
+        ESP_LOGI(TAG,"CallBack send Error %x",status);
+    }
+
+#if 0    
     espnow_event_t evt;
     espnow_event_send_cb_t *send_cb = &evt.info.send_cb;
 
@@ -71,6 +85,7 @@ static void vESPNowSendCallback(const uint8_t *mac_addr, esp_now_send_status_t s
     if (xQueueSend(xESPNowQueue, &evt, ESPNOW_MAXDELAY) != pdTRUE) {
         ESP_LOGW(TAG, "Send send queue fail");
     }
+#endif
 }
 
 static void vESPNowReceiveCallback(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
@@ -166,6 +181,7 @@ static void vTaskESPNow(void *pvParameter)
     bool is_broadcast = false;
     int ret;
 
+    ESP_LOGI(TAG, "ESP Now Task Started");
     uxBits = xEventGroupSetBits(xESPnowEventGroupHandle,1<<eESPNOW_INIT_DONE);
 
     while (xQueueReceive(xESPNowQueue, &evt, portMAX_DELAY) == pdTRUE) {

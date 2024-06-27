@@ -14,11 +14,13 @@
       "cwd": "${workspaceFolder}",
       "environment": [{ "name": "PATH", "value": "${config:idf.customExtraPaths}" }],
       "setupCommands": [
+        { "text": "target remote localhost:3333" },
         { "text": "set remotetimeout 20" },
       ],
       "postRemoteConnectCommands": [
-        { "text": "mon reset halt" },
+        { "text": "mon reset halt" },        
         { "text": "maintenance flush register-cache"},
+        { "text": "break app_main"},
       ],
       "externalConsole": false,
       "logging": {

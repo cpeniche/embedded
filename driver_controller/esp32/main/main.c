@@ -33,6 +33,7 @@
 #include "driver/gpio.h"
 #include "esp_now.h"
 #include "espNow.h"
+#include "spi.h"
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -92,15 +93,18 @@ static twai_message_t buttons_message = {
     .data_length_code = 2,
     .data = {0},
 };
-#endif
+
 static QueueHandle_t tx_task_queue;
 static QueueHandle_t rx_task_queue;
+
+#endif
 /* --------------------------- Tasks and Functions -------------------------- */
 
 
 EventGroupHandle_t xESPnowEventGroupHandle;
-StaticEventGroup_t xStaticCreatedEventGroup;
 
+/* Declare a variable to hold the data associated with the created event group. */
+StaticEventGroup_t xStaticCreatedEventGroup;
 
 /* --------------------------- Events -------------------------*/
 
@@ -155,15 +159,16 @@ void Configure_Can_Module()
 
 void app_main(void)
 {
-
  /* Create statically event group for ESPnow Events*/
- xESPnowEventGroupHandle = xEventGroupCreate( &xCreatedEventGroup );
-
+ xESPnowEventGroupHandle = xEventGroupCreateStatic( &xStaticCreatedEventGroup );
 
  #ifdef USE_CAN
   Configure_Can_Module();
 #endif
+/* Start ESP Now configuration */
   vWifiConfigureESPNow();
+
+  /* Create Button Read spi task */
   xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, 4, NULL);
 }
 

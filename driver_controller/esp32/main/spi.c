@@ -20,8 +20,9 @@
 #define PARALLEL_LOAD 25
 #define PIN_NUM_CLK   26
 #define PIN_NUM_MISO  27
+/*********************** */
 #define PARALLEL_LINES 16
-//static const char *TAG = "Spi_Task";
+static const char *TAG = "Spi_Task";
 
 
 gpio_config_t io_conf = {
@@ -33,6 +34,7 @@ gpio_config_t io_conf = {
 };
 
 uint8_t uDriverControllerButtons[2]={0};
+uint8_t uPreviousDriverControllerButtons[2]={0};
 
 spi_device_handle_t spi;
 
@@ -61,7 +63,7 @@ void vSpiTask(void *pvParameters)
 {
   esp_err_t ret;
   EventBits_t pxESPNowEvents;
-  tx_task_action_t tx_action=TX_SEND_BUTTONS;
+  uint8_t uprvRetry=0;
 
   gpio_config(&io_conf);
   gpio_set_level(PARALLEL_LOAD, 1);
@@ -82,7 +84,7 @@ void vSpiTask(void *pvParameters)
   prvxSpiTransaction.user=(void*)0;                //D/C needs to be set to 0
   prvxSpiTransaction.flags = SPI_TRANS_MODE_OCT;   // 8 bit mode
 
-
+  ESP_LOGI(TAG, "SPI Task Started");
   while(1)
   {
     gpio_set_level(PARALLEL_LOAD, 0);
@@ -90,13 +92,40 @@ void vSpiTask(void *pvParameters)
     gpio_set_level(PARALLEL_LOAD, 1);
     ret =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
     assert(ret==ESP_OK);
+
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 
-    if(pxESPNowEvents == (1<<eESPNOW_SEND_CB | 1<<eESPNOW_INIT_DONE))
+    if(*((uint16_t *)uPreviousDriverControllerButtons) != *((uint16_t *)uDriverControllerButtons))
     {
-        esp_now_send(uDriverControlMAC, &uDriverControllerButtons, sizeof(uDriverControllerButtons));
-        xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_SEND_CB);    
-    }
-    
+      ESP_LOGI(TAG, "SPI Buttons Changed : %x", *((uint16_t *)uPreviousDriverControllerButtons));
+      *((uint16_t *)uPreviousDriverControllerButtons) = *((uint16_t *)uDriverControllerButtons);
+
+      /* Send Data over ESP Now*/      
+      if(ESP_NOW_SEND_SUCCESS == esp_now_send(uDriverControlMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons)))
+      {
+        
+        while(pxESPNowEvents != (1<<eESPNOW_SEND_CB | 1<<eESPNOW_INIT_DONE))
+        {
+          pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
+          /* if we received an error, we retry */
+          if(pxESPNowEvents == (1<<eESPNOW_TRANSMIT_ERROR | 1<<eESPNOW_INIT_DONE))
+          {
+            ESP_LOGI(TAG, "ESP_NOW Transmit Error, Retry");
+            esp_now_send(uDriverControlMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons));
+            xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_TRANSMIT_ERROR); 
+            uprvRetry++;
+          }
+          vTaskDelay(pdMS_TO_TICKS(2000));
+          if(configESPNOW_RETRANSMIT_MAX_RETRIES == uprvRetry) 
+          {
+            uprvRetry=0;
+            ESP_LOGI(TAG, "SPI Message Not Send"); 
+            xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_TRANSMIT_ERROR);
+            break;
+          }
+        }                                         
+        xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_SEND_CB);            
+      } 
+    }    
   }
 }
