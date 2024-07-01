@@ -33,7 +33,7 @@
 #include "driver/gpio.h"
 #include "esp_now.h"
 #include "espNow.h"
-#include "spi.h"
+#include "buttons.h"
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -169,6 +169,11 @@ void app_main(void)
   vWifiConfigureESPNow();
 
   /* Create Button Read spi task */
-  xTaskCreate(vSpiTask, "buttons_task", 2048, (void *)0, tskIDLE_PRIORITY, NULL);
+  xTaskCreate(vButtonsTask, 
+              "buttons_task",                     
+              BUTTON_TASK_STACK_SIZE, 
+              (void *)0, 
+              tskIDLE_PRIORITY, 
+              NULL);
 }
 

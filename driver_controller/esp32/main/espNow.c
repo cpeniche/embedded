@@ -83,8 +83,8 @@ static void vESPNowReceiveCallback(const esp_now_recv_info_t *recv_info, const u
   
     espnow_event_t xprvESPNowEvent;
     espnow_event_recv_cb_t *recv_cb = &xprvESPNowEvent.info.recv_cb;
-
-    memcpy(recv_cb->mac_addr, mac_addr, ESP_NOW_ETH_ALEN);
+    
+    memcpy(recv_cb->mac_addr, recv_info->src_addr, ESP_NOW_ETH_ALEN);
     recv_cb->data = malloc(len);
     if (recv_cb->data == NULL) {
         ESP_LOGE(TAG, "Malloc receive data fail");

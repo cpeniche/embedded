@@ -13,16 +13,17 @@
 #include "driver/gpio.h"
 #include "esp_now.h"
 #include "espNow.h"
+#include "buttons.h"
 
 /* --------------------- SPI Definitions and static variables ------------------ */
 
-#define LCD_HOST    HSPI_HOST
-#define PARALLEL_LOAD 25
-#define PIN_NUM_CLK   26
-#define PIN_NUM_MISO  27
+#define BUTTONS    SPI2_HOST
+#define PARALLEL_LOAD 9
+#define PIN_NUM_CLK   7
+#define PIN_NUM_MISO  8
 /*********************** */
 #define NUM_BITS 16
-static const char *TAG = "Spi_Task";
+static const char *TAG = "Buttons_Task";
 
 
 gpio_config_t io_conf = {
@@ -42,7 +43,7 @@ spi_device_handle_t spi;
 spi_bus_config_t buscfg=
 {
   .miso_io_num=PIN_NUM_MISO,
-  .mosi_io_num=-1,//PIN_NUM_MOSI,
+  .mosi_io_num=-1,
   .sclk_io_num=PIN_NUM_CLK,
   .quadwp_io_num=-1,
   .quadhd_io_num=-1,
@@ -61,7 +62,7 @@ spi_device_interface_config_t devcfg=
 
 /*********** vSpiTask* ***************/
 
-void vSpiTask(void *pvParameters)
+void vButtonsTask(void *pvParameters)
 {
   esp_err_t pxReturnCode;
   EventBits_t pxESPNowEvents;
@@ -71,11 +72,11 @@ void vSpiTask(void *pvParameters)
   gpio_set_level(PARALLEL_LOAD, 1);
 
   //Initialize the SPI bus
-  pxReturnCode=spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO);
+  pxReturnCode=spi_bus_initialize(BUTTONS, &buscfg, SPI_DMA_CH_AUTO);
   ESP_ERROR_CHECK(pxReturnCode);
 
   //Attach the spi device to the SPI bus
-  pxReturnCode=spi_bus_add_device(LCD_HOST, &devcfg, &spi);
+  pxReturnCode=spi_bus_add_device(BUTTONS, &devcfg, &spi);
   ESP_ERROR_CHECK(pxReturnCode);
 
   spi_transaction_t prvxSpiTransaction;
@@ -84,9 +85,9 @@ void vSpiTask(void *pvParameters)
   prvxSpiTransaction.tx_buffer=NULL;               //The data is the cmd itself
   prvxSpiTransaction.rx_buffer=&uDriverControllerButtons;
   prvxSpiTransaction.user=(void*)0;                //D/C needs to be set to 0
-  prvxSpiTransaction.flags = SPI_TRANS_MODE_OCT;   // 8 bit mode
+ // prvxSpiTransaction.flags = SPI_TRANS_MODE_DIO;   // 2 bit mode
 
-  ESP_LOGI(TAG, "SPI Task Started");
+  ESP_LOGI(TAG, "Buttons Task Started");
   while(1)
   {
     

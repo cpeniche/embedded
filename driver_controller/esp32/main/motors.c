@@ -1,7 +1,15 @@
-#include "motors.h"
+#include <esp_log.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/semphr.h"
+#include "freertos/event_groups.h"
+#include "esp_system.h"
+#include "driver/spi_master.h"
 #include "driver/gpio.h"
+#include "esp_now.h"
 #include "espNow.h"
-
+#include "buttons.h"
 
 
 #define LATCHOPEN     20
@@ -21,6 +29,7 @@ uint8_t uprvMotorsPreviousState[2]={0,0};
 void vMotorsTask(void *pvParameters)
 {
 
+
   espnow_event_t xprvESPNowEvent;
 
   gpio_config(&xprvMotorsIOConfiguration);
@@ -34,10 +43,8 @@ void vMotorsTask(void *pvParameters)
     while (xQueueReceive(xESPNowQueue, &xprvESPNowEvent, portMAX_DELAY) == pdTRUE)
     {
       
-      xprvESPNowEvent.info.recv_cb.data
+      //xprvESPNowEvent.info.recv_cb.data
 
     }
   }
-
-
 }
