@@ -15,6 +15,7 @@
 #include "esp_now.h"
 #include "esp_crc.h"
 #include "espNow.h"
+#include "dictionary.h"
 
 #define ESPNOW_MAXDELAY 512
 
@@ -79,23 +80,18 @@ static void vESPNowSendCallback(const uint8_t *mac_addr, esp_now_send_status_t s
 
 static void vESPNowReceiveCallback(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
-    
-  
-    espnow_event_t xprvESPNowEvent;
-    espnow_event_recv_cb_t *recv_cb = &xprvESPNowEvent.info.recv_cb;
-    
-    memcpy(recv_cb->mac_addr, recv_info->src_addr, ESP_NOW_ETH_ALEN);
-    recv_cb->data = malloc(len);
-    if (recv_cb->data == NULL) {
-        ESP_LOGE(TAG, "Malloc receive data fail");
-        return;
+    if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
+    {
+        if(iDictionaryAddDataToQueue((void *)data) == -1)
+            ESP_LOGE(TAG, "Cannot Add Data to Dictionary Queue");
+
+        else
+        /* Access to the shared resource is complete, so the mutex is
+            returned. */
+            xSemaphoreGive( xQueueSemaphore );
     }
-    memcpy(recv_cb->data, data, len);
-    recv_cb->data_len = len;
-    if (xQueueSend(xESPNowQueue, &xprvESPNowEvent, ESPNOW_MAXDELAY) != pdTRUE) {
-        ESP_LOGW(TAG, "Send receive queue fail");
-        free(recv_cb->data);
-    }
+     else
+         ESP_LOGE(TAG, "Could not Get Dictionary Queue Mutex");
 
 }
 

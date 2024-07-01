@@ -3,7 +3,15 @@
   "files.associations": {
     "cstdint": "c",
     "espnow.h": "c",
-    "motors.h": "c"
+    "motors.h": "c",
+    "string": "c",
+    "fstream": "c",
+    "istream": "c",
+    "new": "c",
+    "ostream": "c",
+    "sstream": "c",
+    "functional": "c",
+    "typeinfo": "c"
   },
   "idf.port": "/dev/ttyACM0",
   "idf.flashType": "UART",

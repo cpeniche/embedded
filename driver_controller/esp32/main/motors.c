@@ -10,6 +10,7 @@
 #include "esp_now.h"
 #include "espNow.h"
 #include "buttons.h"
+#include "dictionary.h"
 
 
 #define LATCHOPEN     20
@@ -24,27 +25,44 @@ gpio_config_t xprvMotorsIOConfiguration = {
   .pull_up_en = 0
 };
 
-uint8_t uprvMotorsPreviousState[2]={0,0};
+static void vProcessData(void *Data);
+stButtonsMessage xprvQueueElement;
 
 void vMotorsTask(void *pvParameters)
 {
 
-
-  espnow_event_t xprvESPNowEvent;
+  int8_t iprvStatus;
+  
 
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHOPEN,  0);
   gpio_set_level(LATCHCLOSE, 0);
 
+  xDictionaryCreateQueueSemaphore();
+
   while(1)
   {
     
-    /* Message received from switch module */
-    while (xQueueReceive(xESPNowQueue, &xprvESPNowEvent, portMAX_DELAY) == pdTRUE)
+    /* lookc for Message in Queue */
+    while (1)
     {
       
-      //xprvESPNowEvent.info.recv_cb.data
-
+      /* Get Semaphore */
+      if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
+      {
+        iprvStatus = iDictionaryGetNextQueueElement((void *)&xprvQueueElement);
+        xSemaphoreGive(xQueueSemaphore);
+        /* If there is data to process */
+        if(iprvStatus != -1)          
+          vProcessData((void *)&xprvQueueElement);         
+      }
     }
   }
+}
+
+
+static void vProcessData(void *Data)
+{
+
+
 }
