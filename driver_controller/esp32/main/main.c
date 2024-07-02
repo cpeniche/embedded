@@ -34,6 +34,7 @@
 #include "esp_now.h"
 #include "espNow.h"
 #include "buttons.h"
+#include "dictionary.h"
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -167,6 +168,14 @@ void app_main(void)
 #endif
 /* Start ESP Now configuration */
   vWifiConfigureESPNow();
+
+  /* Create Button Read spi task */
+  xTaskCreate(vProcessReceivedDataTask, 
+              "ProcessReceivedData_task",                     
+              4096, 
+              (void *)0, 
+              tskIDLE_PRIORITY, 
+              NULL);
 
   /* Create Button Read spi task */
   xTaskCreate(vButtonsTask, 

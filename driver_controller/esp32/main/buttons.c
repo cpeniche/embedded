@@ -14,7 +14,7 @@
 #include "esp_now.h"
 #include "espNow.h"
 #include "buttons.h"
-
+#include "dictionary.h"
 /* --------------------- SPI Definitions and static variables ------------------ */
 
 #define BUTTONS    SPI2_HOST
@@ -34,8 +34,16 @@ gpio_config_t io_conf = {
     .pull_up_en = 0
 };
 
-uint8_t uDriverControllerButtons[2]={0};
-uint8_t uPreviousDriverControllerButtons[2]={0};
+
+uint16_t uPreviousDriverControllerButtons;
+
+typedef struct
+{
+  stMessageHeader xHeader;
+  uint16_t data;
+  /* data */
+}__attribute__((packed)) stMessageType;
+
 
 spi_device_handle_t spi;
 
@@ -58,6 +66,14 @@ spi_device_interface_config_t devcfg=
   .spics_io_num=-1,                     //CS pin
   .queue_size=1,                          //We want to be able to queue 7 transactions at a time
   .pre_cb=NULL,                           //Specify pre-transfer callback to handle D/C line
+};
+
+
+stMessageType xMessage=
+{
+  .xHeader.uMessageId=0x55,
+  .xHeader.uReadWrite=1,
+  .xHeader.eDataType=eUNSIGNED16
 };
 
 /*********** vSpiTask* ***************/
@@ -83,7 +99,7 @@ void vButtonsTask(void *pvParameters)
   memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction));       //Zero out the transaction
   prvxSpiTransaction.length=16;                    //Command is 8 bits
   prvxSpiTransaction.tx_buffer=NULL;               //The data is the cmd itself
-  prvxSpiTransaction.rx_buffer=&uDriverControllerButtons;
+  prvxSpiTransaction.rx_buffer=&(xMessage.data);
   prvxSpiTransaction.user=(void*)0;                //D/C needs to be set to 0
  // prvxSpiTransaction.flags = SPI_TRANS_MODE_DIO;   // 2 bit mode
 
@@ -102,13 +118,13 @@ void vButtonsTask(void *pvParameters)
 
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 
-    if(*((uint16_t *)uPreviousDriverControllerButtons) != *((uint16_t *)uDriverControllerButtons))
+    if(uPreviousDriverControllerButtons != xMessage.data)
     {
-      ESP_LOGI(TAG, "SPI Buttons Changed to : %x %x", uDriverControllerButtons[0], uDriverControllerButtons[1]);
-      *((uint16_t *)uPreviousDriverControllerButtons) = *((uint16_t *)uDriverControllerButtons);
+      ESP_LOGI(TAG, "SPI Buttons Changed to : %x", xMessage.data);
+      uPreviousDriverControllerButtons = xMessage.data;
 
       /* Send Data over ESP Now*/  
-      pxReturnCode = esp_now_send(uBroadCastMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons));
+      pxReturnCode = esp_now_send(uBroadCastMAC, (uint8_t *)&xMessage, sizeof(xMessage));
       ESP_LOGI(TAG, "esp_now_send function return code : %d", pxReturnCode);    
       
       
@@ -127,7 +143,7 @@ void vButtonsTask(void *pvParameters)
           if(pxESPNowEvents == (1<<eESPNOW_TRANSMIT_ERROR | 1<<eESPNOW_INIT_DONE))
           {
             ESP_LOGI(TAG, "ESP_NOW Transmit Error, Retry");
-            esp_now_send(uDriverControlMAC, uDriverControllerButtons, sizeof(uDriverControllerButtons));
+            esp_now_send(uDriverControlMAC, (uint8_t *)&xMessage, sizeof(xMessage));
             xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_TRANSMIT_ERROR); 
             uprvRetry++;
             vTaskDelay(pdMS_TO_TICKS(2000));

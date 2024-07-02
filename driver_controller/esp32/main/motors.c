@@ -25,44 +25,21 @@ gpio_config_t xprvMotorsIOConfiguration = {
   .pull_up_en = 0
 };
 
-static void vProcessData(void *Data);
-stButtonsMessage xprvQueueElement;
+uint16_t uButtons;
 
 void vMotorsTask(void *pvParameters)
 {
-
-  int8_t iprvStatus;
-  
-
+ 
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHOPEN,  0);
   gpio_set_level(LATCHCLOSE, 0);
 
-  xDictionaryCreateQueueSemaphore();
-
-  while(1)
-  {
-    
-    /* lookc for Message in Queue */
-    while (1)
-    {
-      
-      /* Get Semaphore */
-      if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
-      {
-        iprvStatus = iDictionaryGetNextQueueElement((void *)&xprvQueueElement);
-        xSemaphoreGive(xQueueSemaphore);
-        /* If there is data to process */
-        if(iprvStatus != -1)          
-          vProcessData((void *)&xprvQueueElement);         
-      }
-    }
-  }
+  
 }
 
-
-static void vProcessData(void *Data)
+void vMotorsCallBack(uint8_t uprvParameters)
 {
 
 
 }
+

@@ -21,5 +21,8 @@
 #define DOOR_OPEN       0x0100
 
 
+extern void vMotorsCallBack(uint8_t);
+extern uint16_t uButtons;
+
 
 #endif

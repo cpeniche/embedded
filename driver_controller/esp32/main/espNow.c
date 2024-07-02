@@ -82,7 +82,7 @@ static void vESPNowReceiveCallback(const esp_now_recv_info_t *recv_info, const u
 {
     if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
     {
-        if(iDictionaryAddDataToQueue((void *)data) == -1)
+        if(iDictionaryAddDataToQueue((void *)data, len) == -1)
             ESP_LOGE(TAG, "Cannot Add Data to Dictionary Queue");
 
         else
