@@ -17,8 +17,27 @@
 #define LATCHMOTORPHASE     5
 #define LATCHMOTORENABLE    6
 
-uint8_t uprvSendLatchMotorPulse = 0;
 static const char *TAG = "Motors_Task";
+
+/* The variable used to hold the queue's data structure. */
+static StaticQueue_t xMotorsStaticQueue;
+
+/* The array to use as the queue's storage area. This must be at least
+(uxQueueLength * uxItemSize) bytes. */
+uint8_t ucMotorQueueStorageArea[ configMOTORQUEUESIZE * configITEMSIZE ];
+QueueHandle_t xMotorQueue;
+
+
+void vprvLatchMotorDriver();
+void vprvWindowMotorDriver();
+void vprvMirrorMotorDriver();
+
+void (*vMotorsFunctions[3])(void)=
+{
+  vprvLatchMotorDriver,
+  vprvWindowMotorDriver,
+  vprvMirrorMotorDriver
+};
 
 
 gpio_config_t xprvMotorsIOConfiguration = {
@@ -30,10 +49,22 @@ gpio_config_t xprvMotorsIOConfiguration = {
 };
 
 uint16_t uButtons;
+eMOTOR_TYPE eMotorFunctionSelect=eNOMOTOR;
+
 
 void vMotorsTask(void *pvParameters)
 {
  
+
+  /* Create a queue capable of containing 10 uint64_t values. */
+  xMotorQueue = xQueueCreateStatic( configMOTORQUEUESIZE,
+                                configITEMSIZE,
+                                ucMotorQueueStorageArea,
+                                &xMotorsStaticQueue );
+
+  /* ucMotorQueueStorageArea was not NULL so xMotorQueue should not be NULL. */
+  configASSERT( xMotorQueue );                                
+
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHMOTORPHASE,  0);
   gpio_set_level(LATCHMOTORENABLE, 0);
@@ -42,25 +73,29 @@ void vMotorsTask(void *pvParameters)
 
   while(1)
   {
-      if(uprvSendLatchMotorPulse)
+      /*Wait for a Message from the Buttons Callback*/
+      if(xQueueReceive(xMotorQueue,&eMotorFunctionSelect,portMAX_DELAY) == pdPASS)
       {
-        gpio_set_level(LATCHMOTORENABLE,1);
-        vTaskDelay(pdMS_TO_TICKS(100));
-        gpio_set_level(LATCHMOTORENABLE,0);
-        uprvSendLatchMotorPulse=0;
-      }     
+        if(NULL != vMotorsFunctions[eMotorFunctionSelect])
+          vMotorsFunctions[eMotorFunctionSelect]();
+      }
   }
 }
 
-void vMotorsCallBack(uint8_t uprvParameters)
+void vprvLatchMotorDriver()
 {
-  if(uprvParameters == WRITE)
-  {
-    if((uButtons & DOOR_CLOSE) == DOOR_CLOSE)
-      gpio_set_level(LATCHMOTORPHASE,  0);    
-    if((uButtons & DOOR_OPEN) == DOOR_OPEN)
-      gpio_set_level(LATCHMOTORPHASE,  1);
-    uprvSendLatchMotorPulse=1;
-  }
+
+  ESP_LOGI(TAG, " %s Executed",__func__);
+
 }
 
+void vprvWindowMotorDriver()
+{
+  ESP_LOGI(TAG, " %s Executed",__func__);
+
+}
+
+void vprvMirrorMotorDriver()
+{
+  ESP_LOGI(TAG, " %s Executed",__func__);
+}

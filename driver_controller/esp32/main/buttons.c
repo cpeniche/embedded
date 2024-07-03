@@ -15,6 +15,7 @@
 #include "espNow.h"
 #include "buttons.h"
 #include "dictionary.h"
+#include "motors.h"
 /* --------------------- SPI Definitions and static variables ------------------ */
 
 #define BUTTONS    SPI2_HOST
@@ -161,5 +162,29 @@ void vButtonsTask(void *pvParameters)
         xEventGroupClearBits(xESPnowEventGroupHandle, 1<<eESPNOW_SEND_CB);            
       } 
     }    
+  }
+}
+
+void vButtonsCallBack(uint8_t uprvParameters)
+{
+  
+  eMOTOR_TYPE xprivItemToQueue;
+
+  if((DOOR_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue=eLATCHMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue,&xprivItemToQueue,10);
+  }
+
+  if((WINDOW_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue=eWINDOWMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue,&xprivItemToQueue,10);
+  }
+
+  if((MIRROR_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue=eMIRRORMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue,&xprivItemToQueue,10);
   }
 }

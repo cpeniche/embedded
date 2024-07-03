@@ -6,7 +6,7 @@
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
-#include "motors.h"
+#include "buttons.h"
 #include "dictionary.h"
 
 static const char *TAG = "Dictionary_Task";
@@ -23,11 +23,12 @@ SemaphoreHandle_t xQueueSemaphore;
 StaticSemaphore_t xSemaphoreBuffer;
 
 
-//stDictionary xpDictionaryEntry={0};
+stDictionary *xpDictionaryEntry=NULL;
+
 stDictionary xDictionary[configDICTIONARYSIZE]=
 {
   {.uMessageId=0x44,.eDataType=eUNSIGNED16,.pvData=NULL,.vCallback=NULL},
-  {.uMessageId=0x55,.eDataType=eUNSIGNED16,.pvData=&uButtons,.vCallback=vMotorsCallBack},
+  {.uMessageId=0x55,.eDataType=eUNSIGNED16,.pvData=&uButtons,.vCallback=vButtonsCallBack},
   {.uMessageId=DELIMITER}
 };
 
@@ -104,14 +105,17 @@ int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength)
   if(xpQueue == NULL)
     return -1;
  
-  *ppvprvData = malloc(xpQueueIndex->xlength * sizeof(uint8_t));
-  if(*ppvprvData == NULL)
-    return -1;
-  /* Copy Element*/
-  memcpy(*ppvprvData,xpProcessDataIndex->vpQueueData,xpQueueIndex->xlength);
-  free(xpProcessDataIndex->vpQueueData);
-  xpProcessDataIndex->vpQueueData = NULL;
+  // *ppvprvData = malloc(xpQueueIndex->xlength * sizeof(uint8_t));
+  // if(*ppvprvData == NULL)
+  //   return -1;
+  // /* Copy Element*/
+  // memcpy(*ppvprvData,xpProcessDataIndex->vpQueueData,xpQueueIndex->xlength);
+  *ppvprvData = xpProcessDataIndex->vpQueueData;
+  //free(xpProcessDataIndex->vpQueueData);
+  //xpProcessDataIndex->vpQueueData = NULL;
   *piprvLength=xpQueueIndex->xlength;
+
+  /* Remove the node from the queue */
   xprvItemToRemove=xpProcessDataIndex;
 
   /*Point to next element*/
@@ -154,17 +158,26 @@ void vProcessReceivedDataTask(void *pvParameters)
         /* If there is data to process */
         if(iprvStatus != -1) 
         { 
-          /* First byte is the Message ID*/
-          iprvIndexInDictionary = iprvDictionaryLookUpMessage(((uint8_t *)vpprvQueueElement)[0]);
+          /*Look up for the Message Id in Dictionary*/          
+          iprvIndexInDictionary = iprvDictionaryLookUpMessage(((stMessageHeader *)vpprvQueueElement)->uMessageId);
+          
           if(iprvIndexInDictionary!=-1)
           {
-            if(xDictionary[iprvIndexInDictionary].pvData != NULL)
-              vprvGetCastedData(vpprvQueueElement, 
-                             xDictionary[iprvIndexInDictionary].eDataType,
-                             xDictionary[iprvIndexInDictionary].pvData);
+            /*Get the Dictionary Specifications*/
+            xpDictionaryEntry=&xDictionary[iprvIndexInDictionary];
 
-            if(xDictionary[iprvIndexInDictionary].vCallback != NULL)
-              xDictionary[iprvIndexInDictionary].vCallback(((uint8_t *)vpprvQueueElement)[1]);                                 
+            /* Cast the received data according to the Data Type enum*/
+            if(xpDictionaryEntry->pvData != NULL)
+              vprvGetCastedData(vpprvQueueElement, 
+                             xpDictionaryEntry->eDataType,
+                             xpDictionaryEntry->pvData);
+
+            /* If Callback defined, execute it*/
+            if(xpDictionaryEntry->vCallback != NULL)
+              xDictionary[iprvIndexInDictionary].vCallback(((stMessageHeader *)vpprvQueueElement)->uReadWrite); 
+
+            /* free the memory where the received data was store*/  
+            free(vpprvQueueElement);                                
           }        
         }                
       }
@@ -182,12 +195,14 @@ int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
   while(xDictionary[uprvIndex].uMessageId != DELIMITER)
   {
 
+    /* Message id found, return index*/
     if(xDictionary[uprvIndex].uMessageId == uprvMessageId)
     {
       return uprvIndex;
     }
     uprvIndex++;
   }
+  /* Message Id not found */
   return -1;
 }
 
@@ -195,23 +210,25 @@ int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
 void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDest)
 {
 
-
-  void *vpprvDataTypePosition = (void *)&(((uint8_t *)vpprvElement)[3]);
+  /*Point to the Data type element on the Message Received*/
+  void *vpprvDataPosition = vpprvElement + sizeof(stMessageHeader);
 
   switch(eprvDataType)
   { 
     case eUNSIGEND8:
-      *((uint8_t*)vpprvDest)= *((uint8_t*)vpprvDataTypePosition);
+      *((uint8_t*)vpprvDest)= *((uint8_t*)vpprvDataPosition);
       break;
 
     case eSIGNED8:
-       *((int8_t*)vpprvDest)= *((int8_t*)vpprvDataTypePosition);
+       *((int8_t*)vpprvDest)= *((int8_t*)vpprvDataPosition);
       break;
 
     case eUNSIGNED16:
-       *((uint16_t*)vpprvDest)= *((uint16_t*)vpprvDataTypePosition);
+       *((uint16_t*)vpprvDest)= *((uint16_t*)vpprvDataPosition);
       break;    
 
     default:
   }
+
+  ESP_LOGI(TAG, "Data Received Value : %x", *((uint16_t*)vpprvDest));
 }
