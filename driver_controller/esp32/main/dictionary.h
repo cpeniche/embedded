@@ -5,6 +5,9 @@
 #define configDICTIONARYSIZE 5
 #define DELIMITER 0xFF
 
+#define READ 0
+#define WRITE 1
+
 typedef enum 
 {
    eUNSIGEND8,

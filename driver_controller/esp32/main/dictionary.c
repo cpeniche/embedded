@@ -3,16 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "motors.h"
 #include "dictionary.h"
 
-
+static const char *TAG = "Dictionary_Task";
 
 void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDest);
-int8_t iprvDictionaryGetNextQueueElement(void *pvprvData, int *piprvLength);
-int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId, stDictionary *xpDictionaryEntry);
+int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength);
+int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId);
 
 stQueueList *xpQueue=NULL;
 stQueueList *xpQueueIndex=NULL;
@@ -22,9 +23,10 @@ SemaphoreHandle_t xQueueSemaphore;
 StaticSemaphore_t xSemaphoreBuffer;
 
 
-stDictionary xpDictionaryEntry={0};
+//stDictionary xpDictionaryEntry={0};
 stDictionary xDictionary[configDICTIONARYSIZE]=
 {
+  {.uMessageId=0x44,.eDataType=eUNSIGNED16,.pvData=NULL,.vCallback=NULL},
   {.uMessageId=0x55,.eDataType=eUNSIGNED16,.pvData=&uButtons,.vCallback=vMotorsCallBack},
   {.uMessageId=DELIMITER}
 };
@@ -92,7 +94,7 @@ int8_t iDictionaryAddDataToQueue(void *pvprvData, int iprvLength)
 
 
 /***************** uAddDataToQueue ***************************/
-int8_t iprvDictionaryGetNextQueueElement(void *pvprvData, int *piprvLength)
+int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength)
 {
   /*First In First out*/
 
@@ -102,13 +104,13 @@ int8_t iprvDictionaryGetNextQueueElement(void *pvprvData, int *piprvLength)
   if(xpQueue == NULL)
     return -1;
  
-  pvprvData= malloc(xpQueueIndex->xlength * sizeof(uint8_t));
-  if(pvprvData == NULL)
+  *ppvprvData = malloc(xpQueueIndex->xlength * sizeof(uint8_t));
+  if(*ppvprvData == NULL)
     return -1;
-
   /* Copy Element*/
-  memcpy(pvprvData,xpProcessDataIndex->vpQueueData,xpQueueIndex->xlength);
+  memcpy(*ppvprvData,xpProcessDataIndex->vpQueueData,xpQueueIndex->xlength);
   free(xpProcessDataIndex->vpQueueData);
+  xpProcessDataIndex->vpQueueData = NULL;
   *piprvLength=xpQueueIndex->xlength;
   xprvItemToRemove=xpProcessDataIndex;
 
@@ -118,7 +120,10 @@ int8_t iprvDictionaryGetNextQueueElement(void *pvprvData, int *piprvLength)
 
   /*Remove Processed Element from Queue*/
   free(xprvItemToRemove);
-
+  if(xprvItemToRemove == xpQueue)
+    xpQueue=NULL;
+  xprvItemToRemove=NULL;
+  
   return 0;
 }
 
@@ -129,8 +134,10 @@ void vProcessReceivedDataTask(void *pvParameters)
   void *vpprvQueueElement=NULL;
   int iprvLength;
   int iprvStatus;
+  int8_t iprvIndexInDictionary=0;
 
   xDictionaryCreateQueueSemaphore();
+  ESP_LOGI(TAG, "Data Process Task Started  ");
 
   while(1)
   {
@@ -142,21 +149,22 @@ void vProcessReceivedDataTask(void *pvParameters)
       /* Get Semaphore */
       if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
       {
-        iprvStatus = iprvDictionaryGetNextQueueElement(vpprvQueueElement, &iprvLength);
+        iprvStatus = iprvDictionaryGetNextQueueElement(&vpprvQueueElement, &iprvLength);
         xSemaphoreGive(xQueueSemaphore);
         /* If there is data to process */
         if(iprvStatus != -1) 
         { 
           /* First byte is the Message ID*/
-          if(iprvDictionaryLookUpMessage(((uint8_t *)vpprvQueueElement)[0], &xpDictionaryEntry)==0)
+          iprvIndexInDictionary = iprvDictionaryLookUpMessage(((uint8_t *)vpprvQueueElement)[0]);
+          if(iprvIndexInDictionary!=-1)
           {
-            if(xpDictionaryEntry.pvData != NULL)
+            if(xDictionary[iprvIndexInDictionary].pvData != NULL)
               vprvGetCastedData(vpprvQueueElement, 
-                             xpDictionaryEntry.eDataType,
-                             xpDictionaryEntry.pvData);
+                             xDictionary[iprvIndexInDictionary].eDataType,
+                             xDictionary[iprvIndexInDictionary].pvData);
 
-            if(xpDictionaryEntry.vCallback != NULL)
-              xpDictionaryEntry.vCallback(xpDictionaryEntry.uReadWrite);                                 
+            if(xDictionary[iprvIndexInDictionary].vCallback != NULL)
+              xDictionary[iprvIndexInDictionary].vCallback(((uint8_t *)vpprvQueueElement)[1]);                                 
           }        
         }                
       }
@@ -165,21 +173,18 @@ void vProcessReceivedDataTask(void *pvParameters)
 }
 
 /************************* prvDictionaryLookUpMessage ****************************** */
-int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId, stDictionary *xpprvDictionaryEntry)
+int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
 {
 
-  uint8_t uprvIndex=0;
+  int8_t uprvIndex=0;
   
-  xpprvDictionaryEntry->uMessageId = 0;
   /* First byte is the Message ID*/
   while(xDictionary[uprvIndex].uMessageId != DELIMITER)
   {
 
     if(xDictionary[uprvIndex].uMessageId == uprvMessageId)
     {
-      xpprvDictionaryEntry=&(xDictionary[uprvIndex]);
-     
-      return 0;
+      return uprvIndex;
     }
     uprvIndex++;
   }
@@ -191,7 +196,7 @@ void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDe
 {
 
 
-  void *vpprvDataTypePosition = (void *)&(((uint8_t *)vpprvElement)[2]);
+  void *vpprvDataTypePosition = (void *)&(((uint8_t *)vpprvElement)[3]);
 
   switch(eprvDataType)
   { 
@@ -201,7 +206,11 @@ void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDe
 
     case eSIGNED8:
        *((int8_t*)vpprvDest)= *((int8_t*)vpprvDataTypePosition);
-      break;  
+      break;
+
+    case eUNSIGNED16:
+       *((uint16_t*)vpprvDest)= *((uint16_t*)vpprvDataTypePosition);
+      break;    
 
     default:
   }

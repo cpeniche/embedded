@@ -14,7 +14,7 @@
     "typeinfo": "c"
   },
   "idf.port": "/dev/ttyACM0",
-  "idf.flashType": "UART",
+  "idf.flashType": "JTAG",
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ]
