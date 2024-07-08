@@ -1,0 +1,9 @@
+[submodule "PlatformIO/Esp8266/Sprinklers/lib/ESP8266-I2C-Driver"]
+	path = PlatformIO/Esp8266/Sprinklers/lib/ESP8266-I2C-Driver
+	url = https://github.com/enjoyneering/ESP8266-I2C-Driver.git
+[submodule "PlatformIO/Esp8266/Sprinklers/lib/OpenThings-Framework-Firmware-Library"]
+	path = PlatformIO/Esp8266/Sprinklers/lib/OpenThings-Framework-Firmware-Library
+	url = https://github.com/OpenThingsIO/OpenThings-Framework-Firmware-Library.git
+[submodule "PlatformIO/Esp8266/Sprinklers/lib/blynk-library"]
+	path = PlatformIO/Esp8266/Sprinklers/lib/blynk-library
+	url = https://github.com/blynkkk/blynk-library.git

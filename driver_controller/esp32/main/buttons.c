@@ -187,4 +187,6 @@ void vButtonsCallBack(uint8_t uprvParameters)
     xprivItemToQueue=eMIRRORMOTORDRIVER;
     xQueueSendToBack(xMotorQueue,&xprivItemToQueue,10);
   }
+
+  gpio_set_level(WINDOWMOTOR_PWM,  0);
 }
