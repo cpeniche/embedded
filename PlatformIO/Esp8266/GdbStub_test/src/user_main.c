@@ -25,6 +25,8 @@
 #include "esp_common.h"
 #include "uart.h"
 #include "gdbstub.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
@@ -85,5 +87,11 @@ void user_init(void)
     uart_init_new();
     UART_SetBaudrate(UART0,BIT_RATE_115200);
     gdbstub_init();
-    printf("SDK version:%s\n", system_get_sdk_version());
+    while(1)
+    {
+        printf("SDK version:%s\n", system_get_sdk_version());
+        vTaskDelay(2000 / portTICK_RATE_MS);
+    }
+   
+    
 }

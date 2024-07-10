@@ -24,11 +24,13 @@
 .global gdbstub_exceptionStack
 #endif
 
+
 	ASATTR_GDBFN
 .literal_position
 
 	ASATTR_GDBINIT
 .literal_position
+
 
 	ASATTR_GDBFN
 	.align	4
@@ -251,8 +253,7 @@ is still something we need to implement later, if there's any demand for it, or 
 FreeRTOS to allow this in the future. (Which will then kill backwards compatibility... hmmm.)
 */
 	j UserExceptionExit
-	.size gdbstub_user_exception_entry, .-gdbstub_user_exception_entry
-
+	//.size gdbstub_user_exception_entry, .-gdbstub_user_exception_entry
 
 	.global gdbstub_handle_uart_int
 	.global gdbstub_uart_entry

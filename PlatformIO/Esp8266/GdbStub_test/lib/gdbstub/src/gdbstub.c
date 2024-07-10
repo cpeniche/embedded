@@ -21,6 +21,7 @@
 #include "gdbstub-entry.h"
 #include "gdbstub-cfg.h"
 
+#define os_isr_attach(intnum,isrFunc) _xt_isr_attach(intnum, isrFunc, NULL);
 
 //From xtruntime-frames.h
 struct XTensa_exception_frame_s {
@@ -54,7 +55,7 @@ also sets up some function pointers for ROM functions that aren't in the FreeRTO
 */
 #include <string.h>
 #include <stdio.h>
-void os_isr_attach(int inum, void *fn);
+//void os_isr_attach(int inum, void *fn);
 void os_install_putc1(void (*p)(char c));
 #define os_printf(...) printf(__VA_ARGS__)
 #define os_strncmp(...) strncmp(__VA_ARGS__)
@@ -67,7 +68,7 @@ static wdtfntype *ets_wdt_enable = (wdtfntype *)0x40002fa0;
 OS-less SDK defines. Defines some headers for things that aren't in the include files, plus
 the xthal stack frame struct.
 */
-#include "osapi.h"
+//#include "osapi.h"
 
 void _xtos_set_exception_handler(int cause, void (exhandler)(struct XTensa_exception_frame_s *frame));
 
@@ -831,7 +832,7 @@ void ATTR_GDBFN gdbstub_handle_uart_int(struct XTensa_rtos_int_frame_s *frame) {
 }
 
 static void ATTR_GDBINIT install_uart_hdlr() {
-	//ets_isr_attach(ETS_UART_INUM, gdbstub_uart_entry);
+	os_isr_attach(ETS_UART_INUM, gdbstub_uart_entry);
 	SET_PERI_REG_MASK(UART_INT_ENA(0), UART_RXFIFO_FULL_INT_ENA | UART_RXFIFO_TOUT_INT_ENA);
 	ETS_UART_INTR_ENABLE();
 }
@@ -901,6 +902,7 @@ void ATTR_GDBINIT gdbstub_set_uart_isr_callback(void (*func)(void*, uint8_t), vo
 
 //gdbstub initialization routine.
 void gdbstub_init() {
+	*((volatile uint32_t*) 0x60000900) &= ~(1);
 #if GDBSTUB_REDIRECT_CONSOLE_OUTPUT
 	os_install_putc1(gdbstub_semihost_putchar1);
 #endif
