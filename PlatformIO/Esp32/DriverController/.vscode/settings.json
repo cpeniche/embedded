@@ -1,0 +1,11 @@
+{
+  "idf.adapterTargetName": "esp32s3",
+  "idf.flashType": "JTAG",
+  "debug.hideLauncherWhileDebugging": true,
+  "launch": {
+
+    "configurations": [],
+    "compounds": []
+  },
+  "debug.toolBarLocation": "docked"
+}
