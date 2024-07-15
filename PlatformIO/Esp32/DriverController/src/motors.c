@@ -1,4 +1,5 @@
 #include <esp_log.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -40,13 +41,17 @@ gpio_config_t xprvMotorsIOConfiguration = {
   .intr_type = GPIO_INTR_DISABLE,
   .mode = GPIO_MODE_OUTPUT,
   .pin_bit_mask = 1<<LATCHMOTORPHASE | 1<< LATCHMOTORENABLE | 1<<WINDOWMOTOR_INA | 1<<WINDOWMOTOR_INB | \
-                  1<<WINDOWMOTOR_ENA | 1<< WINDOWMOTOR_ENB | 1<< WINDOWMOTOR_PWM,
+                  1<<WINDOWMOTOR_ENA | 1<< WINDOWMOTOR_ENB | 1<< WINDOWMOTOR_PWM | 1<<TLEMOTORENABLE  | \
+                  1<<TLEMOTORCHIPSELECT,
   .pull_down_en = 1,
   .pull_up_en = 0
 };
 
 uint16_t uButtons;
 eMOTOR_TYPE eMotorFunctionSelect=eNOMOTOR;
+spi_transaction_t prvxSpiTransaction;
+xTleTxMessageType xTLETxMessage;
+xTleRxMessageType xTLERxMessage;
 
 
 void vMotorsTask(void *pvParameters)
@@ -65,6 +70,17 @@ void vMotorsTask(void *pvParameters)
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHMOTORPHASE,  0);
   gpio_set_level(LATCHMOTORENABLE, 0);
+  gpio_set_level(TLEMOTORCHIPSELECT, 1);
+  gpio_set_level(TLEMOTORENABLE, 1);
+
+
+  memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction));       //Zero out the transaction
+  prvxSpiTransaction.length=16;                    //Command is 8 bits
+  prvxSpiTransaction.tx_buffer=&xTLETxMessage;    //The data is the cmd itself
+  prvxSpiTransaction.rx_buffer=&xTLERxMessage;
+  prvxSpiTransaction.user=(void*)0;    
+  prvxSpiTransaction.rxlength=16;
+  
 
   ESP_LOGI(TAG, "Motors Task Started  ");
 
@@ -114,5 +130,71 @@ void vprvWindowMotorDriver()
 
 void vprvMirrorMotorDriver()
 {
+  esp_err_t pxReturnCode;  
+  BaseType_t xSpiSemaphoreStatus;
+  uint8_t uprvtest;
+
+  xTLETxMessage.NA=1;  
+  xTLETxMessage.uAddress = CONTROLREGISTER;
+  xTLETxMessage.uLabt = 1;
+  xTLETxMessage.uAccesType = 1;
+
+  if((MIRROR_SELECT_LEFT & uButtons) == MIRROR_SELECT_LEFT)
+  {
+    uButtons &= (~MIRROR_SELECT_LEFT);
+    xTLETxMessage.uData = 0x0;
+
+    if((MIRROR_MOVE_UP & uButtons) == MIRROR_MOVE_UP)
+    {
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_UP;      
+    }
+    if((MIRROR_MOVE_DOWN & uButtons) == MIRROR_MOVE_DOWN)
+    {
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_DOWN;      
+    }
+    if((MIRROR_MOVE_LEFT & uButtons)== MIRROR_MOVE_LEFT )
+    {
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_LEFT;      
+    }
+    if((MIRROR_MOVE_RIGHT & uButtons) == MIRROR_MOVE_RIGHT)
+    {
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_RIGHT;  
+    }
+    /* send spi command to read inputs*/
+    if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
+    {
+
+      uprvtest = xTLETxMessage.uData;         
+      gpio_set_level(TLEMOTORCHIPSELECT, 0);
+      pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+      gpio_set_level(TLEMOTORCHIPSELECT, 1);
+
+      // xTLETxMessage.uAddress = GLOBALSTATUSREGISTER;      
+      // xTLETxMessage.uAccesType = 0;
+      // xTLETxMessage.uData = 0;
+      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
+      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
+
+      // xTLETxMessage.uAddress = OP1STATUSREGISTER;   
+      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
+      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
+
+      // xTLETxMessage.uAddress = OP2STATUSREGISTER;
+      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
+      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
+       
+      xSemaphoreGive(xSpiSemaphoreHandle);
+      
+      ESP_LOGI(TAG, "SPI TX Data : %x\n",uprvtest);            
+    }
+    assert(pxReturnCode==ESP_OK);
+    assert(xSpiSemaphoreStatus == pdPASS);
+    
+  }
+  
+
   ESP_LOGI(TAG, " %s Executed",__func__);
 }

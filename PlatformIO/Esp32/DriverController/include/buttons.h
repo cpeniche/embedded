@@ -31,6 +31,8 @@
 #define BUTTON_TASK_STACK_SIZE  4096
 extern void vButtonsTask(void *pvParameters);
 extern uint16_t uButtons;
+extern spi_device_handle_t spi;
+extern SemaphoreHandle_t xSpiSemaphoreHandle;
 
 extern void vButtonsCallBack(uint8_t uprvParameters);
 

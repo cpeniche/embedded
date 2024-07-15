@@ -6,6 +6,7 @@
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "driver/spi_master.h"
 #include "buttons.h"
 #include "dictionary.h"
 
@@ -105,14 +106,8 @@ int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength)
   if(xpQueue == NULL)
     return -1;
  
-  // *ppvprvData = malloc(xpQueueIndex->xlength * sizeof(uint8_t));
-  // if(*ppvprvData == NULL)
-  //   return -1;
-  // /* Copy Element*/
-  // memcpy(*ppvprvData,xpProcessDataIndex->vpQueueData,xpQueueIndex->xlength);
   *ppvprvData = xpProcessDataIndex->vpQueueData;
-  //free(xpProcessDataIndex->vpQueueData);
-  //xpProcessDataIndex->vpQueueData = NULL;
+  
   *piprvLength=xpQueueIndex->xlength;
 
   /* Remove the node from the queue */

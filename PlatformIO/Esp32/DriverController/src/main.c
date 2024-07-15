@@ -104,9 +104,10 @@ static QueueHandle_t rx_task_queue;
 
 
 EventGroupHandle_t xESPnowEventGroupHandle;
-
 /* Declare a variable to hold the data associated with the created event group. */
 StaticEventGroup_t xStaticCreatedEventGroup;
+SemaphoreHandle_t xSpiSemaphoreHandle;
+StaticSemaphore_t xSemaphoreStaticBuffer;
 
 /* --------------------------- Events -------------------------*/
 
@@ -163,6 +164,8 @@ void app_main(void)
 {
  /* Create statically event group for ESPnow Events*/
  xESPnowEventGroupHandle = xEventGroupCreateStatic( &xStaticCreatedEventGroup );
+ /* Create a mutex without using any dynamic memory allocation. */
+ xSpiSemaphoreHandle = xSemaphoreCreateMutexStatic( &xSemaphoreStaticBuffer );
 
  #ifdef USE_CAN
   Configure_Can_Module();
