@@ -13,6 +13,7 @@
 #include "buttons.h"
 #include "dictionary.h"
 #include "motors.h"
+#include "main.h"
 
 static const char *TAG = "Motors_Task";
 
@@ -41,8 +42,8 @@ gpio_config_t xprvMotorsIOConfiguration = {
   .intr_type = GPIO_INTR_DISABLE,
   .mode = GPIO_MODE_OUTPUT,
   .pin_bit_mask = 1<<LATCHMOTORPHASE | 1<< LATCHMOTORENABLE | 1<<WINDOWMOTOR_INA | 1<<WINDOWMOTOR_INB | \
-                  1<<WINDOWMOTOR_ENA | 1<< WINDOWMOTOR_ENB | 1<< WINDOWMOTOR_PWM | 1<<TLEMOTORENABLE  | \
-                  1<<TLEMOTORCHIPSELECT,
+                  1<<WINDOWMOTOR_ENA | 1<< WINDOWMOTOR_ENB | 1<< WINDOWMOTOR_PWM | 1<<TLEMOTORENABLE,
+                
   .pull_down_en = 1,
   .pull_up_en = 0
 };
@@ -70,7 +71,7 @@ void vMotorsTask(void *pvParameters)
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHMOTORPHASE,  0);
   gpio_set_level(LATCHMOTORENABLE, 0);
-  gpio_set_level(TLEMOTORCHIPSELECT, 1);
+  //gpio_set_level(TLEMOTORCHIPSELECT, 1);
   gpio_set_level(TLEMOTORENABLE, 1);
 
 
@@ -131,7 +132,7 @@ void vprvWindowMotorDriver()
 void vprvMirrorMotorDriver()
 {
   esp_err_t pxReturnCode;  
-  BaseType_t xSpiSemaphoreStatus;
+  //BaseType_t xSpiSemaphoreStatus;
   uint8_t uprvtest;
 
   xTLETxMessage.NA=1;  
@@ -161,8 +162,8 @@ void vprvMirrorMotorDriver()
       xTLETxMessage.uData = MIRROR_DRIVER_MOVE_RIGHT;  
     }
     /* send spi command to read inputs*/
-    if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
-    {
+    // if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
+    // {
 
       uprvtest = xTLETxMessage.uData;         
       gpio_set_level(TLEMOTORCHIPSELECT, 0);
@@ -186,12 +187,12 @@ void vprvMirrorMotorDriver()
       // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
       // gpio_set_level(TLEMOTORCHIPSELECT, 1);
        
-      xSemaphoreGive(xSpiSemaphoreHandle);
+      //xSemaphoreGive(xSpiSemaphoreHandle);
       
       ESP_LOGI(TAG, "SPI TX Data : %x\n",uprvtest);            
-    }
+    //}
     assert(pxReturnCode==ESP_OK);
-    assert(xSpiSemaphoreStatus == pdPASS);
+    //assert(xSpiSemaphoreStatus == pdPASS);
     
   }
   

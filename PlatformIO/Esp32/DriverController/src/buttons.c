@@ -16,16 +16,10 @@
 #include "buttons.h"
 #include "dictionary.h"
 #include "motors.h"
-/* --------------------- SPI Definitions and static variables ------------------ */
+#include "main.h"
 
-#define PARALLEL_LOAD 9
-#define PIN_NUM_CLK   7
-#define PIN_NUM_MISO  8
-#define PIN_NUM_MOSI  4
-
-/*********************** */
-#define NUM_BITS 16
 static const char *TAG = "Buttons_Task";
+#define PARALLEL_LOAD 9
 
 
 gpio_config_t io_conf = {
@@ -36,7 +30,6 @@ gpio_config_t io_conf = {
     .pull_up_en = 0
 };
 
-
 uint16_t uPreviousDriverControllerButtons;
 
 typedef struct
@@ -45,32 +38,6 @@ typedef struct
   uint16_t data;
   /* data */
 }__attribute__((packed)) stMessageType;
-
-
-spi_device_handle_t spi;
-
-/* define spi bus configuration */
-spi_bus_config_t buscfg=
-{
-  .miso_io_num=PIN_NUM_MISO,
-  .mosi_io_num=PIN_NUM_MOSI,
-  .sclk_io_num=PIN_NUM_CLK,
-  .quadwp_io_num=-1,
-  .quadhd_io_num=-1,
-  .max_transfer_sz=NUM_BITS
-};
-
-/* define spi device configuration */
-spi_device_interface_config_t devcfg=
-{
-  .clock_speed_hz=1*1000*1000,           //Clock out at 1 MHz
-  //.mode=2,                               //SPI mode 0
-  .mode=1,
-  .spics_io_num=-1,                     //CS pin
-  .queue_size=1,                          //We want to be able to queue 7 transactions at a time
-  .pre_cb=NULL,                           //Specify pre-transfer callback to handle D/C line
-  .flags = SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST
-};
 
 
 stMessageType xMessage=
@@ -84,30 +51,16 @@ stMessageType xMessage=
 
 void vButtonsTask(void *pvParameters)
 {
-  esp_err_t pxReturnCode;
+  
   EventBits_t pxESPNowEvents;
   uint8_t uprvRetry=0;
-  BaseType_t xSpiSemaphoreStatus;
+  spi_transaction_t prvxSpiTransaction;
+  
 
   gpio_config(&io_conf);
   gpio_set_level(PARALLEL_LOAD, 1);
 
-  //Initialize the SPI bus
-  if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
-  {
-    pxReturnCode=spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
-    ESP_ERROR_CHECK(pxReturnCode);
-
-    //Attach the spi device to the SPI bus
-    pxReturnCode=spi_bus_add_device(SPI2_HOST, &devcfg, &spi);
-    ESP_ERROR_CHECK(pxReturnCode);
-
-    xSemaphoreGive(xSpiSemaphoreHandle);
-
-  }  
-  assert(xSpiSemaphoreStatus==pdPASS);
-
-  spi_transaction_t prvxSpiTransaction;
+  
   memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction));       //Zero out the transaction
   prvxSpiTransaction.length=16;                    //Command is 8 bits
   prvxSpiTransaction.tx_buffer=NULL;               //The data is the cmd itself
@@ -119,20 +72,20 @@ void vButtonsTask(void *pvParameters)
   ESP_LOGI(TAG, "Buttons Task Started");
   while(1)
   {
-    
+    esp_err_t pxReturnCode;
     /* Latch parallel inputs*/
     gpio_set_level(PARALLEL_LOAD, 0);
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
     /* send spi command to read inputs*/
-    if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
-    {
+    // if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
+    // {
       pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      xSemaphoreGive(xSpiSemaphoreHandle);
-    }
+      //xSemaphoreGive(xSpiSemaphoreHandle);
+   // }
     assert(pxReturnCode==ESP_OK);
-    assert(xSpiSemaphoreStatus==pdPASS);
+    //assert(xSpiSemaphoreStatus==pdPASS);
 
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 
