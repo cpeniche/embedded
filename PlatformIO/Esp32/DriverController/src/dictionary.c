@@ -6,9 +6,11 @@
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/timers.h"
 #include "driver/spi_master.h"
 #include "buttons.h"
 #include "dictionary.h"
+#include "main.h"
 
 static const char *TAG = "Dictionary_Task";
 
@@ -148,6 +150,7 @@ void vProcessReceivedDataTask(void *pvParameters)
       /* Get Semaphore */
       if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
       {
+                
         iprvStatus = iprvDictionaryGetNextQueueElement(&vpprvQueueElement, &iprvLength);
         xSemaphoreGive(xQueueSemaphore);
         /* If there is data to process */
@@ -158,6 +161,9 @@ void vProcessReceivedDataTask(void *pvParameters)
           
           if(iprvIndexInDictionary!=-1)
           {
+            
+            ResetSleepTimer();
+            
             /*Get the Dictionary Specifications*/
             xpDictionaryEntry=&xDictionary[iprvIndexInDictionary];
 

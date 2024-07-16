@@ -23,11 +23,13 @@
 #include <string.h>
 #include <inttypes.h>
 #include <esp_log.h>
+#include <esp_sleep.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/event_groups.h"
+#include "freertos/timers.h"
 #include "esp_system.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
@@ -106,6 +108,11 @@ EventGroupHandle_t xESPnowEventGroupHandle;
 StaticEventGroup_t xStaticCreatedEventGroup;
 SemaphoreHandle_t xSpiSemaphoreHandle;
 StaticSemaphore_t xSemaphoreStaticBuffer;
+
+/* Sleep Timer*/
+StaticTimer_t xTimerBuffer;
+TimerHandle_t xSleepTimer;
+void vprvEnableSleepModeWakeUp(void);
 
 spi_device_handle_t spi;
 void vprvInitilizeSPI(void);
@@ -216,6 +223,13 @@ void vprvInitilizeSPI(void)
 
 }
 
+
+void vTimerCallback(TimerHandle_t xTimer)
+{
+
+  ESP_LOGI("SLEEP", "Entering Sleep Mode");
+  esp_deep_sleep_start();
+}
 /***************** app main ****************************** */
 
 void app_main(void)
@@ -225,8 +239,17 @@ void app_main(void)
  /* Create a mutex without using any dynamic memory allocation. */
  xSpiSemaphoreHandle = xSemaphoreCreateMutexStatic( &xSemaphoreStaticBuffer );
 
+
+ xSleepTimer=xTimerCreateStatic("SleepTimer",pdMS_TO_TICKS(10000),pdFALSE,NULL,
+                    vTimerCallback,&xTimerBuffer);
+
+                   
+
  /* Initilize SPi*/
  vprvInitilizeSPI();
+
+ /* Enable S*/
+ vprvEnableSleepModeWakeUp();
 
  #ifdef USE_CAN
   Configure_Can_Module();
@@ -259,6 +282,25 @@ void app_main(void)
               (void *)0, 
               tskIDLE_PRIORITY, 
               NULL);     
-#endif                       
+#endif   
+
+xTimerStart(xSleepTimer,0);  
 }
 
+/************ vprvEnableSleepMode ********************/
+void vprvEnableSleepModeWakeUp()
+{
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_3,1);
+}
+
+/***************************** */
+void ResetSleepTimer()
+{ 
+  if(xTimerReset(xSleepTimer,10) != pdPASS)
+  {
+    ESP_LOGI("SleepTimer", "Timer Failed to Reset\n");
+  
+  }else
+    ESP_LOGI("SleepTimer", "Timer Reset Ok\n");
+
+}

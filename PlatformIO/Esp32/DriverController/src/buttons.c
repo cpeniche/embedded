@@ -91,6 +91,8 @@ void vButtonsTask(void *pvParameters)
 
     if(uPreviousDriverControllerButtons != xMessage.data)
     {
+      
+      ResetSleepTimer();
       ESP_LOGI(TAG, "SPI Buttons Changed to : %x", xMessage.data);
       uPreviousDriverControllerButtons = xMessage.data;
 
