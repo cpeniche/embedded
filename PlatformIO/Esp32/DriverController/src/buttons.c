@@ -78,14 +78,10 @@ void vButtonsTask(void *pvParameters)
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
-    /* send spi command to read inputs*/
-    // if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
-    // {
-      pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      //xSemaphoreGive(xSpiSemaphoreHandle);
-   // }
+   
+    pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+   
     assert(pxReturnCode==ESP_OK);
-    //assert(xSpiSemaphoreStatus==pdPASS);
 
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 

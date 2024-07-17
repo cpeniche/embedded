@@ -24,6 +24,7 @@
 #include <inttypes.h>
 #include <esp_log.h>
 #include <esp_sleep.h>
+#include <driver/rtc_io.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -248,7 +249,7 @@ void app_main(void)
  /* Initilize SPi*/
  vprvInitilizeSPI();
 
- /* Enable S*/
+ /* Enable Sleep Mode*/
  vprvEnableSleepModeWakeUp();
 
  #ifdef USE_CAN
@@ -290,6 +291,8 @@ xTimerStart(xSleepTimer,0);
 /************ vprvEnableSleepMode ********************/
 void vprvEnableSleepModeWakeUp()
 {
+  rtc_gpio_pulldown_en(GPIO_NUM_3);
+  rtc_gpio_isolate(GPIO_NUM_3);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_3,1);
 }
 
