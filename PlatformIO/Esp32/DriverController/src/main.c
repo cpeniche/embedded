@@ -303,7 +303,6 @@ void ResetSleepTimer()
   {
     ESP_LOGI("SleepTimer", "Timer Failed to Reset\n");
   
-  }else
-    ESP_LOGI("SleepTimer", "Timer Reset Ok\n");
+  }
 
 }

@@ -16,6 +16,11 @@
 #include "main.h"
 
 static const char *TAG = "Motors_Task";
+static const char *MOVINGUP = "MOVING UP\0";
+static const char *MOVINGDOWN = "MOVING DOWN\0";
+static const char *MOVINGLEFT = "MOVING LEFT\0";
+static const char *MOVINGRIGHT = "MOVING RIGHT\0";
+static const char *NOMOVE     = "NO MOVE\0";
 
 /* The variable used to hold the queue's data structure. */
 static StaticQueue_t xMotorsStaticQueue;
@@ -132,7 +137,7 @@ void vprvWindowMotorDriver()
 void vprvMirrorMotorDriver()
 {
   esp_err_t pxReturnCode;  
-  //BaseType_t xSpiSemaphoreStatus;
+  uint8_t uprvMessage[10];
   uint8_t uprvtest;
 
   xTLETxMessage.NA=1;  
@@ -142,60 +147,42 @@ void vprvMirrorMotorDriver()
 
   if((MIRROR_SELECT_LEFT & uButtons) == MIRROR_SELECT_LEFT)
   {
+    memset(&uprvMessage,0x0,sizeof(uprvMessage));
     uButtons &= (~MIRROR_SELECT_LEFT);
     xTLETxMessage.uData = 0x0;
+    memcpy(&uprvMessage,NOMOVE, strlen(NOMOVE));
 
     if((MIRROR_MOVE_UP & uButtons) == MIRROR_MOVE_UP)
     {
-      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_UP;      
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_UP; 
+      memcpy(&uprvMessage,MOVINGUP, strlen(MOVINGUP));
     }
     if((MIRROR_MOVE_DOWN & uButtons) == MIRROR_MOVE_DOWN)
     {
-      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_DOWN;      
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_DOWN; 
+      memcpy(&uprvMessage,MOVINGDOWN, strlen(MOVINGDOWN));     
     }
     if((MIRROR_MOVE_LEFT & uButtons)== MIRROR_MOVE_LEFT )
     {
-      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_LEFT;      
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_LEFT;
+      memcpy(&uprvMessage,MOVINGLEFT, strlen(MOVINGLEFT));      
     }
     if((MIRROR_MOVE_RIGHT & uButtons) == MIRROR_MOVE_RIGHT)
     {
-      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_RIGHT;  
+      xTLETxMessage.uData = MIRROR_DRIVER_MOVE_RIGHT; 
+      memcpy(&uprvMessage,MOVINGRIGHT, strlen(MOVINGRIGHT)); 
     }
-    /* send spi command to read inputs*/
-    // if((xSpiSemaphoreStatus=xSemaphoreTake(xSpiSemaphoreHandle,portMAX_DELAY))==pdTRUE)
-    // {
+  
+    uprvtest = xTLETxMessage.uData;         
+    gpio_set_level(TLEMOTORCHIPSELECT, 0);
+    pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+    gpio_set_level(TLEMOTORCHIPSELECT, 1);
 
-      uprvtest = xTLETxMessage.uData;         
-      gpio_set_level(TLEMOTORCHIPSELECT, 0);
-      pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      gpio_set_level(TLEMOTORCHIPSELECT, 1);
-
-      // xTLETxMessage.uAddress = GLOBALSTATUSREGISTER;      
-      // xTLETxMessage.uAccesType = 0;
-      // xTLETxMessage.uData = 0;
-      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
-      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
-
-      // xTLETxMessage.uAddress = OP1STATUSREGISTER;   
-      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
-      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
-
-      // xTLETxMessage.uAddress = OP2STATUSREGISTER;
-      // gpio_set_level(TLEMOTORCHIPSELECT, 0);
-      // pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
-      // gpio_set_level(TLEMOTORCHIPSELECT, 1);
-       
-      //xSemaphoreGive(xSpiSemaphoreHandle);
-      
-      ESP_LOGI(TAG, "SPI TX Data : %x\n",uprvtest);            
-    //}
-    assert(pxReturnCode==ESP_OK);
-    //assert(xSpiSemaphoreStatus == pdPASS);
-    
+    ESP_LOGI(TAG, "%s : %x",uprvMessage,uprvtest);            
+  
+    assert(pxReturnCode==ESP_OK);    
   }
   
 
-  ESP_LOGI(TAG, " %s Executed",__func__);
+  //ESP_LOGI(TAG, " %s Executed",__func__);
 }
