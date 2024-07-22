@@ -169,7 +169,6 @@ void Configure_Can_Module()
 }
 #endif
 
-/***************** vprvInitilizeSPI **************************** */
 
 void vprvInitilizeSPI(void)
 {
