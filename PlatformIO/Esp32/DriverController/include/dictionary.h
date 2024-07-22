@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 #define configMAXARRAYSIZE 10
 #define configDICTIONARYSIZE 5
@@ -19,13 +22,13 @@ typedef enum
    eUNSIGNED64,
    eSIGNED64,
    eFLOAT
-}eDataType;
+}eDataTYPE;
 
 typedef struct 
 {
   uint8_t uMessageId;
   uint8_t uReadWrite;
-  eDataType eDataType;
+  eDataTYPE eDataType;
   void *pvData;
   void (*vCallback)(uint8_t);
   
@@ -35,7 +38,7 @@ typedef struct
 {
   uint8_t uMessageId;
   uint8_t uReadWrite;
-  eDataType eDataType;
+  eDataTYPE eDataType;
 
 }__attribute__((packed)) stMessageHeader;;
 
@@ -59,4 +62,6 @@ extern int8_t iDictionaryAddDataToQueue(void * , int );
 extern int8_t iDictionaryGetNextQueueElement(void * , int*);
 extern SemaphoreHandle_t xQueueSemaphore;
 
-
+#ifdef __cplusplus
+}
+#endif

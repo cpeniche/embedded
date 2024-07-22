@@ -1,6 +1,10 @@
 #ifndef _motors_h_
 #define _motors_h_
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 typedef enum{
   eLATCHMOTORDRIVER,
   eWINDOWMOTORDRIVER,
@@ -55,20 +59,20 @@ typedef struct
 #define MIRROR_DRIVER_MOVE_LEFT   (1<<HB3_LS_EN | 1<<HB2_HS_EN)
 #define MIRROR_DRIVER_MOVE_RIGHT  (1<<HB2_LS_EN | 1<<HB3_HS_EN)
 
-#define TLEMOTORENABLE      2
-#define TLEMOTORCHIPSELECT  1
+#define TLEMOTORENABLE      GPIO_NUM_2
+#define TLEMOTORCHIPSELECT  GPIO_NUM_1
 
 #define configMOTORQUEUESIZE  10
 #define configITEMSIZE        sizeof(eMOTOR_TYPE)
 
-#define LATCHMOTORPHASE   5
-#define LATCHMOTORENABLE  6
+#define LATCHMOTORPHASE  GPIO_NUM_5
+#define LATCHMOTORENABLE GPIO_NUM_6
 
-#define WINDOWMOTOR_INA   14
-#define WINDOWMOTOR_INB   15
-#define WINDOWMOTOR_PWM   16
-#define WINDOWMOTOR_ENA   17
-#define WINDOWMOTOR_ENB   18
+#define WINDOWMOTOR_INA   GPIO_NUM_14
+#define WINDOWMOTOR_INB   GPIO_NUM_15
+#define WINDOWMOTOR_PWM   GPIO_NUM_16
+#define WINDOWMOTOR_ENA   GPIO_NUM_17
+#define WINDOWMOTOR_ENB   GPIO_NUM_18
 
 #define CONTROLREGISTER 0x0
 #define GLOBALSTATUSREGISTER 0x6
@@ -79,5 +83,9 @@ extern void vMotorsTask(void *pvParameters);
 
 extern eMOTOR_TYPE eMotorFunctionSelect;
 extern QueueHandle_t xMotorQueue;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

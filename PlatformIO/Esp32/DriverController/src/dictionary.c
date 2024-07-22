@@ -14,7 +14,7 @@
 
 static const char *TAG = "Dictionary_Task";
 
-void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDest);
+void vprvGetCastedData(void *vpprvElement, eDataTYPE eprvDataType, void *vpprvDest);
 int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength);
 int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId);
 
@@ -208,7 +208,7 @@ int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
 }
 
 /********************* vprvGetCastedData ********************* */
-void vprvGetCastedData(void *vpprvElement, eDataType eprvDataType, void *vpprvDest)
+void vprvGetCastedData(void *vpprvElement, eDataTYPE eprvDataType, void *vpprvDest)
 {
 
   /*Point to the Data type element on the Message Received*/

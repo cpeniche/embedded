@@ -44,13 +44,14 @@ void (*vMotorsFunctions[3])(void)=
 
 
 gpio_config_t xprvMotorsIOConfiguration = {
-  .intr_type = GPIO_INTR_DISABLE,
-  .mode = GPIO_MODE_OUTPUT,
+  
   .pin_bit_mask = 1<<LATCHMOTORPHASE | 1<< LATCHMOTORENABLE | 1<<WINDOWMOTOR_INA | 1<<WINDOWMOTOR_INB | \
                   1<<WINDOWMOTOR_ENA | 1<< WINDOWMOTOR_ENB | 1<< WINDOWMOTOR_PWM | 1<<TLEMOTORENABLE,
-                
-  .pull_down_en = 1,
-  .pull_up_en = 0
+  .mode = GPIO_MODE_OUTPUT,
+  .pull_up_en = GPIO_PULLUP_DISABLE,
+  .pull_down_en = GPIO_PULLDOWN_ENABLE,
+  .intr_type = GPIO_INTR_DISABLE,
+  
 };
 
 uint16_t uButtons;
@@ -137,7 +138,7 @@ void vprvWindowMotorDriver()
 void vprvMirrorMotorDriver()
 {
   esp_err_t pxReturnCode;  
-  uint8_t uprvMessage[10];
+  uint8_t uprvMessage[12];
   uint8_t uprvtest;
 
   xTLETxMessage.NA=1;  

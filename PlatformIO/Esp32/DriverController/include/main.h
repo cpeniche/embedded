@@ -1,5 +1,8 @@
 #pragma once 
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* --------------------- SPI Definitions and static variables ------------------ */
 
@@ -11,3 +14,7 @@
 #define NUM_BITS 16
 extern spi_device_handle_t spi;
 extern void ResetSleepTimer(void);
+
+#ifdef __cplusplus
+}
+#endif

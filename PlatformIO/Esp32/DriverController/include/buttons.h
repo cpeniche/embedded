@@ -1,6 +1,10 @@
 #ifndef _buttons_h_
 #define _buttons_h_
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 
 #define MIRROR_MOVE_UP      0x0c00
 #define MIRROR_SELECT_LEFT  0x4000
@@ -35,5 +39,9 @@ extern SemaphoreHandle_t xSpiSemaphoreHandle;
 
 extern void vButtonsCallBack(uint8_t uprvParameters);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
+

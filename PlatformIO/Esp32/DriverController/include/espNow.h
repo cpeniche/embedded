@@ -10,6 +10,10 @@
 #ifndef ESPNOW_H
 #define ESPNOW_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* ESPNOW can work in both station and softap mode. It is configured in menuconfig. */
 #if CONFIG_ESPNOW_WIFI_MODE_STATION
 #define ESPNOW_WIFI_MODE WIFI_MODE_STA
@@ -86,4 +90,10 @@ extern void vWifiConfigureESPNow(void);
 extern QueueHandle_t xESPNowQueue;
 extern EventGroupHandle_t xESPnowEventGroupHandle;
 
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+
