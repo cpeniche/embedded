@@ -12,7 +12,6 @@ extern "C"{
 
 /*********************** */
 #define NUM_BITS 16
-extern spi_device_handle_t spi;
 extern void ResetSleepTimer(void);
 
 #ifdef __cplusplus

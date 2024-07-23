@@ -40,8 +40,8 @@
 #include "dictionary.h"
 #include "motors.h"
 #include "main.h"
-#include "spi.h"
-#include "espspi.h"
+#include "spidrivermodel.h"
+#include "drivers/include/espspi.h"
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -172,26 +172,26 @@ void vprvInitilizeSPI(void)
 
   esp_err_t pxReturnCode=0;
   BaseType_t xSpiSemaphoreStatus;
+  //spi_device_handle_t xprvSpiHandle;
+  uint8_t uTxBuffer[2]={0};
+  uint8_t uRxBuffer[2]={0};
+
+  EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
+  EspSpiDeviceBuilder xprvEspSpiDevice;
+  EspSpiTransactionBuilder xprEspvSpiTransaction(uTxBuffer, uRxBuffer);
+  EspSpiBuilder xprvEspSpi;
+
   
-  /* define spi device configuration */
-  EspSpiBusConfiguratorBuilder<spi_bus_config_t> xprvBusConfigurator(DUAL);
-#ifndef configREMOTE
-  xprvBusConfigurator.vSetMosi(PIN_NUM_MOSI);
-#endif
-  xprvBusConfigurator.vSetClocK(PIN_NUM_CLK);
-  xprvBusConfigurator.vSetMiso(PIN_NUM_MISO);
-  xprvBusConfigurator.vSetMaxTransfer(NUM_BITS);
+  SpiBuilder *xSpi = &xprvEspSpi;
+  xSpi->xBuildBusConfigure(xprvEspSpiBusConfiguration);
+  xSpi->xBuildDevice(xprvEspSpiDevice);
+  xSpi->xBuildTransaction(xprEspvSpiTransaction);
 
-  SpiBusConfiguratorBuilder<spi_bus_config_t>*xprvBusBuilder = &xprvBusConfigurator;
-  spi_bus_config_t temp = xprvBusBuilder->xBuild();
-
-  // SpiCreator *xprvspicreator = new EspSpiCreator();
-  // xprvspi = xprvspicreator->CreateSpi();
-
+  
   // Initialize the SPI bus
   if ((xSpiSemaphoreStatus = xSemaphoreTake(xSpiSemaphoreHandle, portMAX_DELAY)) == pdTRUE)
   {
-    pxReturnCode = spi_bus_initialize(SPI2_HOST, &temp, SPI_DMA_CH_AUTO);
+    //pxReturnCode = spi_bus_initialize(SPI2_HOST, &(xprvBusBuilder->xBuild()), SPI_DMA_CH_AUTO);
 
     ESP_ERROR_CHECK(pxReturnCode);
 

@@ -176,7 +176,7 @@ void vprvMirrorMotorDriver()
   
     uprvtest = xTLETxMessage.uData;         
     gpio_set_level(TLEMOTORCHIPSELECT, 0);
-    pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
+    //pxReturnCode =  spi_device_polling_transmit(spi,&prvxSpiTransaction);
     gpio_set_level(TLEMOTORCHIPSELECT, 1);
 
     ESP_LOGI(TAG, "%s : %x",uprvMessage,uprvtest);            

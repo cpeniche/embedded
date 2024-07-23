@@ -71,7 +71,7 @@ void vButtonsTask(void *pvParameters)
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
-    pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
+    //pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
 
     assert(pxReturnCode == ESP_OK);
 
