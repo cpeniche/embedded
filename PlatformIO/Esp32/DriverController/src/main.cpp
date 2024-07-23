@@ -41,6 +41,7 @@
 #include "motors.h"
 #include "main.h"
 #include "spi.h"
+#include "espspi.h"
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -169,43 +170,34 @@ void Configure_Can_Module()
 void vprvInitilizeSPI(void)
 {
 
-  esp_err_t pxReturnCode;
+  esp_err_t pxReturnCode=0;
   BaseType_t xSpiSemaphoreStatus;
-  spi_bus_config_t xprvSpiBusConfig;
-  spi_device_interface_config_t xprvDeviceConfiguration;
-  /* define spi bus configuration */
-
-  SpiBusConfigBuilder<spi_bus_config_t> *xSpiBusConfig = new SpiBusConfigBuilder<spi_bus_config_t>(DUAL);
+  
+  /* define spi device configuration */
+  EspSpiBusConfiguratorBuilder<spi_bus_config_t> xprvBusConfigurator(DUAL);
 #ifndef configREMOTE
-  xSpiBusConfig->vSetMosi(PIN_NUM_MOSI);
+  xprvBusConfigurator.vSetMosi(PIN_NUM_MOSI);
 #endif
-  xSpiBusConfig->vSetClocK(PIN_NUM_CLK);
-  xSpiBusConfig->vSetMiso(PIN_NUM_MISO);
-  xSpiBusConfig->vSetMaxTransfer(NUM_BITS);
+  xprvBusConfigurator.vSetClocK(PIN_NUM_CLK);
+  xprvBusConfigurator.vSetMiso(PIN_NUM_MISO);
+  xprvBusConfigurator.vSetMaxTransfer(NUM_BITS);
 
-  SpiDeviceBuilder<spi_device_interface_config_t> *xSpiDevice = new SpiDeviceBuilder<spi_device_interface_config_t>();
+  SpiBusConfiguratorBuilder<spi_bus_config_t>*xprvBusBuilder = &xprvBusConfigurator;
+  spi_bus_config_t temp = xprvBusBuilder->xBuild();
 
-/* define spi device configuration */
-#ifndef configREMOTE
-  xSpiDevice->vSetChipSelect(TLEMOTORCHIPSELECT);
-  xSpiDevice->vSetFlags(SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST);
-#endif
-  xSpiDevice->vSetMode(1);
-  xSpiDevice->vSetClockSpeed(1 * 1000 * 1000);
-  xSpiDevice->vSetQueueSize(1);
-  xSpiDevice->vSetCallBackFunction(NULL);
+  // SpiCreator *xprvspicreator = new EspSpiCreator();
+  // xprvspi = xprvspicreator->CreateSpi();
 
   // Initialize the SPI bus
   if ((xSpiSemaphoreStatus = xSemaphoreTake(xSpiSemaphoreHandle, portMAX_DELAY)) == pdTRUE)
   {
-    // pxReturnCode=spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
-    xprvSpiBusConfig = xSpiBusConfig->vBuild();
-    pxReturnCode = spi_bus_initialize(SPI2_HOST, &xprvSpiBusConfig, SPI_DMA_CH_AUTO);
+    pxReturnCode = spi_bus_initialize(SPI2_HOST, &temp, SPI_DMA_CH_AUTO);
+
     ESP_ERROR_CHECK(pxReturnCode);
 
     // Attach the spi device to the SPI bus
-    xprvDeviceConfiguration = xSpiDevice->vBuild();
-    pxReturnCode = spi_bus_add_device(SPI2_HOST, &xprvDeviceConfiguration, &spi);
+    
+    //pxReturnCode = spi_bus_add_device(SPI2_HOST, &xprvDeviceConfiguration, &spi);
     ESP_ERROR_CHECK(pxReturnCode);
 
     xSemaphoreGive(xSpiSemaphoreHandle);
