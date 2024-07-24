@@ -33,7 +33,7 @@ class EspSpiBusConfiguratorBuilder : public SpiBusConfiguratorBuilder
     void vSetData6(int iData6) { xprvBusConfiguration.data6_io_num = iData6; };
     void vSetData7(int iData7) { xprvBusConfiguration.data7_io_num = iData7; };
 
-    void xBuild() override;
+    void *xBuild() override;
 
   private:
     spi_bus_config_t xprvBusConfiguration;
@@ -60,7 +60,7 @@ public:
   void vSetQueueSize(int uQueueSize) { xprvDeviceConfiguration.queue_size = uQueueSize; };
   void vSetCallBackFunction(transaction_cb_t xCallBackFunction) { xprvDeviceConfiguration.pre_cb = xCallBackFunction; };
 
-  void xBuild() override;
+  void *xBuild() override;
 
 private:
   spi_device_interface_config_t xprvDeviceConfiguration;
@@ -81,7 +81,7 @@ class EspSpiTransactionBuilder: public SpiTransactionBuilder{
     void vsetTransmitBuffer(void* pvTransmitBuffer) { xprvSpiTransaction.tx_buffer = pvTransmitBuffer; };
     void vsetReceivedBuffer(void* pvReceiveBuffer) { xprvSpiTransaction.rx_buffer = pvReceiveBuffer; };
 
-    void xBuild() override;
+    void *xBuild() override;
 
   private:
     spi_transaction_t xprvSpiTransaction;
@@ -89,25 +89,33 @@ class EspSpiTransactionBuilder: public SpiTransactionBuilder{
     uint8_t *prvuRxBuffer;
 };
 
+class EspSpiDriver : public SpiDriver
+{
+  void Init() const = 0;
+  void Transmit() const = 0;
+  uint8_t *GetReceiveData();
+};
+
+
 class EspSpiBuilder : public SpiBuilder
 {
 public:
   EspSpiBuilder(){};
 
-  virtual SpiDriver *xBuild(uint8_t *prvuTxBuffer, uint8_t *prvuRxBuffer) override;
-  virtual void xBuildBusConfigure(SpiBusConfiguratorBuilder) override;
-  virtual void xBuildTransaction(SpiTransactionBuilder) override;
-  virtual void xBuildDevice(SpiDeviceConfigurationBuilder) override;
+  //EspSpiDriver *xBuild(){};
+  void xBuildBusConfigure(SpiBusConfiguratorBuilder) override;
+  void xBuildTransaction(SpiTransactionBuilder) override;
+  void xBuildDevice(SpiDeviceConfigurationBuilder) override;
 
-//   void *pvGetBusConfiguration() { return &xprvEspConfig; };
-//   void *pvGetDevice() { return &xprvEspDevice; };
-//   void *pvGetTransaction() { return &xprvEspTransaction; }
+  void *pvGetBusConfiguration() { return &xprvEspBusConfig; };
+  void *pvGetDevice() { return &xprvEspDevice; };
+  void *pvGetTransaction() { return &xprvEspTransaction; }
 
-// private:
-//   EspSpiBusConfiguratorBuilder xprvEspConfig;
-//   EspSpiDeviceBuilder xprvEspDevice;
-//   EspSpiTransactionBuilder xprvEspTransaction(NULL,NULL);
-//   // spi_device_handle_t xprvSpiHandle;
+private:
+  spi_bus_config_t xprvEspBusConfig;
+  spi_device_interface_config_t xprvEspDevice;
+  spi_transaction_t xprvEspTransaction;
+  spi_device_handle_t xprvSpiHandle;
 };
 
 

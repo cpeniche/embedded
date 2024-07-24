@@ -20,7 +20,7 @@ EspSpiBusConfiguratorBuilder::EspSpiBusConfiguratorBuilder()
 
 }
 
-void EspSpiBusConfiguratorBuilder::xBuild() 
+void *EspSpiBusConfiguratorBuilder::xBuild() 
 {
   /*Configure the Bus Interface */
 #ifndef configREMOTE
@@ -29,6 +29,8 @@ void EspSpiBusConfiguratorBuilder::xBuild()
   vSetClocK(PIN_NUM_CLK);
   vSetMiso(PIN_NUM_MISO);
   vSetMaxTransfer(NUM_BITS);
+
+  return &xprvBusConfiguration;
 }
 
 /// @brief //////////////
@@ -37,7 +39,7 @@ EspSpiDeviceBuilder::EspSpiDeviceBuilder()
   memset(&xprvDeviceConfiguration, 0x0, sizeof(xprvDeviceConfiguration));
 }
 
-void EspSpiDeviceBuilder::xBuild()
+void *EspSpiDeviceBuilder::xBuild()
 {
 #ifndef configREMOTE
   vSetChipSelect(GPIO_NUM_1);
@@ -47,6 +49,8 @@ void EspSpiDeviceBuilder::xBuild()
     vSetClockSpeed(1 * 1000 * 1000);
     vSetQueueSize(1);
     vSetCallBackFunction(NULL);
+
+    return &xprvDeviceConfiguration;
 }
 
     /// @brief //////////////////
@@ -60,26 +64,28 @@ EspSpiTransactionBuilder::EspSpiTransactionBuilder(uint8_t *puTxBuffer, uint8_t 
   prvuRxBuffer = puRxBuffer;
 }
 
-void EspSpiTransactionBuilder::xBuild()
+void *EspSpiTransactionBuilder::xBuild()
 {
   vsetLength(16);
   vsetReceiveLength(16);
   vsetReceivedBuffer(prvuRxBuffer);
   vsetTransmitBuffer(prvuTxBuffer);
+
+  return &xprvSpiTransaction;
 }
 
 /// @brief ////////////////
 void EspSpiBuilder::xBuildBusConfigure(SpiBusConfiguratorBuilder Builder)
 {
-    Builder.xBuild();
+  xprvEspBusConfig =*((spi_bus_config_t *)Builder.xBuild());
 }
 
 void EspSpiBuilder::xBuildTransaction(SpiTransactionBuilder Builder)
 {
-  Builder.xBuild();
+ xprvEspTransaction =*((spi_transaction_t *)Builder.xBuild());
 }
 
 void EspSpiBuilder::xBuildDevice(SpiDeviceConfigurationBuilder Builder)
 {
-  Builder.xBuild();
+  xprvEspDevice = *((spi_device_interface_config_t *)Builder.xBuild());
 }

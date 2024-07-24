@@ -179,10 +179,8 @@ void vprvInitilizeSPI(void)
   EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
   EspSpiDeviceBuilder xprvEspSpiDevice;
   EspSpiTransactionBuilder xprEspvSpiTransaction(uTxBuffer, uRxBuffer);
-  EspSpiBuilder xprvEspSpi;
-
   
-  SpiBuilder *xSpi = &xprvEspSpi;
+  SpiBuilder *xSpi = new EspSpiBuilder();
   xSpi->xBuildBusConfigure(xprvEspSpiBusConfiguration);
   xSpi->xBuildDevice(xprvEspSpiDevice);
   xSpi->xBuildTransaction(xprEspvSpiTransaction);

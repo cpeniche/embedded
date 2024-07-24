@@ -9,7 +9,7 @@ class SpiDriver
 
 public:
   virtual ~SpiDriver(){};
-  virtual SpiDriver *Init() const = 0;
+  virtual void Init() const = 0;
   virtual void Transmit() const = 0;
   virtual uint8_t *GetReceiveData();
 };
@@ -18,33 +18,27 @@ class SpiBusConfiguratorBuilder{
 
   public:
     virtual ~SpiBusConfiguratorBuilder() {};
-    virtual void xBuild(){};
+    virtual void *xBuild() { return NULL; };
 };
 
 class SpiTransactionBuilder{
   public:
     virtual ~SpiTransactionBuilder() {};
-    virtual void xBuild() {};
+    virtual void *xBuild() { return NULL; };
 };
 
 class SpiDeviceConfigurationBuilder{
   public:
     virtual ~SpiDeviceConfigurationBuilder() {};
-    virtual void xBuild() {};
-    ;
+    virtual void *xBuild() { return NULL; };
 };
 
-class SpiBuilder
-{
+class SpiBuilder{
 
 public:
   virtual ~SpiBuilder() {};
-  virtual SpiDriver *xBuild(uint8_t *prvuTxBuffer, uint8_t *prvuRxBuffer) = 0;
+  //virtual SpiDriver *xBuild() = 0;
   virtual void xBuildBusConfigure(SpiBusConfiguratorBuilder) = 0;
   virtual void xBuildTransaction(SpiTransactionBuilder) = 0;
   virtual void xBuildDevice(SpiDeviceConfigurationBuilder) = 0;
-
-private:
-  uint8_t *puTxBuffer;
-  uint8_t *puRxBuffer;
 };
