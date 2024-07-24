@@ -7,3 +7,6 @@
 [submodule "PlatformIO/Esp8266/Sprinklers/lib/blynk-library"]
 	path = PlatformIO/Esp8266/Sprinklers/lib/blynk-library
 	url = https://github.com/blynkkk/blynk-library.git
+[submodule "PlatformIO/Esp8266/Sprinklers/PlatformIO/Esp8266/Sprinklers/lib/OpenThings-Framework-Firmware-Library"]
+	path = PlatformIO/Esp8266/Sprinklers/PlatformIO/Esp8266/Sprinklers/lib/OpenThings-Framework-Firmware-Library
+	url = https://github.com/OpenThingsIO/OpenThings-Framework-Firmware-Library.git
