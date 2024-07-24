@@ -91,18 +91,31 @@ class EspSpiTransactionBuilder: public SpiTransactionBuilder{
 
 class EspSpiDriver : public SpiDriver
 {
-  void Init() const = 0;
-  void Transmit() const = 0;
-  uint8_t *GetReceiveData();
-};
 
+public:
+  EspSpiDriver(spi_host_device_t host, spi_device_handle_t handle,
+               spi_transaction_t transaction);
+  void Init() override;
+  void Transmit() override;
+  void *GetReceiveData() override;
+  void *GetError() override;
+
+private:
+  spi_host_device_t xHostDevice;
+  spi_device_handle_t xHandle;
+  spi_transaction_t xTransaction;
+  esp_err_t error;
+};
 
 class EspSpiBuilder : public SpiBuilder
 {
 public:
-  EspSpiBuilder(){};
+  EspSpiBuilder(spi_host_device_t xHost,
+                spi_common_dma_t xDmaChannel):
+    xprvHost(xHost),
+    xprvDmaChannel(xDmaChannel){};
 
-  //EspSpiDriver *xBuild(){};
+  void *xBuild() override;
   void xBuildBusConfigure(SpiBusConfiguratorBuilder) override;
   void xBuildTransaction(SpiTransactionBuilder) override;
   void xBuildDevice(SpiDeviceConfigurationBuilder) override;
@@ -116,6 +129,6 @@ private:
   spi_device_interface_config_t xprvEspDevice;
   spi_transaction_t xprvEspTransaction;
   spi_device_handle_t xprvSpiHandle;
+  spi_host_device_t xprvHost;
+  spi_common_dma_t xprvDmaChannel;
 };
-
-

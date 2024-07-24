@@ -9,9 +9,10 @@ class SpiDriver
 
 public:
   virtual ~SpiDriver(){};
-  virtual void Init() const = 0;
-  virtual void Transmit() const = 0;
-  virtual uint8_t *GetReceiveData();
+  virtual void Init()  = 0;
+  virtual void Transmit()  = 0;
+  virtual void *GetReceiveData() = 0;
+  virtual void *GetError() = 0;
 };
 
 class SpiBusConfiguratorBuilder{
@@ -36,9 +37,10 @@ class SpiDeviceConfigurationBuilder{
 class SpiBuilder{
 
 public:
-  virtual ~SpiBuilder() {};
-  //virtual SpiDriver *xBuild() = 0;
+  virtual ~SpiBuilder() {};  
   virtual void xBuildBusConfigure(SpiBusConfiguratorBuilder) = 0;
   virtual void xBuildTransaction(SpiTransactionBuilder) = 0;
   virtual void xBuildDevice(SpiDeviceConfigurationBuilder) = 0;
+  virtual void *xBuild() = 0;
+  ;
 };

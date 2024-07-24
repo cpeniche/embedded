@@ -40,8 +40,7 @@
 #include "dictionary.h"
 #include "motors.h"
 #include "main.h"
-#include "spidrivermodel.h"
-#include "drivers/include/espspi.h"
+
 
 #ifdef USE_CAN
 #include "driver/twai.h"
@@ -172,19 +171,6 @@ void vprvInitilizeSPI(void)
 
   esp_err_t pxReturnCode=0;
   BaseType_t xSpiSemaphoreStatus;
-  //spi_device_handle_t xprvSpiHandle;
-  uint8_t uTxBuffer[2]={0};
-  uint8_t uRxBuffer[2]={0};
-
-  EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
-  EspSpiDeviceBuilder xprvEspSpiDevice;
-  EspSpiTransactionBuilder xprEspvSpiTransaction(uTxBuffer, uRxBuffer);
-  
-  SpiBuilder *xSpi = new EspSpiBuilder();
-  xSpi->xBuildBusConfigure(xprvEspSpiBusConfiguration);
-  xSpi->xBuildDevice(xprvEspSpiDevice);
-  xSpi->xBuildTransaction(xprEspvSpiTransaction);
-
   
   // Initialize the SPI bus
   if ((xSpiSemaphoreStatus = xSemaphoreTake(xSpiSemaphoreHandle, portMAX_DELAY)) == pdTRUE)

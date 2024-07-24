@@ -89,3 +89,37 @@ void EspSpiBuilder::xBuildDevice(SpiDeviceConfigurationBuilder Builder)
 {
   xprvEspDevice = *((spi_device_interface_config_t *)Builder.xBuild());
 }
+
+void *EspSpiBuilder::xBuild()
+{
+
+  spi_bus_initialize(xprvHost, &xprvEspBusConfig, xprvDmaChannel);
+  spi_bus_add_device(xprvHost, &xprvEspDevice, &xprvSpiHandle);
+  return new EspSpiDriver(xprvHost, xprvSpiHandle, xprvEspTransaction);
+}
+
+
+EspSpiDriver::EspSpiDriver(spi_host_device_t host, spi_device_handle_t handle,
+                           spi_transaction_t transaction)
+{
+
+
+}
+
+void EspSpiDriver::Init()
+{}
+
+void EspSpiDriver::Transmit()
+{
+  error = spi_device_polling_transmit(xHandle, &xTransaction);
+}
+
+void *EspSpiDriver::GetReceiveData()
+{
+  return xTransaction.rx_buffer;
+}
+
+void *EspSpiDriver::GetError()
+{
+  return (void *)error;
+}
