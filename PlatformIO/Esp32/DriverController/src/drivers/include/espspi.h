@@ -33,7 +33,7 @@ class EspSpiBusConfiguratorBuilder : public SpiBusConfiguratorBuilder
     void vSetData6(int iData6) { xprvBusConfiguration.data6_io_num = iData6; };
     void vSetData7(int iData7) { xprvBusConfiguration.data7_io_num = iData7; };
 
-    void *xBuild() override;
+    spi_bus_config_t xBuild() override;
 
   private:
     spi_bus_config_t xprvBusConfiguration;
@@ -60,7 +60,7 @@ public:
   void vSetQueueSize(int uQueueSize) { xprvDeviceConfiguration.queue_size = uQueueSize; };
   void vSetCallBackFunction(transaction_cb_t xCallBackFunction) { xprvDeviceConfiguration.pre_cb = xCallBackFunction; };
 
-  void *xBuild() override;
+  spi_device_interface_config_t xBuild() override;
 
 private:
   spi_device_interface_config_t xprvDeviceConfiguration;
@@ -81,7 +81,7 @@ class EspSpiTransactionBuilder: public SpiTransactionBuilder{
     void vsetTransmitBuffer(void* pvTransmitBuffer) { xprvSpiTransaction.tx_buffer = pvTransmitBuffer; };
     void vsetReceivedBuffer(void* pvReceiveBuffer) { xprvSpiTransaction.rx_buffer = pvReceiveBuffer; };
 
-    void *xBuild() override;
+    spi_transaction_t xBuild() override;
 
   private:
     spi_transaction_t xprvSpiTransaction;
@@ -94,7 +94,12 @@ class EspSpiDriver : public SpiDriver
 
 public:
   EspSpiDriver(spi_host_device_t host, spi_device_handle_t handle,
-               spi_transaction_t transaction);
+               spi_transaction_t transaction) : xHostDevice(host),
+                                                xHandle(handle),
+                                                xTransaction(transaction)
+  {
+    
+  }
   void Init() override;
   void Transmit() override;
   void *GetReceiveData() override;
@@ -111,15 +116,19 @@ class EspSpiBuilder : public SpiBuilder
 {
 public:
   EspSpiBuilder(spi_host_device_t xHost,
-                spi_common_dma_t xDmaChannel):
+                spi_common_dma_t xDmaChannel,
+                uint8_t *xTxBuffer,
+                uint8_t *xRxBuffer):
     xprvHost(xHost),
-    xprvDmaChannel(xDmaChannel){};
+    xprvDmaChannel(xDmaChannel){
 
-  void *xBuild() override;
-  void xBuildBusConfigure(SpiBusConfiguratorBuilder) override;
-  void xBuildTransaction(SpiTransactionBuilder) override;
-  void xBuildDevice(SpiDeviceConfigurationBuilder) override;
+    EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
+    EspSpiDeviceBuilder xprvEspSpiDevice;
+    EspSpiTransactionBuilder xprEspvSpiTransaction(xTxBuffer, xRxBuffer);
+    };
 
+void *xBuild() override;
+  
   void *pvGetBusConfiguration() { return &xprvEspBusConfig; };
   void *pvGetDevice() { return &xprvEspDevice; };
   void *pvGetTransaction() { return &xprvEspTransaction; }

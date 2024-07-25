@@ -62,16 +62,21 @@ void vButtonsTask(void *pvParameters)
   gpio_config(&io_conf);
   gpio_set_level(PARALLEL_LOAD, 1);
 
-  EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
-  EspSpiDeviceBuilder xprvEspSpiDevice;
-  EspSpiTransactionBuilder xprEspvSpiTransaction(uTxBuffer, uRxBuffer);
+  
 
-  SpiBuilder *xSpiBuild = new EspSpiBuilder(SPI2_HOST, SPI_DMA_CH_AUTO);
-  xSpiBuild->xBuildBusConfigure(xprvEspSpiBusConfiguration);
-  xSpiBuild->xBuildDevice(xprvEspSpiDevice);
-  xSpiBuild->xBuildTransaction(xprEspvSpiTransaction);
+  EspSpiBuilder *xSpiBuild = new EspSpiBuilder(SPI2_HOST, SPI_DMA_CH_AUTO);
+  
 
-  SpiDriver *xSpiDriver = static_cast<SpiDriver *>(xSpiBuild->xBuild());
+
+
+  xprvEspSpiBusConfiguration.xBuild();
+
+  
+  // xSpiBuild->xBuildBusConfigure(xprvEspSpiBusConfiguration);
+  // xSpiBuild->xBuildDevice(xprvEspSpiDevice);
+  // xSpiBuild->xBuildTransaction(xprEspvSpiTransaction);
+
+  //SpiDriver *xSpiDriver = static_cast<SpiDriver *>(xSpiBuild->xBuild());
 
   // memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction)); // Zero out the transaction
   // prvxSpiTransaction.length = 16;                             // Command is 8 bits
@@ -89,9 +94,9 @@ void vButtonsTask(void *pvParameters)
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
-    xSpiDriver->Transmit();
-    pxReturnCode = *(static_cast<esp_err_t *>(xSpiDriver->GetError()));
-    uPreviousDriverControllerButtons = *(static_cast<uint16_t *>(xSpiDriver->GetReceiveData()));
+    // xSpiDriver->Transmit();
+    // pxReturnCode = *(static_cast<esp_err_t *>(xSpiDriver->GetError()));
+    // uPreviousDriverControllerButtons = *(static_cast<uint16_t *>(xSpiDriver->GetReceiveData()));
     // pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
 
     assert(pxReturnCode == ESP_OK);

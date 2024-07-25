@@ -7,107 +7,55 @@
 
 
 /// @brief /////////////////////
-EspSpiBusConfiguratorBuilder::EspSpiBusConfiguratorBuilder()
-{
-  
-  this->xprvBusConfiguration.data1_io_num = NODEF;
-  this->xprvBusConfiguration.data2_io_num = NODEF;
-  this->xprvBusConfiguration.data3_io_num = NODEF;
-  this->xprvBusConfiguration.data4_io_num = NODEF;
-  this->xprvBusConfiguration.data5_io_num = NODEF;
-  this->xprvBusConfiguration.data6_io_num = NODEF;
-  this->xprvBusConfiguration.data7_io_num = NODEF;
-
-}
-
-void *EspSpiBusConfiguratorBuilder::xBuild() 
-{
-  /*Configure the Bus Interface */
-#ifndef configREMOTE
-  vSetMosi(PIN_NUM_MOSI);
-#endif
-  vSetClocK(PIN_NUM_CLK);
-  vSetMiso(PIN_NUM_MISO);
-  vSetMaxTransfer(NUM_BITS);
-
-  return &xprvBusConfiguration;
-}
-
-/// @brief //////////////
-EspSpiDeviceBuilder::EspSpiDeviceBuilder()
-{
-  memset(&xprvDeviceConfiguration, 0x0, sizeof(xprvDeviceConfiguration));
-}
-
-void *EspSpiDeviceBuilder::xBuild()
-{
-#ifndef configREMOTE
-  vSetChipSelect(GPIO_NUM_1);
-  vSetFlags(SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST);
-  #endif
-    vSetMode(1);
-    vSetClockSpeed(1 * 1000 * 1000);
-    vSetQueueSize(1);
-    vSetCallBackFunction(NULL);
-
-    return &xprvDeviceConfiguration;
-}
-
-    /// @brief //////////////////
-EspSpiTransactionBuilder::EspSpiTransactionBuilder(uint8_t *puTxBuffer, uint8_t *puRxBuffer)
-{
-  memset(&xprvSpiTransaction, 0x0, sizeof(xprvSpiTransaction));
-  assert(puTxBuffer != NULL);
-  assert(puRxBuffer != NULL);
-
-  prvuTxBuffer = puTxBuffer;
-  prvuRxBuffer = puRxBuffer;
-}
-
-void *EspSpiTransactionBuilder::xBuild()
-{
-  vsetLength(16);
-  vsetReceiveLength(16);
-  vsetReceivedBuffer(prvuRxBuffer);
-  vsetTransmitBuffer(prvuTxBuffer);
-
-  return &xprvSpiTransaction;
-}
-
-/// @brief ////////////////
-void EspSpiBuilder::xBuildBusConfigure(SpiBusConfiguratorBuilder Builder)
-{
-  xprvEspBusConfig =*((spi_bus_config_t *)Builder.xBuild());
-}
-
-void EspSpiBuilder::xBuildTransaction(SpiTransactionBuilder Builder)
-{
- xprvEspTransaction =*((spi_transaction_t *)Builder.xBuild());
-}
-
-void EspSpiBuilder::xBuildDevice(SpiDeviceConfigurationBuilder Builder)
-{
-  xprvEspDevice = *((spi_device_interface_config_t *)Builder.xBuild());
-}
-
 void *EspSpiBuilder::xBuild()
 {
+
+  EspSpiBusConfiguratorBuilder xprvEspSpiBusConfiguration;
+  EspSpiDeviceBuilder xprvEspSpiDevice;
+  EspSpiTransactionBuilder xprEspvSpiTransaction(xTxBuffer, xRxBuffer);
+  xprvEspBusConfig = xprvEspSpiBusConfiguration.xBuild();
 
   spi_bus_initialize(xprvHost, &xprvEspBusConfig, xprvDmaChannel);
   spi_bus_add_device(xprvHost, &xprvEspDevice, &xprvSpiHandle);
   return new EspSpiDriver(xprvHost, xprvSpiHandle, xprvEspTransaction);
 }
 
-
-EspSpiDriver::EspSpiDriver(spi_host_device_t host, spi_device_handle_t handle,
-                           spi_transaction_t transaction)
+void EspSpiDriver::Init()
 {
 
+  spi_bus_config_t buscfg =
+  {
+#ifdef configREMOTE
+  .mosi_io_num = -1,
+#else
+  .mosi_io_num = PIN_NUM_MOSI,
+#endif
+  .miso_io_num = PIN_NUM_MISO,
+  .sclk_io_num = PIN_NUM_CLK,
+  .quadwp_io_num = -1,
+  .quadhd_io_num = -1,
+  .max_transfer_sz = NUM_BITS
+  };
 
+/* define spi device configuration */
+  spi_device_interface_config_t devcfg =
+  {
+#ifdef configREMOTE
+    .mode = 2,
+#else
+    .mode = 1,    
+#endif                     // SPI mode 0
+    .clock_speed_hz = 1 * 1000 * 1000, // Clock out at 1 MHz
+#ifdef configREMOTE
+    .spics_io_num = -1, // CS pin
+#else
+    .spics_io_num = TLEMOTORCHIPSELECT, // CS pin
+    .flags = SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST,
+#endif
+    .queue_size = 1, // We want to be able to queue 7 transactions at a time
+    .pre_cb = NULL   // Specify pre-transfer callback to handle D/C line
+  };
 }
-
-void EspSpiDriver::Init()
-{}
 
 void EspSpiDriver::Transmit()
 {
