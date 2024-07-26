@@ -13,7 +13,11 @@
 class EspSpiBusSetUp
 {
 public:
-  EspSpiBusSetUp(spi_bus_config_t &xBusSetUP) : xprvBusConfiguration(xBusSetUP) {}
+  EspSpiBusSetUp(spi_bus_config_t &xBusSetUP) : xprvBusConfiguration(xBusSetUP) 
+  {
+
+    memset(&xprvBusConfiguration, 0x0, sizeof(xprvBusConfiguration));
+  }
 
   void vSetMiso(int iMiso) { xprvBusConfiguration.miso_io_num = iMiso; };
   void vSetMosi(int iMosi) { xprvBusConfiguration.mosi_io_num = iMosi; };
@@ -42,6 +46,7 @@ class EspSpiDeviceSetUp
 public:
   EspSpiDeviceSetUp(spi_device_interface_config_t &xDeviceSetUp) : xprvDeviceConfiguration(xDeviceSetUp)
   {
+    memset(&xprvDeviceConfiguration, 0x0, sizeof(xprvDeviceConfiguration));
   }
   void vSetCommandBits(uint8_t uCommandBits){xprvDeviceConfiguration.command_bits = uCommandBits;};
   void vSetAddresBits(uint8_t uAddressBits) { xprvDeviceConfiguration.address_bits = uAddressBits; };
@@ -68,7 +73,10 @@ public:
   EspSpiTransactionSetUp(uint8_t *puTxBuffer, uint8_t *puRxBuffer,
                          spi_transaction_t &xTransactionSetUp) : prvuTxBuffer(puTxBuffer),
                                                                  prvuRxBuffer(puRxBuffer),
-                                                                 xprvSpiTransaction(xTransactionSetUp) {}
+                                                                 xprvSpiTransaction(xTransactionSetUp) 
+  {
+    memset(&xprvSpiTransaction, 0x0, sizeof(xprvSpiTransaction));
+  }
   void vsetFlags(uint32_t uFlags) { xprvSpiTransaction.flags = uFlags; };
   void vsetCommand(uint16_t uCommand) { xprvSpiTransaction.cmd = uCommand; };
   void vsetAddress(uint64_t uAddress) { xprvSpiTransaction.addr = uAddress; };

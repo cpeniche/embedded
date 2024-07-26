@@ -41,14 +41,13 @@ typedef struct
 } __attribute__((packed)) stMessageType;
 
 stMessageType xMessage =
-{
-              /*mesageid , readwrite, datatype*/
-    .xHeader= {0x55,1,eUNSIGNED16},
-    .data={0}
-};
+    {
+        /*mesageid , readwrite, datatype*/
+        .xHeader = {0x55, 1, eUNSIGNED16},
+        .data = {0}};
 
 spi_device_handle_t xprvSpiHandle;
-uint8_t uRxBuffer[2] = {0};
+uint16_t uRxBuffer;
 
 /*********** vSpiTask* ***************/
 
@@ -57,42 +56,38 @@ void vButtonsTask(void *pvParameters)
 
   EventBits_t pxESPNowEvents;
   uint8_t uprvRetry = 0;
-  
+  esp_err_t pxReturnCode = ESP_OK;
+
   gpio_config(&io_conf);
   gpio_set_level(PARALLEL_LOAD, 1);
 
-  //SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
-  EspSpiBuilder xprvEspSpiBuilder(nullptr, uRxBuffer);
-  SpiBuilder *xprvSpiBuilder = dynamic_cast<SpiBuilder *> (&xprvEspSpiBuilder);
-  Spi *xprvSpi=xprvSpiBuilder->xBuild();
+  SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
+  Spi *xprvSpi = xprvSpiBuilder->xBuild();
+  delete xprvSpiBuilder;
 
   xprvSpi->Init();
-  // memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction)); // Zero out the transaction
-  // prvxSpiTransaction.length = 16;                             // Command is 8 bits
-  // prvxSpiTransaction.tx_buffer = NULL;                        // The data is the cmd itself
-  // prvxSpiTransaction.rx_buffer = &(xMessage.data);
-  // prvxSpiTransaction.user = (void *)0; // D/C needs to be set to 0
-  // prvxSpiTransaction.rxlength = 16;
+  pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
+  if (pxReturnCode != ESP_OK)
+  {
+    ESP_LOGE(TAG, "Spi Initialization Error : %d", pxReturnCode);
+    assert(pxReturnCode == ESP_OK);
+  }
 
   ESP_LOGI(TAG, "Buttons Task Started");
   while (1)
   {
-    esp_err_t pxReturnCode;
+
     /* Latch parallel inputs*/
     gpio_set_level(PARALLEL_LOAD, 0);
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
-   
     xprvSpi->Transmit();
     pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
-    uPreviousDriverControllerButtons = *(static_cast<uint16_t *>(xprvSpi->GetReceiveData()));
-    //pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
-
     assert(pxReturnCode == ESP_OK);
 
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
-
+    
     if (uPreviousDriverControllerButtons != xMessage.data)
     {
 

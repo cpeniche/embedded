@@ -204,7 +204,7 @@ extern "C" void app_main(void)
   /* Create a mutex without using any dynamic memory allocation. */
   xSpiSemaphoreHandle = xSemaphoreCreateMutexStatic(&xSemaphoreStaticBuffer);
 
-  xSleepTimer = xTimerCreateStatic("SleepTimer", pdMS_TO_TICKS(10000), pdFALSE, NULL,
+  xSleepTimer = xTimerCreateStatic("SleepTimer", pdMS_TO_TICKS(60000), pdFALSE, NULL,
                                    vTimerCallback, &xTimerBuffer);
 
   /* Initilize SPi*/
@@ -239,13 +239,13 @@ extern "C" void app_main(void)
   /* Create Motor task for latch, windows and mirrors*/
   xTaskCreate(vMotorsTask,
               "Motors_task",
-              4096,
+              8192,
               (void *)0,
               tskIDLE_PRIORITY,
               NULL);
 #endif
 
-  xTimerStart(xSleepTimer, 0);
+  xTimerStop(xSleepTimer, 0);
 }
 
 /************ vprvEnableSleepMode ********************/
