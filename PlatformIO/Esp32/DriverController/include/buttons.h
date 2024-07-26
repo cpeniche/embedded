@@ -32,7 +32,7 @@ extern "C"{
 #define MIRROR_SIGNALS  (MIRROR_MOVE_UP | MIRROR_SELECT_LEFT | MIRROR_SELECT_RIGHT \
                          | MIRROR_MOVE_DOWN | MIRROR_MOVE_LEFT | MIRROR_MOVE_RIGHT)
 
-#define BUTTON_TASK_STACK_SIZE  4096
+#define BUTTON_TASK_STACK_SIZE  8192
 extern void vButtonsTask(void *pvParameters);
 extern uint16_t uButtons;
 extern SemaphoreHandle_t xSpiSemaphoreHandle;

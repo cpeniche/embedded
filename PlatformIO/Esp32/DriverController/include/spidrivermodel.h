@@ -4,11 +4,11 @@
 #define NODEF -1
 
 /* Virtual Classes*/
-class SpiDriver
+class Spi
 {
 
 public:
-  virtual ~SpiDriver(){};
+  virtual ~Spi(){};
   virtual void Init()  = 0;
   virtual void Transmit()  = 0;
   virtual void *GetReceiveData() = 0;
@@ -17,7 +17,7 @@ public:
 
 class SpiBuilder{
 public:
-  virtual ~SpiBuilder() {};  
-  virtual void *xBuild() = 0;
+  virtual ~SpiBuilder() {};
+  virtual Spi *xBuild() = 0;
   ;
 };

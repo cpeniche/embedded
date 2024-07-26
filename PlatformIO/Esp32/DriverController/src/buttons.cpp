@@ -48,7 +48,6 @@ stMessageType xMessage =
 };
 
 spi_device_handle_t xprvSpiHandle;
-uint8_t uTxBuffer[2] = {0};
 uint8_t uRxBuffer[2] = {0};
 
 /*********** vSpiTask* ***************/
@@ -62,22 +61,12 @@ void vButtonsTask(void *pvParameters)
   gpio_config(&io_conf);
   gpio_set_level(PARALLEL_LOAD, 1);
 
-  
+  //SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
+  EspSpiBuilder xprvEspSpiBuilder(nullptr, uRxBuffer);
+  SpiBuilder *xprvSpiBuilder = dynamic_cast<SpiBuilder *> (&xprvEspSpiBuilder);
+  Spi *xprvSpi=xprvSpiBuilder->xBuild();
 
-  EspSpiBuilder *xSpiBuild = new EspSpiBuilder(SPI2_HOST, SPI_DMA_CH_AUTO);
-  
-
-
-
-  xprvEspSpiBusConfiguration.xBuild();
-
-  
-  // xSpiBuild->xBuildBusConfigure(xprvEspSpiBusConfiguration);
-  // xSpiBuild->xBuildDevice(xprvEspSpiDevice);
-  // xSpiBuild->xBuildTransaction(xprEspvSpiTransaction);
-
-  //SpiDriver *xSpiDriver = static_cast<SpiDriver *>(xSpiBuild->xBuild());
-
+  xprvSpi->Init();
   // memset(&prvxSpiTransaction, 0, sizeof(prvxSpiTransaction)); // Zero out the transaction
   // prvxSpiTransaction.length = 16;                             // Command is 8 bits
   // prvxSpiTransaction.tx_buffer = NULL;                        // The data is the cmd itself
@@ -94,10 +83,11 @@ void vButtonsTask(void *pvParameters)
     vTaskDelay(pdMS_TO_TICKS(5));
     gpio_set_level(PARALLEL_LOAD, 1);
 
-    // xSpiDriver->Transmit();
-    // pxReturnCode = *(static_cast<esp_err_t *>(xSpiDriver->GetError()));
-    // uPreviousDriverControllerButtons = *(static_cast<uint16_t *>(xSpiDriver->GetReceiveData()));
-    // pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
+   
+    xprvSpi->Transmit();
+    pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
+    uPreviousDriverControllerButtons = *(static_cast<uint16_t *>(xprvSpi->GetReceiveData()));
+    //pxReturnCode = spi_device_polling_transmit(spi, &prvxSpiTransaction);
 
     assert(pxReturnCode == ESP_OK);
 
