@@ -13,41 +13,83 @@
 #include "driver/gpio.h"
 #include "esp_now.h"
 #include "espNow.h"
-#include "buttons.h"
-#include "dictionary.h"
-#include "motors.h"
 #include "spidrivermodel.h"
 #include "drivers/include/espspi.h"
+#include "dictionary.h"
+#include "buttons.h"
+#include "motors.h"
+
 #include "main.h"
+
 
 static const char *TAG = "Buttons_Task";
 #define PARALLEL_LOAD GPIO_NUM_9
 
-gpio_config_t io_conf = {
-    .pin_bit_mask = 1 << PARALLEL_LOAD,
-    .mode = GPIO_MODE_OUTPUT,
-    .pull_up_en = GPIO_PULLUP_DISABLE,
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .intr_type = GPIO_INTR_DISABLE,
-};
-
-uint16_t uPreviousDriverControllerButtons;
-
-typedef struct
+Buttons::Buttons()
 {
-  stMessageHeader xHeader;
-  uint16_t data;
-  /* data */
-} __attribute__((packed)) stMessageType;
+  gpio_config_t io_conf = {
+      .pin_bit_mask = 1 << PARALLEL_LOAD,
+      .mode = GPIO_MODE_OUTPUT,
+      .pull_up_en = GPIO_PULLUP_DISABLE,
+      .pull_down_en = GPIO_PULLDOWN_DISABLE,
+      .intr_type = GPIO_INTR_DISABLE,
+  };
+  
+  gpio_config(&io_conf);
+  gpio_set_level(PARALLEL_LOAD, 1);
 
-stMessageType xMessage =
-    {
-        /*mesageid , readwrite, datatype*/
-        .xHeader = {0x55, 1, eUNSIGNED16},
-        .data = {0}};
+  /* Create Spi Configuration */
+  SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
+  Spi *xprvSpi = xprvSpiBuilder->xBuild();
+  delete xprvSpiBuilder;
 
-spi_device_handle_t xprvSpiHandle;
-uint16_t uRxBuffer;
+  xprvSpi->Init();
+  xprvError = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
+  if (xprvError != ESP_OK)
+  {
+    ESP_LOGE(TAG, "Spi Initialization Error : %d", xprvError);
+    assert(xprvError == ESP_OK);
+  }
+}
+
+void Buttons::vReadButtons()
+{
+  /* Latch parallel inputs*/
+  gpio_set_level(PARALLEL_LOAD, 0);
+  vTaskDelay(pdMS_TO_TICKS(5));
+  gpio_set_level(PARALLEL_LOAD, 1);
+  xprvSpi->Transmit();
+  xprvError = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
+  assert(xprvError == ESP_OK);
+}
+
+bool Buttons::bBottonsChanged()
+{
+  bool bprvReturn;
+  bprvReturn = uprvPreviousButtonsState != xMessage.data;
+  uprvPreviousButtonsState = xMessage.data;
+  return bprvReturn;
+}
+
+void Buttons::vSendEspNowMessage(uint8_t *upprvReceiver)
+{
+  /* Send Data over ESP Now*/
+  xprvError = esp_now_send(upprvReceiver, (uint8_t *)&xMessage, sizeof(xMessage));
+}
+
+bool Buttons::bIsThereAnError()
+{
+  return ESP_NOW_SEND_SUCCESS != xprvError;
+}
+
+esp_err_t Buttons::xGetError()
+{
+
+  ESP_LOGI(TAG, "esp_now_send function return code : %d", xprvError);
+  return xprvError;
+}
+
+
 
 /*********** vSpiTask* ***************/
 
@@ -56,51 +98,24 @@ void vButtonsTask(void *pvParameters)
 
   EventBits_t pxESPNowEvents;
   uint8_t uprvRetry = 0;
-  esp_err_t pxReturnCode = ESP_OK;
-
-  gpio_config(&io_conf);
-  gpio_set_level(PARALLEL_LOAD, 1);
-
-  SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
-  Spi *xprvSpi = xprvSpiBuilder->xBuild();
-  delete xprvSpiBuilder;
-
-  xprvSpi->Init();
-  pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
-  if (pxReturnCode != ESP_OK)
-  {
-    ESP_LOGE(TAG, "Spi Initialization Error : %d", pxReturnCode);
-    assert(pxReturnCode == ESP_OK);
-  }
+  Buttons *buttons = new Buttons();
 
   ESP_LOGI(TAG, "Buttons Task Started");
-  while (1)
+  while (true)
   {
-
-    /* Latch parallel inputs*/
-    gpio_set_level(PARALLEL_LOAD, 0);
-    vTaskDelay(pdMS_TO_TICKS(5));
-    gpio_set_level(PARALLEL_LOAD, 1);
-
-    xprvSpi->Transmit();
-    pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
-    assert(pxReturnCode == ESP_OK);
-
+    buttons->vReadButtons();
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
-    
-    if (uPreviousDriverControllerButtons != xMessage.data)
+
+    /* Buttons Changed, need to send a new EspNow Message */
+    if (buttons->bBottonsChanged())
     {
 
       ResetSleepTimer();
-      ESP_LOGI(TAG, "SPI Buttons Changed to : %x", xMessage.data);
-      uPreviousDriverControllerButtons = xMessage.data;
 
-      /* Send Data over ESP Now*/
-      pxReturnCode = esp_now_send(uBroadCastMAC, (uint8_t *)&xMessage, sizeof(xMessage));
-      ESP_LOGI(TAG, "esp_now_send function return code : %d", pxReturnCode);
+      buttons->vSendEspNowMessage(uBroadCastMAC);
 
       /* if send function return sucess*/
-      if (ESP_NOW_SEND_SUCCESS == pxReturnCode)
+      if (buttons->bIsThereAnError())
       {
 
         /* Check with callback function for the
@@ -114,7 +129,7 @@ void vButtonsTask(void *pvParameters)
           if (pxESPNowEvents == (1 << eESPNOW_TRANSMIT_ERROR | 1 << eESPNOW_INIT_DONE))
           {
             ESP_LOGI(TAG, "ESP_NOW Transmit Error, Retry");
-            esp_now_send(uDriverControlMAC, (uint8_t *)&xMessage, sizeof(xMessage));
+            buttons->vSendEspNowMessage(uBroadCastMAC);
             xEventGroupClearBits(xESPnowEventGroupHandle, 1 << eESPNOW_TRANSMIT_ERROR);
             uprvRetry++;
             vTaskDelay(pdMS_TO_TICKS(2000));
@@ -133,30 +148,4 @@ void vButtonsTask(void *pvParameters)
       }
     }
   }
-}
-
-void vButtonsCallBack(uint8_t uprvParameters)
-{
-
-  eMOTOR_TYPE xprivItemToQueue;
-
-  if ((DOOR_SIGNALS & uButtons) != 0x0)
-  {
-    xprivItemToQueue = eLATCHMOTORDRIVER;
-    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
-  }
-
-  if ((WINDOW_SIGNALS & uButtons) != 0x0)
-  {
-    xprivItemToQueue = eWINDOWMOTORDRIVER;
-    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
-  }
-
-  if ((MIRROR_SIGNALS & uButtons) != 0x0)
-  {
-    xprivItemToQueue = eMIRRORMOTORDRIVER;
-    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
-  }
-
-  gpio_set_level(WINDOWMOTOR_PWM, 0);
 }

@@ -31,7 +31,7 @@ EspSpiBuilder::EspSpiBuilder(uint8_t *xTxBuffer,
   xprvEspSpiDevice.vSetChipSelect(GPIO_NUM_NC);
   xprvEspSpiDevice.vSetMode(2);
 #else
-  xprvEspSpiDevice.vSetChipSelect(GPIO_NUM_1);
+  xprvEspSpiDevice.vSetChipSelect(GPIO_NUM_13);
   xprvEspSpiDevice.vSetMode(1);
   xprvEspSpiDevice.vSetFlags(SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST);
 #endif

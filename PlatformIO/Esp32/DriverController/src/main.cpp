@@ -34,10 +34,11 @@
 #include "esp_system.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
+#include "spidrivermodel.h"
 #include "esp_now.h"
 #include "espNow.h"
-#include "buttons.h"
 #include "dictionary.h"
+#include "buttons.h"
 #include "motors.h"
 #include "main.h"
 
@@ -166,29 +167,6 @@ void Configure_Can_Module()
 }
 #endif
 
-void vprvInitilizeSPI(void)
-{
-
-  esp_err_t pxReturnCode=0;
-  BaseType_t xSpiSemaphoreStatus;
-  
-  // Initialize the SPI bus
-  if ((xSpiSemaphoreStatus = xSemaphoreTake(xSpiSemaphoreHandle, portMAX_DELAY)) == pdTRUE)
-  {
-    //pxReturnCode = spi_bus_initialize(SPI2_HOST, &(xprvBusBuilder->xBuild()), SPI_DMA_CH_AUTO);
-
-    ESP_ERROR_CHECK(pxReturnCode);
-
-    // Attach the spi device to the SPI bus
-    
-    //pxReturnCode = spi_bus_add_device(SPI2_HOST, &xprvDeviceConfiguration, &spi);
-    ESP_ERROR_CHECK(pxReturnCode);
-
-    xSemaphoreGive(xSpiSemaphoreHandle);
-  }
-  assert(xSpiSemaphoreStatus == pdPASS);
-}
-
 void vTimerCallback(TimerHandle_t xTimer)
 {
 
@@ -206,9 +184,6 @@ extern "C" void app_main(void)
 
   xSleepTimer = xTimerCreateStatic("SleepTimer", pdMS_TO_TICKS(60000), pdFALSE, NULL,
                                    vTimerCallback, &xTimerBuffer);
-
-  /* Initilize SPi*/
-  vprvInitilizeSPI();
 
   /* Enable Sleep Mode*/
   vprvEnableSleepModeWakeUp();
@@ -244,8 +219,6 @@ extern "C" void app_main(void)
               tskIDLE_PRIORITY,
               NULL);
 #endif
-
-  xTimerStop(xSleepTimer, 0);
 }
 
 /************ vprvEnableSleepMode ********************/

@@ -8,7 +8,7 @@
 #include "freertos/semphr.h"
 #include "freertos/timers.h"
 #include "driver/spi_master.h"
-#include "buttons.h"
+#include "motors.h"
 #include "dictionary.h"
 #include "main.h"
 
@@ -18,38 +18,35 @@ void vprvGetCastedData(void *vpprvElement, eDataTYPE eprvDataType, void *vpprvDe
 int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength);
 int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId);
 
-stQueueList *xpQueue=NULL;
-stQueueList *xpQueueIndex=NULL;
-stQueueList *xpProcessDataIndex=NULL;
+stQueueList *xpQueue = NULL;
+stQueueList *xpQueueIndex = NULL;
+stQueueList *xpProcessDataIndex = NULL;
 
 SemaphoreHandle_t xQueueSemaphore;
 StaticSemaphore_t xSemaphoreBuffer;
 
+stDictionary *xpDictionaryEntry = NULL;
 
-stDictionary *xpDictionaryEntry=NULL;
-
-stDictionary xDictionary[configDICTIONARYSIZE]=
-{
-  {.uMessageId=0x44,.eDataType=eUNSIGNED16,.pvData=NULL,.vCallback=NULL},
-  {.uMessageId=0x55,.eDataType=eUNSIGNED16,.pvData=&uButtons,.vCallback=vButtonsCallBack},
-  {.uMessageId=DELIMITER}
-};
+stDictionary xDictionary[configDICTIONARYSIZE] =
+    {
+        {.uMessageId = 0x44, .eDataType = eUNSIGNED16, .vCallback = NULL},
+        {.uMessageId = 0x55, .eDataType = eUNSIGNED16, .vCallback = vESPNowMessageProcessButtonsCallBack},
+        {.uMessageId = DELIMITER}};
 
 SemaphoreHandle_t xDictionaryCreateQueueSemaphore()
 {
 
   /* Create a mutex without using any dynamic memory allocation. */
-  xQueueSemaphore = xSemaphoreCreateMutexStatic( &xSemaphoreBuffer );
+  xQueueSemaphore = xSemaphoreCreateMutexStatic(&xSemaphoreBuffer);
 
-  return  xQueueSemaphore;
+  return xQueueSemaphore;
 }
 
-
 /******************* xpCreateNode *************************/
-stQueueList* xpCreateNode()
+stQueueList *xpCreateNode()
 {
 
-  stQueueList *xprvNewNode=NULL;
+  stQueueList *xprvNewNode = NULL;
 
   xprvNewNode = malloc(sizeof(stQueueList));
   if (xprvNewNode != NULL)
@@ -61,7 +58,7 @@ stQueueList* xpCreateNode()
 /***************** uAddDataToQueue ***************************/
 int8_t iDictionaryAddDataToQueue(void *pvprvData, int iprvLength)
 {
-  
+
   /* If no elements, Create one node and point
      indexes to first element
   */
@@ -69,62 +66,62 @@ int8_t iDictionaryAddDataToQueue(void *pvprvData, int iprvLength)
   {
     /* Create Element*/
     xpQueue = xpCreateNode();
-      if(xpQueue == NULL)
-        return -1;
-    
-    /* Update Indexes */    
-    xpQueueIndex=xpQueue;
-    xpProcessDataIndex=xpQueue;    
+    if (xpQueue == NULL)
+      return -1;
+
+    /* Update Indexes */
+    xpQueueIndex = xpQueue;
+    xpProcessDataIndex = xpQueue;
   }
-  else{
+  else
+  {
 
     /* Create a new Node*/
-    xpQueueIndex->xpNextElement=xpCreateNode();
-    if(xpQueueIndex->xpNextElement == NULL)
-        return -1;
+    xpQueueIndex->xpNextElement = xpCreateNode();
+    if (xpQueueIndex->xpNextElement == NULL)
+      return -1;
 
-    /* Link the new node to the list*/    
-    xpQueueIndex = xpQueueIndex->xpNextElement;    
+    /* Link the new node to the list*/
+    xpQueueIndex = xpQueueIndex->xpNextElement;
   }
   /* Copy Data to the new Element */
-  xpQueueIndex->vpQueueData=malloc(iprvLength*sizeof(uint8_t));
+  xpQueueIndex->vpQueueData = malloc(iprvLength * sizeof(uint8_t));
   if (xpQueueIndex->vpQueueData == NULL)
     return -1;
-  memcpy(xpQueueIndex->vpQueueData,pvprvData,iprvLength);
-  xpQueueIndex->xlength=iprvLength;
+  memcpy(xpQueueIndex->vpQueueData, pvprvData, iprvLength);
+  xpQueueIndex->xlength = iprvLength;
 
   return 0;
 }
-
 
 /***************** uAddDataToQueue ***************************/
 int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength)
 {
   /*First In First out*/
 
-  stQueueList *xprvItemToRemove=NULL;
+  stQueueList *xprvItemToRemove = NULL;
 
   /* No Element in Queue*/
-  if(xpQueue == NULL)
+  if (xpQueue == NULL)
     return -1;
- 
+
   *ppvprvData = xpProcessDataIndex->vpQueueData;
-  
-  *piprvLength=xpQueueIndex->xlength;
+
+  *piprvLength = xpQueueIndex->xlength;
 
   /* Remove the node from the queue */
-  xprvItemToRemove=xpProcessDataIndex;
+  xprvItemToRemove = xpProcessDataIndex;
 
   /*Point to next element*/
-  if(xpProcessDataIndex->xpNextElement != NULL)
-    xpProcessDataIndex=xpProcessDataIndex->xpNextElement;
+  if (xpProcessDataIndex->xpNextElement != NULL)
+    xpProcessDataIndex = xpProcessDataIndex->xpNextElement;
 
   /*Remove Processed Element from Queue*/
   free(xprvItemToRemove);
-  if(xprvItemToRemove == xpQueue)
-    xpQueue=NULL;
-  xprvItemToRemove=NULL;
-  
+  if (xprvItemToRemove == xpQueue)
+    xpQueue = NULL;
+  xprvItemToRemove = NULL;
+
   return 0;
 }
 
@@ -132,55 +129,56 @@ int8_t iprvDictionaryGetNextQueueElement(void **ppvprvData, int *piprvLength)
 void vProcessReceivedDataTask(void *pvParameters)
 {
 
-  void *vpprvQueueElement=NULL;
+  void *vpprvQueueElement = NULL;
   int iprvLength;
   int iprvStatus;
-  int8_t iprvIndexInDictionary=0;
+  int8_t iprvIndexInDictionary = 0;
 
   xDictionaryCreateQueueSemaphore();
   ESP_LOGI(TAG, "Data Process Task Started  ");
 
-  while(1)
+  while (1)
   {
-    
+
     /* lookc for Message in Queue */
     while (1)
     {
-      
+
       /* Get Semaphore */
-      if (xSemaphoreTake(xQueueSemaphore,10 ) == pdTRUE)
+      if (xSemaphoreTake(xQueueSemaphore, 10) == pdTRUE)
       {
-                
+
         iprvStatus = iprvDictionaryGetNextQueueElement(&vpprvQueueElement, &iprvLength);
         xSemaphoreGive(xQueueSemaphore);
         /* If there is data to process */
-        if(iprvStatus != -1) 
-        { 
-          /*Look up for the Message Id in Dictionary*/          
+        if (iprvStatus != -1)
+        {
+          /*Look up for the Message Id in Dictionary*/
           iprvIndexInDictionary = iprvDictionaryLookUpMessage(((stMessageHeader *)vpprvQueueElement)->uMessageId);
-          
-          if(iprvIndexInDictionary!=-1)
-          {
-            
-            ResetSleepTimer();
-            
-            /*Get the Dictionary Specifications*/
-            xpDictionaryEntry=&xDictionary[iprvIndexInDictionary];
 
-            /* Cast the received data according to the Data Type enum*/
-            if(xpDictionaryEntry->pvData != NULL)
-              vprvGetCastedData(vpprvQueueElement, 
-                             xpDictionaryEntry->eDataType,
-                             xpDictionaryEntry->pvData);
+          if (iprvIndexInDictionary != -1)
+          {
+
+            ResetSleepTimer();
+
+            /*Get the Dictionary Specifications*/
+            xpDictionaryEntry = &xDictionary[iprvIndexInDictionary];
+
+            /* Cast the received data according to the Data Type enum
+            vprvGetCastedData(vpprvQueueElement,
+                              xpDictionaryEntry->eDataType,
+                              xpDictionaryEntry->pvData);*/
 
             /* If Callback defined, execute it*/
-            if(xpDictionaryEntry->vCallback != NULL)
-              xDictionary[iprvIndexInDictionary].vCallback(((stMessageHeader *)vpprvQueueElement)->uReadWrite); 
+            if (xpDictionaryEntry->vCallback != NULL)
+              xDictionary[iprvIndexInDictionary].vCallback(((stMessageHeader *)vpprvQueueElement)->uReadWrite,
+                                                           xpDictionaryEntry->eDataType,
+                                                           (vpprvQueueElement + sizeof(stMessageHeader)));
 
-            /* free the memory where the received data was store*/  
-            free(vpprvQueueElement);                                
-          }        
-        }                
+            /* free the memory where the received data was store*/
+            free(vpprvQueueElement);
+          }
+        }
       }
     }
   }
@@ -190,14 +188,14 @@ void vProcessReceivedDataTask(void *pvParameters)
 int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
 {
 
-  int8_t uprvIndex=0;
-  
+  int8_t uprvIndex = 0;
+
   /* First byte is the Message ID*/
-  while(xDictionary[uprvIndex].uMessageId != DELIMITER)
+  while (xDictionary[uprvIndex].uMessageId != DELIMITER)
   {
 
     /* Message id found, return index*/
-    if(xDictionary[uprvIndex].uMessageId == uprvMessageId)
+    if (xDictionary[uprvIndex].uMessageId == uprvMessageId)
     {
       return uprvIndex;
     }
@@ -208,28 +206,25 @@ int8_t iprvDictionaryLookUpMessage(uint8_t uprvMessageId)
 }
 
 /********************* vprvGetCastedData ********************* */
-void vprvGetCastedData(void *vpprvElement, eDataTYPE eprvDataType, void *vpprvDest)
+void vGetCastedData(void *vpprvData, eDataTYPE eprvDataType, void *vpprvDest)
 {
 
-  /*Point to the Data type element on the Message Received*/
-  void *vpprvDataPosition = vpprvElement + sizeof(stMessageHeader);
+  switch (eprvDataType)
+  {
+  case eUNSIGEND8:
+    *((uint8_t *)vpprvDest) = *((uint8_t *)vpprvData);
+    break;
 
-  switch(eprvDataType)
-  { 
-    case eUNSIGEND8:
-      *((uint8_t*)vpprvDest)= *((uint8_t*)vpprvDataPosition);
-      break;
+  case eSIGNED8:
+    *((int8_t *)vpprvDest) = *((int8_t *)vpprvData);
+    break;
 
-    case eSIGNED8:
-       *((int8_t*)vpprvDest)= *((int8_t*)vpprvDataPosition);
-      break;
+  case eUNSIGNED16:
+    *((uint16_t *)vpprvDest) = *((uint16_t *)vpprvData);
+    break;
 
-    case eUNSIGNED16:
-       *((uint16_t*)vpprvDest)= *((uint16_t*)vpprvDataPosition);
-      break;    
-
-    default:
+  default:
   }
 
-  ESP_LOGI(TAG, "Data Received Value : %x", *((uint16_t*)vpprvDest));
+  ESP_LOGI(TAG, "Data Received Value : %x", *((uint16_t *)vpprvDest));
 }

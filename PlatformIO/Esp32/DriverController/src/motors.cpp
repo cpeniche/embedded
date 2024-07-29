@@ -10,10 +10,10 @@
 #include "driver/gpio.h"
 #include "esp_now.h"
 #include "espNow.h"
-#include "buttons.h"
-#include "dictionary.h"
-#include "motors.h"
 #include "spidrivermodel.h"
+#include "dictionary.h"
+#include "buttons.h"
+#include "motors.h"
 #include "drivers/include/espspi.h"
 #include "main.h"
 
@@ -26,6 +26,7 @@ static const char *NOMOVE = "NO MOVE\0";
 
 /* The variable used to hold the queue's data structure. */
 static StaticQueue_t xMotorsStaticQueue;
+uint16_t uButtons;
 
 /* The array to use as the queue's storage area. This must be at least
 (uxQueueLength * uxItemSize) bytes. */
@@ -53,7 +54,6 @@ gpio_config_t xprvMotorsIOConfiguration = {
 
 };
 
-uint16_t uButtons;
 eMOTOR_TYPE eMotorFunctionSelect = eNOMOTOR;
 spi_transaction_t prvxSpiTransaction;
 xTleTxMessageType xTLETxMessage;
@@ -191,4 +191,34 @@ void vprvMirrorMotorDriver(Spi *vpArgs)
   }
 
   // ESP_LOGI(TAG, " %s Executed",__func__);
+}
+
+
+
+void vESPNowMessageProcessButtonsCallBack(uint8_t uprvRW, eDataTYPE xprvDataType, void *uprvParameters)
+{
+
+  eMOTOR_TYPE xprivItemToQueue;
+
+  vGetCastedData(uprvParameters, xprvDataType, &uButtons);
+
+  if ((DOOR_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue = eLATCHMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
+  }
+
+  if ((WINDOW_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue = eWINDOWMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
+  }
+
+  if ((MIRROR_SIGNALS & uButtons) != 0x0)
+  {
+    xprivItemToQueue = eMIRRORMOTORDRIVER;
+    xQueueSendToBack(xMotorQueue, &xprivItemToQueue, 10);
+  }
+
+  gpio_set_level(WINDOWMOTOR_PWM, 0);
 }
