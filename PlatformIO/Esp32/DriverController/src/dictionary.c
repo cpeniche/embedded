@@ -8,8 +8,8 @@
 #include "freertos/semphr.h"
 #include "freertos/timers.h"
 #include "driver/spi_master.h"
-#include "motors.h"
 #include "dictionary.h"
+#include "motors.h"
 #include "main.h"
 
 static const char *TAG = "Dictionary_Task";

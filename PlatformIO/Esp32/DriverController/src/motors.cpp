@@ -75,7 +75,6 @@ void vMotorsTask(void *pvParameters)
   gpio_config(&xprvMotorsIOConfiguration);
   gpio_set_level(LATCHMOTORPHASE, 0);
   gpio_set_level(LATCHMOTORENABLE, 0);
-  // gpio_set_level(TLEMOTORCHIPSELECT, 1);
   gpio_set_level(TLEMOTORENABLE, 1);
 
   SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(reinterpret_cast<uint8_t *>(&(xTLETxMessage)),
@@ -154,6 +153,7 @@ void vprvMirrorMotorDriver(Spi *vpArgs)
     uButtons &= (~MIRROR_SELECT_LEFT);
     xTLETxMessage.uData = 0x0;
     memcpy(&uprvMessage, NOMOVE, strlen(NOMOVE));
+    gpio_set_level(TLEMOTORENABLE, 1);
 
     if ((MIRROR_MOVE_UP & uButtons) == MIRROR_MOVE_UP)
     {
@@ -177,13 +177,13 @@ void vprvMirrorMotorDriver(Spi *vpArgs)
     }
 
     uprvtest = xTLETxMessage.uData;
-    gpio_set_level(TLEMOTORCHIPSELECT, 0);
+    //gpio_set_level(TLEMOTORCHIPSELECT, 0);
 
     xprvSpi->Transmit();
     pxReturnCode = *(static_cast<esp_err_t *>(xprvSpi->GetError()));
     assert(pxReturnCode == ESP_OK);
 
-    gpio_set_level(TLEMOTORCHIPSELECT, 1);
+    //gpio_set_level(TLEMOTORCHIPSELECT, 1);
 
     ESP_LOGI(TAG, "%s : %x", uprvMessage, uprvtest);
 

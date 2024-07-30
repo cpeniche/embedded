@@ -59,8 +59,8 @@ typedef struct
 #define MIRROR_DRIVER_MOVE_LEFT   (1<<HB3_LS_EN | 1<<HB2_HS_EN)
 #define MIRROR_DRIVER_MOVE_RIGHT  (1<<HB2_LS_EN | 1<<HB3_HS_EN)
 
-#define TLEMOTORENABLE      GPIO_NUM_2
-#define TLEMOTORCHIPSELECT  GPIO_NUM_1
+#define TLEMOTORENABLE      GPIO_NUM_10
+#define TLEMOTORCHIPSELECT  GPIO_NUM_13
 
 #define configMOTORQUEUESIZE  10
 #define configITEMSIZE        sizeof(eMOTOR_TYPE)
@@ -103,7 +103,7 @@ typedef struct
 #define MIRROR_SIGNALS (MIRROR_MOVE_UP | MIRROR_SELECT_LEFT | MIRROR_SELECT_RIGHT | MIRROR_MOVE_DOWN | MIRROR_MOVE_LEFT | MIRROR_MOVE_RIGHT)
 
 extern void vMotorsTask(void *pvParameters);
-extern void vESPNowMessageProcessButtonsCallBack();
+extern void vESPNowMessageProcessButtonsCallBack(uint8_t, eDataTYPE, void *);
 
 #ifdef __cplusplus
 }

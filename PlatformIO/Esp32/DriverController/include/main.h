@@ -8,7 +8,7 @@ extern "C"{
 
 #define PIN_NUM_CLK   GPIO_NUM_7
 #define PIN_NUM_MISO  GPIO_NUM_8
-#define PIN_NUM_MOSI  GPIO_NUM_4
+#define PIN_NUM_MOSI  GPIO_NUM_9
 
 /*********************** */
 #define NUM_BITS 16

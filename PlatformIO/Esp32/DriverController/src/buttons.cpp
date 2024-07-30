@@ -25,6 +25,7 @@
 static const char *TAG = "Buttons_Task";
 #define PARALLEL_LOAD GPIO_NUM_9
 
+
 Buttons::Buttons()
 {
   gpio_config_t io_conf = {
@@ -40,7 +41,7 @@ Buttons::Buttons()
 
   /* Create Spi Configuration */
   SpiBuilder *xprvSpiBuilder = new EspSpiBuilder(nullptr, reinterpret_cast<uint8_t *>(&(xMessage.data)));
-  Spi *xprvSpi = xprvSpiBuilder->xBuild();
+  xprvSpi = xprvSpiBuilder->xBuild();
   delete xprvSpiBuilder;
 
   xprvSpi->Init();
@@ -68,6 +69,10 @@ bool Buttons::bBottonsChanged()
   bool bprvReturn;
   bprvReturn = uprvPreviousButtonsState != xMessage.data;
   uprvPreviousButtonsState = xMessage.data;
+  if (bprvReturn)
+  {
+    ESP_LOGI(TAG, "Buttons Pressed: %x", xMessage.data);
+  }
   return bprvReturn;
 }
 
@@ -98,24 +103,23 @@ void vButtonsTask(void *pvParameters)
 
   EventBits_t pxESPNowEvents;
   uint8_t uprvRetry = 0;
-  Buttons *buttons = new Buttons();
+  Buttons buttons;
 
   ESP_LOGI(TAG, "Buttons Task Started");
   while (true)
   {
-    buttons->vReadButtons();
+    buttons.vReadButtons();
     pxESPNowEvents = xEventGroupGetBits(xESPnowEventGroupHandle);
 
     /* Buttons Changed, need to send a new EspNow Message */
-    if (buttons->bBottonsChanged())
-    {
-
+    if (buttons.bBottonsChanged())
+    {      
       ResetSleepTimer();
 
-      buttons->vSendEspNowMessage(uBroadCastMAC);
+      buttons.vSendEspNowMessage(uBroadCastMAC);
 
       /* if send function return sucess*/
-      if (buttons->bIsThereAnError())
+      if (buttons.bIsThereAnError())
       {
 
         /* Check with callback function for the
@@ -129,7 +133,7 @@ void vButtonsTask(void *pvParameters)
           if (pxESPNowEvents == (1 << eESPNOW_TRANSMIT_ERROR | 1 << eESPNOW_INIT_DONE))
           {
             ESP_LOGI(TAG, "ESP_NOW Transmit Error, Retry");
-            buttons->vSendEspNowMessage(uBroadCastMAC);
+            buttons.vSendEspNowMessage(uBroadCastMAC);
             xEventGroupClearBits(xESPnowEventGroupHandle, 1 << eESPNOW_TRANSMIT_ERROR);
             uprvRetry++;
             vTaskDelay(pdMS_TO_TICKS(2000));

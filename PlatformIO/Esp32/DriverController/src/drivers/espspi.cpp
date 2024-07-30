@@ -34,6 +34,8 @@ EspSpiBuilder::EspSpiBuilder(uint8_t *xTxBuffer,
   xprvEspSpiDevice.vSetChipSelect(GPIO_NUM_13);
   xprvEspSpiDevice.vSetMode(1);
   xprvEspSpiDevice.vSetFlags(SPI_DEVICE_TXBIT_LSBFIRST | SPI_DEVICE_RXBIT_LSBFIRST);
+  xprvEspSpiDevice.vSetChipEnablePretransfer(1);
+  xprvEspSpiDevice.vSetChipEnablePostTransfer(1);
 #endif
   xprvEspSpiDevice.vSetQueueSize(1);
   xprvEspSpiDevice.vSetCallBackFunction(nullptr);
