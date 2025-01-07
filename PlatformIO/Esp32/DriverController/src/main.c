@@ -241,7 +241,7 @@ void app_main(void)
  xSpiSemaphoreHandle = xSemaphoreCreateMutexStatic( &xSemaphoreStaticBuffer );
 
 
- xSleepTimer=xTimerCreateStatic("SleepTimer",pdMS_TO_TICKS(10000),pdFALSE,NULL,
+ xSleepTimer=xTimerCreateStatic("SleepTimer",pdMS_TO_TICKS(1200000),pdFALSE,NULL,
                     vTimerCallback,&xTimerBuffer);
 
                    

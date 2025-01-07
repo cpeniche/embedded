@@ -1,0 +1,32 @@
+{
+	"name": "ESP-IDF",
+	"image":"platformio/esp32framework:1.0",
+	/*"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".",
+		"args": {
+			"FEDORA_COMPAT" : "1", // enables fedora compatibility mode (extra dialout group with gid 18)
+			"VARIANT": "bookworm"
+		}
+	},*/
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind,consistency=cached",
+	"workspaceFolder": "/home/vscode/project",
+	"runArgs": ["--privileged","--device=/dev/ttyACM0"],
+	"customizations": {
+		"vscode": {
+			"settings": {			
+				"terminal.integrated.shell.linux": "/bin/bash"
+			},
+			"extensions": [
+				"ms-vscode.cpptools",
+				"platformio.platformio-ide",
+				"marus25.cortex-debug"			
+			]
+		}
+	},
+	"forwardPorts": [
+		8008
+	],	
+	"userEnvProbe": "loginInteractiveShell",
+	"postAttachCommand": "sudo service udev restart"
+}

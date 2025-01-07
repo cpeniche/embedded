@@ -1,0 +1,25 @@
+{
+	"name": "ESP-IDF",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"runArgs": ["--privileged","--device=/dev/ttyACM0"],
+	// Pre-configure ESP-IDF extension
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"idf.showOnboardingOnInit": false,
+				"idf.toolsPath": "/opt/esp",
+				"idf.espIdfPath": "/opt/esp/idf",
+				"terminal.integrated.shell.linux": "/bin/bash"
+			},
+			"extensions": [
+				"espressif.esp-idf-extension",
+				"ms-vscode.cmake-tools",
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	},
+	"userEnvProbe": "loginInteractiveShell",
+	"postAttachCommand": "sudo service udev restart"
+}
