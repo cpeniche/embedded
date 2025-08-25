@@ -1,0 +1,37 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+  "name": "Zephyr",
+  "image": "localhost/zephyr:v4.2",
+  "runArgs": ["--group-add=keep-groups"],
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
+  "workspaceFolder": "/home/vscode/project",
+  "mounts": [
+    //"source=${localWorkspaceFolderBasename}-build,target=${containerWorkspaceFolder}/build,type=volume",    
+    "source=/dev,target=/dev,type=bind"
+  ],
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000],
+
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "webfreak.debug",
+        "ms-vscode.cpptools-extension-pack",
+        "marus25.cortex-debug",
+        "esbenp.prettier-vscode",
+        "ms-vscode.cpptools",
+        "rafaelrenanpacheco.darcula-theme",
+        "vscode-icons-team.vscode-icons"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "mkdir /home/vscode/build && chown vscode /home/vscode/build"
+}

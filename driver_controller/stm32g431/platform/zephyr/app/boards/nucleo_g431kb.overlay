@@ -1,0 +1,3 @@
+&fdcan1{
+  status = "okay";
+};

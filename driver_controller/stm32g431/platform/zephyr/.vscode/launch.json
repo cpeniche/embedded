@@ -1,0 +1,23 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cortex Debug",
+      "cwd": "${workspaceFolder}",
+      "executable": "./build/zephyr/zephyr.elf",
+      "request": "launch",
+      "type": "cortex-debug",
+      "runToEntryPoint": "__start",
+      "interface": "swd",
+      "servertype": "jlink",
+      "device": "STM32F767BG",
+      "gdbPath": "/home/vscode/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+      "showDevDebugOutput": "vscode",
+      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
+      "svdFile": "/home/vscode/project/stm32f767.svd"
+    }
+  ]
+}

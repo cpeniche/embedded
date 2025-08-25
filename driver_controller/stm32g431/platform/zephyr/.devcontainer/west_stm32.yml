@@ -1,0 +1,108 @@
+# The west manifest file for upstream Zephyr.
+#
+# The per-installation west configuration file, .west/config, sets the
+# path to the project containing this file in the [manifest] section's
+# "path" variable.
+#
+# You are free to create your own manifest files and put them in any
+# repository you want, to create your own custom Zephyr installations.
+# For example, you could create a manifest file in your own out of
+# tree application directory, which would pull this zephyr repository
+# in as an ordinary project.
+#
+# You can pass your manifest repositories to west init when creating a
+# new Zephyr installation. See the west documentation for more
+# information.
+
+manifest:
+  defaults:
+    remote: upstream
+
+  remotes:
+    - name: upstream
+      url-base: https://github.com/zephyrproject-rtos
+    - name: babblesim
+      url-base: https://github.com/BabbleSim
+
+  group-filter: [-babblesim, -optional]
+
+  #
+  # Please add items below based on alphabetical order
+  # zephyr-keep-sorted-start re(^\s+\- name:)
+  projects:
+    - name: cmsis
+      revision: 4b96cbb174678dcd3ca86e11e1f24bc5f8726da0
+      path: modules/hal/cmsis
+      groups:
+        - hal
+    - name: cmsis_6
+      repo-path: CMSIS_6
+      revision: 30a859f44ef8ab4dc8f84b03ed586fd16ccf9d74
+      path: modules/hal/cmsis_6
+    - name: fatfs
+      revision: 427159bf95ea49b7680facffaa29ad506b42709b
+      path: modules/fs/fatfs
+      groups:
+        - fs
+    - name: hal_st
+      revision: b2f548fe672f24122c7f92027b2c9eeea8a0483a
+      path: modules/hal/st
+      groups:
+        - hal
+    - name: hal_stm32
+      revision: 0788d073d76bb4e6c1a4a8ff21e95bb3498da536
+      path: modules/hal/stm32
+      groups:
+        - hal
+    - name: liblc3
+      revision: 1a5938ebaca4f13fe79ce074f5dee079783aa29f
+      path: modules/lib/liblc3
+    - name: libmetal
+      revision: 3e8781aae9d7285203118c05bc01d4eb0ca565a7
+      path: modules/hal/libmetal
+      groups:
+        - hal
+    - name: littlefs
+      path: modules/fs/littlefs
+      groups:
+        - fs
+      revision: 009bcff0ed4853a53df8256039fa815bda6854dd
+    - name: mbedtls
+      revision: 4952e1328529ee549d412b498ea71c54f30aa3b1
+      path: modules/crypto/mbedtls
+      groups:
+        - crypto
+    - name: mcuboot
+      revision: c8470fb145f8aff92696d05396fb77c3b8068b32
+      path: bootloader/mcuboot
+      groups:
+        - bootloader
+    - name: net-tools
+      revision: 93acc8bac4661e74e695eb1aea94c7c5262db2e2
+      path: tools/net-tools
+      groups:
+        - tools   
+    - name: picolibc
+      path: modules/lib/picolibc
+      revision: d492d5fa7c96918e37653f303028346bb0dd51a2
+    - name: segger
+      revision: cf56b1d9c80f81a26e2ac5727c9cf177116a4692
+      path: modules/debug/segger
+      groups:
+        - debug
+    - name: tinycrypt
+      revision: 1012a3ebee18c15ede5efc8332ee2fc37817670f
+      path: modules/crypto/tinycrypt
+      groups:
+        - crypto
+    - name: trusted-firmware-m
+      revision: fa020a8b001843bb5a115bc4692eaf6787e3d1de
+      path: modules/tee/tf-m/trusted-firmware-m
+      groups:
+        - tee
+  # zephyr-keep-sorted-stop
+
+  self:
+    path: zephyr
+    west-commands: scripts/west-commands.yml
+    import: submanifests
