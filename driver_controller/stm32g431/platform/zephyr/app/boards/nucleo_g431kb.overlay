@@ -1,3 +1,9 @@
+
+
 &fdcan1{
   status = "okay";
+};
+
+&{/chosen}{
+ zephyr,canbus =&fdcan1;
 };
