@@ -9,7 +9,6 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
   "workspaceFolder": "/home/vscode/project",
   "mounts": [
-    "source=${localWorkspaceFolderBasename}-build,target=${containerWorkspaceFolder}/build,type=volume",
     "source=/dev,target=/dev,type=bind"
   ],
 
