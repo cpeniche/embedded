@@ -12,14 +12,14 @@
     {
       "label": "Flash",
       "type": "shell",
-      "command": "cd ~/zephyr; west flash --skip-rebuild -r jlink -d ../project/build",
+      "command": "cd ~/zephyr; west flash --skip-rebuild -r jlink -d ${workspaceFolder}/build",
       "group": "build",
       "problemMatcher": []
     },
     {
       "label": "Clean Build",
       "type": "shell",
-      "command": "cd ~/zephyr; west build -p always -b nucleo_g431kb ../project/app -d ../project/build",
+      "command": "cd ~/zephyr; west build -p always -b nucleo_g431kb ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
       "dependsOrder": "sequence",
@@ -28,7 +28,7 @@
     {
       "label": "build",
       "type": "shell",
-      "command": "cd ~/zephyr; west build -p auto -b nucleo_g431kb ../project/app -d ../project/build",
+      "command": "cd ~/zephyr; west build -p auto -b nucleo_g431kb ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
       "dependsOrder": "sequence",
