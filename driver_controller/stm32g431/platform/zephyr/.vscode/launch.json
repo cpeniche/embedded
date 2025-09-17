@@ -5,7 +5,27 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Cortex Debug",
+      "cwd": "${workspaceRoot}",
+      "executable": "./build/zephyr/zephyr.elf",
+      "name": "OpenOCD",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "interface": "swd",
+      "serverpath": "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
+      "configFiles": [
+        "/home/vscode/project/openocd/minimodule-swd.cfg",
+        "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
+      ],
+      "searchDir": [],
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "raw",
+      "device": "STM32G431KB",
+      "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"]
+    },
+    {
+      "name": "Jlink",
       "cwd": "${workspaceFolder}",
       "executable": "./build/zephyr/zephyr.elf",
       "request": "launch",
