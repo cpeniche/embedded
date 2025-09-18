@@ -18,11 +18,12 @@
         "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
       ],
       "searchDir": [],
-      "runToEntryPoint": "main",
-      "showDevDebugOutput": "raw",
+      "runToEntryPoint": "_start",
+      "showDevDebugOutput": "vscode",
       "device": "STM32G431KB",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
-      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"]
+      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
+      "svdFile": "/home/vscode/project/openocd/STM32G431.svd"
     },
     {
       "name": "Jlink",
@@ -36,8 +37,8 @@
       "device": "STM32G431KB",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
       "showDevDebugOutput": "vscode",
-      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"]
-      //"svdFile": "/home/vscode/project/stm32f767.svd"
+      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
+      "svdFile": "/home/vscode/project/openocd/STM32G431.svd"
     }
   ]
 }

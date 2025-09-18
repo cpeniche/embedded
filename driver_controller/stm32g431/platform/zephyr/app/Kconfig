@@ -7,7 +7,7 @@ mainmenu "SocketCAN sample application"
 
 config SAMPLE_SOCKETCAN_LOOPBACK_MODE
 	bool "Loopback mode"
-	default y
+	default n
 	help
 	  Set the controller to loopback mode.
 	  This allows testing without a second board.
