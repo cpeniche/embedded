@@ -18,7 +18,7 @@
         "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
       ],
       "searchDir": [],
-      "runToEntryPoint": "_start",
+      "runToEntryPoint": "main",
       "showDevDebugOutput": "vscode",
       "device": "STM32G431KB",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",

@@ -12,7 +12,7 @@
     {
       "label": "Flash",
       "type": "shell",
-      "command": "cd ~/zephyr; west flash --skip-rebuild -r jlink -d ${workspaceFolder}/build",
+      "command": "cd ~/zephyr; west flash --skip-rebuild -r openocd -d ${workspaceFolder}/build",
       "group": "build",
       "problemMatcher": []
     },
