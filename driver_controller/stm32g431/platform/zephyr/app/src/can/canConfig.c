@@ -23,6 +23,12 @@ static struct k_thread rx_data;
 
 #define CLOSE_PERIOD 15
 
+static int setup_socket(void);
+static void tx(void *p1, void *p2, void *p3);
+static void rx(void *p1, void *p2, void *p3);
+
+static struct socketcan_filter sock_filter;
+
 static const struct can_filter zfilter = {
     .flags = 0U,
     .id = 0x1,
@@ -166,7 +172,7 @@ cleanup:
   return ret;
 }
 
-static struct socketcan_filter sock_filter;
+
 
 static void tx(void *p1, void *p2, void *p3)
 {
