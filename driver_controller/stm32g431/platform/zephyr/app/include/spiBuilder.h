@@ -8,7 +8,7 @@ class SpiBuilder
 
 public:
   virtual ~SpiBuilder() {};
-  virtual spiInterface<basetype, errortype> *createSpi() const = 0;
+  virtual spiInterface<basetype, errortype> *factoryMethod() = 0;  
 };
 
 template <class basetype, class errortype>
@@ -16,7 +16,7 @@ class zephyrSpiBuilder : public SpiBuilder<basetype,errortype>
 {
 
 public:
-  zephyrSpi<basetype, errortype> *createSpi() const override
+  spiInterface<basetype, errortype> *factoryMethod() override
   {
     return new zephyrSpi<basetype, errortype>();
   }

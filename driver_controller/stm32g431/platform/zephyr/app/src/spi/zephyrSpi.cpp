@@ -29,4 +29,8 @@ template <class datatype, class errortype>
 errortype
 zephyrSpi<datatype, errortype>::GetError()
 {
+  return 0;
 }
+
+
+template class zephyrSpi<uint8_t, int16_t>;

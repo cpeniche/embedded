@@ -8,6 +8,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/spi.h>
+#include <cstdlib>
 #include "canConfig.h"
 #include "spiBuilder.h"
 
@@ -28,6 +29,8 @@ void vMain(void)
 	int ret = 0;
 	canConfig();
 	SpiBuilder<uint8_t, int16_t> *spibuilder = new zephyrSpiBuilder<uint8_t, int16_t>();
+	spiInterface<uint8_t, int16_t> *spi;// = spibuilder->factoryMethod(); 
+	spi = new zephyrSpi<uint8_t, int16_t>();;
 	while (1)
 	{
 		k_yield();

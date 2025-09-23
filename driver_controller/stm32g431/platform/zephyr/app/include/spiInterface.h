@@ -11,10 +11,10 @@ template <class basetype, class errortype>
 class spiInterface
 {
 public:
-  spiInterface()
-  {
-    init = nullptr;
-  };
+  // spiInterface()
+  // {
+  //   init = nullptr;
+  // };
 
   virtual ~spiInterface() {};
   virtual void Init() = 0;
@@ -22,8 +22,8 @@ public:
   virtual void Write(basetype *) = 0;
   virtual errortype GetError() = 0;
 
-private:
-  void (*init)(void);
+/* private:
+  void (*init)(void); */
 };
 
 #endif
