@@ -30,9 +30,9 @@ static void rx(void *p1, void *p2, void *p3);
 static struct socketcan_filter sock_filter;
 
 static const struct can_filter zfilter = {
-    .flags = 0U,
     .id = 0x1,
-    .mask = CAN_STD_ID_MASK};
+    .mask = CAN_STD_ID_MASK,
+    .flags = 0U};
 
 int canConfig(void)
 {
@@ -172,14 +172,12 @@ cleanup:
   return ret;
 }
 
-
-
 static void tx(void *p1, void *p2, void *p3)
 {
   ARG_UNUSED(p2);
   ARG_UNUSED(p3);
 
-  int *can_fd = p1;
+  int *can_fd = static_cast<int *>(p1);
   int fd = POINTER_TO_INT(can_fd);
   struct can_frame zframe = {0};
   struct socketcan_frame sframe = {0};
@@ -241,9 +239,9 @@ static int create_socket(const struct socketcan_filter *sfilter)
 
 static void rx(void *p1, void *p2, void *p3)
 {
-  int *can_fd = p1;
-  int *do_close_period = p2;
-  const struct socketcan_filter *sfilter = p3;
+  int *can_fd = static_cast<int *>(p1);
+  int *do_close_period = static_cast<int *>(p2);
+  const struct socketcan_filter *sfilter = static_cast<const struct socketcan_filter *>(p3);
   int close_period = POINTER_TO_INT(do_close_period);
   int fd = POINTER_TO_INT(can_fd);
   struct sockaddr_can can_addr;

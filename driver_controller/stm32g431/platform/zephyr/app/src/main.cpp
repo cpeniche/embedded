@@ -9,7 +9,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <zephyr/device.h>
 #include <zephyr/drivers/spi.h>
 #include "canConfig.h"
-#include "spiConfig.h"
+#include "spiBuilder.h"
 
 static void vMain(void);
 #define STACK_SIZE 1024
@@ -27,10 +27,7 @@ void vMain(void)
 
 	int ret = 0;
 	canConfig();
-	if ((ret = sendDrvMsg()) != 0)
-		LOG_ERR("Spi Device Failed with code (%d)", ret);
-	else
-		LOG_DBG("Spi Sent Successful");
+	SpiBuilder<uint8_t, int16_t> *spibuilder = new zephyrSpiBuilder<uint8_t, int16_t>();
 	while (1)
 	{
 		k_yield();

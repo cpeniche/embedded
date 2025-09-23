@@ -1,0 +1,32 @@
+/*
+ * Spi.cpp
+ *
+ *  Created on: May 8, 2024
+ *      Author: carlo
+ */
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/spi.h>
+#include <cstdlib>
+#include "zephyrSpi.h"
+
+template <class datatype, class errortype>
+void zephyrSpi<datatype, errortype>::Init()
+{
+}
+
+template <class datatype, class errortype>
+void zephyrSpi<datatype, errortype>::Read(datatype *buffer)
+{
+}
+
+template <class datatype, class errortype>
+void zephyrSpi<datatype, errortype>::Write(datatype *buffer)
+{
+}
+
+template <class datatype, class errortype>
+errortype
+zephyrSpi<datatype, errortype>::GetError()
+{
+}
