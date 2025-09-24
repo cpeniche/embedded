@@ -12,16 +12,14 @@ class zephyrSpi : public spiInterface<datatype, errortype>
 {
 public:
 	void Init() override;
-	void Read(datatype *) override;
-	void Write(datatype *) override;
+	void Read(datatype *, size_t) override;
+	void Write(datatype *, size_t) override;
 	errortype GetError() override;
 	void setDataLength(size_t size) { this->bufs.len = size; };
 	void setTxBuffer(datatype *buffer) { this->bufs.buf = buffer; };
-	// void setRxBuffer(datatype *buffer) { this->rx_buffer = buffer; };
 
 private:
-	// datatype *rx_buffer;
-	// datatype *tx_buffer;
+	
 	errortype error;
 	struct spi_config spi_cfg = {
 			.frequency = 1000000U,
@@ -36,4 +34,6 @@ private:
 			.buffers = &bufs, /* buffer pointer */
 			.count = 1			 /* one buffer */
 	};
+
+	const struct device* spiDevice = DEVICE_DT_GET(DT_NODELABEL(spi1));
 };

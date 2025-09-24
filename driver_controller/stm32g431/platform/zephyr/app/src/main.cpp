@@ -8,7 +8,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/spi.h>
-#include <cstdlib>
 #include "canConfig.h"
 #include "spiBuilder.h"
 
@@ -26,11 +25,15 @@ K_THREAD_DEFINE(MainThread, STACK_SIZE, vMain, NULL, NULL, NULL,
 void vMain(void)
 {
 
-	int ret = 0;
+	uint8_t testWrite = 0xAA;
+
+
 	canConfig();
 	SpiBuilder<uint8_t, int16_t> *spibuilder = new zephyrSpiBuilder<uint8_t, int16_t>();
-	spiInterface<uint8_t, int16_t> *spi;// = spibuilder->factoryMethod(); 
-	spi = new zephyrSpi<uint8_t, int16_t>();;
+	spiInterface<uint8_t, int16_t> *spi = spibuilder->factoryMethod(); 
+	spi->Write(&testWrite,1);
+	if (spi->GetError() != 0)
+		LOG_ERR("Cannot send spi message %d", spi->GetError());
 	while (1)
 	{
 		k_yield();
