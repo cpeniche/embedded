@@ -6,6 +6,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(driverModule)
 set(TARGET_NAME app)
 set(sources src/main.cpp
+            src/tle94103.cpp
             src/can/canConfig.cpp            
             src/spi/zephyrSpi.cpp 
             src/spi/spiFactory.cpp)
