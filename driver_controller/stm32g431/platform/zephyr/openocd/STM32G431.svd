@@ -3659,7 +3659,7 @@ Copyright (c) 2025 STMicroelectronics.
         <register>
           <name>APB1L_FZ</name>
           <displayName>APB1L_FZ</displayName>
-          <description>APB Low Freeze Register 1</description>
+          <description>APB Low k_freeze Register 1</description>
           <addressOffset>0x8</addressOffset>
           <size>0x20</size>
           <access>read-write</access>
@@ -3748,7 +3748,7 @@ Copyright (c) 2025 STMicroelectronics.
         <register>
           <name>APB1H_FZ</name>
           <displayName>APB1H_FZ</displayName>
-          <description>APB Low Freeze Register 2</description>
+          <description>APB Low k_freeze Register 2</description>
           <addressOffset>0xC</addressOffset>
           <size>0x20</size>
           <access>read-write</access>
@@ -3765,7 +3765,7 @@ Copyright (c) 2025 STMicroelectronics.
         <register>
           <name>APB2_FZ</name>
           <displayName>APB2_FZ</displayName>
-          <description>APB High Freeze Register</description>
+          <description>APB High k_freeze Register</description>
           <addressOffset>0x10</addressOffset>
           <size>0x20</size>
           <access>read-write</access>
@@ -10400,7 +10400,7 @@ Copyright (c) 2025 STMicroelectronics.
           <fields>
             <field>
               <name>TFFL</name>
-              <description>Tx FIFO free level
+              <description>Tx FIFO k_free level
 </description>
               <bitOffset>0</bitOffset>
               <bitWidth>3</bitWidth>
@@ -11617,7 +11617,7 @@ Copyright (c) 2025 STMicroelectronics.
             </field>
             <field>
               <name>IWDG_STOP</name>
-              <description>Independent watchdog counter freeze in Stop mode</description>
+              <description>Independent watchdog counter k_freeze in Stop mode</description>
               <bitOffset>17</bitOffset>
               <bitWidth>1</bitWidth>
               <access>read-write</access>

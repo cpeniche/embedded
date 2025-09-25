@@ -7,6 +7,8 @@ project(driverModule)
 set(TARGET_NAME app)
 set(sources src/main.cpp
             src/tle94103.cpp
+            src/button.cpp
+            src/dictionary.cpp
             src/can/canConfig.cpp            
             src/spi/zephyrSpi.cpp 
             src/spi/spiFactory.cpp)

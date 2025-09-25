@@ -1,6 +1,7 @@
 #pragma once
 #define W_R(BIT) (BIT<<7)
 #define LABT(BIT) (BIT<<1)
+#define ADDRESS(x)  (uint8_t)(x<<2)
 
 class Tle94103{
 

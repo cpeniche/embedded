@@ -25,11 +25,6 @@ K_THREAD_DEFINE(MainThread, STACK_SIZE, vMain, NULL, NULL, NULL,
 void vMain(void)
 {
 
-	uint8_t testWrite = 0xAA;
-	
-	
-	if (spi->GetError() != 0)
-		LOG_ERR("Cannot send spi message %d", spi->GetError());
 	canConfig();
 	while (1)
 	{

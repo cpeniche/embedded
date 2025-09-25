@@ -5,6 +5,7 @@ LOG_MODULE_REGISTER(canConfig, LOG_LEVEL_DBG);
 #include <zephyr/net/socket.h>
 #include <zephyr/net/socketcan.h>
 #include <zephyr/net/socketcan_utils.h>
+#include "dictionary.h"
 
 #define PRIORITY K_PRIO_PREEMPT(15) // k_thread_priority_get(k_current_get())
 #define STACK_SIZE 1024
@@ -115,7 +116,7 @@ static int setup_socket(void)
     goto cleanup;
   }
 
-  /* Delay TX startup so that RX is ready to receive */
+  /* Delay TX startup so that RX is ready to receive 
   tx_tid = k_thread_create(&tx_data, tx_stack,
                            K_THREAD_STACK_SIZEOF(tx_stack),
                            tx, INT_TO_POINTER(fd),
@@ -128,7 +129,7 @@ static int setup_socket(void)
     goto cleanup;
   }
 
-  LOG_DBG("Started socket CAN TX thread");
+  LOG_DBG("Started socket CAN TX thread");*/
 
   LOG_INF("1st RX fd %d", fd);
 
@@ -249,6 +250,7 @@ static void rx(void *p1, void *p2, void *p3)
   struct can_frame zframe;
   struct socketcan_frame sframe;
   int ret;
+  Dictionary *dicInstance = getDictionaryInstance();
 
   LOG_DBG("[%d] Waiting CAN data...", fd);
 
@@ -276,13 +278,12 @@ static void rx(void *p1, void *p2, void *p3)
             (zframe.flags & CAN_FRAME_RTR) != 0 ? 1 : 0,
             zframe.id, zframe.dlc);
 
-    if ((zframe.flags & CAN_FRAME_RTR) != 0)
-    {
-      LOG_INF("[%d] EXT Remote frame received", fd);
-    }
+    if(dicInstance->AddDataToQueue(static_cast<void *>(&zframe), sizeof(zframe)) == -1)
+      LOG_ERR("Can not add data to queue");
     else
     {
-      if (zframe.dlc > 8)
+    
+    if (zframe.dlc > 8)
       {
         data = (uint8_t *)zframe.data_32;
       }
@@ -292,26 +293,26 @@ static void rx(void *p1, void *p2, void *p3)
       }
 
       LOG_HEXDUMP_INF(data, zframe.dlc, "Data");
-    }
+    
 
-    if (POINTER_TO_INT(do_close_period) > 0)
-    {
-      close_period--;
-      if (close_period <= 0)
+      if (POINTER_TO_INT(do_close_period) > 0)
       {
-        (void)close(fd);
-
-        k_sleep(K_SECONDS(1));
-
-        fd = create_socket(sfilter);
-        if (fd < 0)
+        close_period--;
+        if (close_period <= 0)
         {
-          LOG_ERR("Cannot get socket (%d)",
-                  -errno);
-          return;
-        }
+          (void)close(fd);
 
-        close_period = POINTER_TO_INT(do_close_period);
+          k_sleep(K_SECONDS(1));
+
+          fd = create_socket(sfilter);
+          if (fd < 0)
+          {
+            LOG_ERR("Cannot get socket (%d)",
+                    -errno);
+            return;
+          }
+          close_period = POINTER_TO_INT(do_close_period);
+        }
       }
     }
   }
