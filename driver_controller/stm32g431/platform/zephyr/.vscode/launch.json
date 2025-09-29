@@ -12,16 +12,16 @@
       "type": "cortex-debug",
       "servertype": "openocd",
       "interface": "swd",
-      "serverpath": "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
+      "serverpath": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
       "configFiles": [
         "/home/vscode/project/openocd/minimodule-swd.cfg",
-        "/home/vscode/zephyr-sdk-0.17.2/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
+        "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
       ],
       "searchDir": [],
       "runToEntryPoint": "_start",
       "showDevDebugOutput": "vscode",
       "device": "STM32G431KB",
-      "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+      "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
       "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
       "svdFile": "/home/vscode/project/openocd/STM32G431.svd"
     },

@@ -7,25 +7,30 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/spi.h>
-
 #include "zephyrSpi.h"
 
 template <class datatype, class errortype>
 void zephyrSpi<datatype, errortype>::Init()
 {
+  
 }
 
 template <class datatype, class errortype>
 void zephyrSpi<datatype, errortype>::Read(datatype *buffer, size_t size)
 {
+  setBuffer(buffer);
+  setDataLength(size);
+  this->error = spi_read(this->spiDevice, &spi_cfg,&Buffer);
 }
 
 template <class datatype, class errortype>
 void zephyrSpi<datatype, errortype>::Write(datatype *buffer, size_t size)
 {
-  setTxBuffer(buffer);
+  
+  setBuffer(buffer);
   setDataLength(size);
-  this->error = spi_write(this->spiDevice, &spi_cfg, &txBuffer);
+  this->error = spi_write(this->spiDevice, &spi_cfg, &Buffer);
+  
 }
 
 template <class datatype, class errortype>

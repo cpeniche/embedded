@@ -17,17 +17,12 @@ public:
     SYSDIAG3  =0x1,
   };
 
-  Tle94103(){
-    /* Create Spi Device */
-    spibuilder= new zephyrSpiBuilder<uint8_t, int16_t>();
-	  spi = spibuilder->factoryMethod(); 
-  }
+  Tle94103(spiInterface<uint8_t, int16_t> *);  
   void WriteRegister(uint8_t, uint8_t *);
 
 
 private:  
  
  spiInterface<uint8_t, int16_t> *spi=nullptr; 
- SpiBuilder<uint8_t, int16_t> *spibuilder= nullptr;
 
 };

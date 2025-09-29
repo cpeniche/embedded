@@ -1,5 +1,5 @@
 #pragma once
-#include "spiInterface.h"
+//#include "spiInterface.h"
 #include "zephyrSpi.h"
 
 template <class basetype, class errortype>

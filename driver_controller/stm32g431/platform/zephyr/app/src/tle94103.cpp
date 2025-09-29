@@ -6,6 +6,11 @@ LOG_MODULE_REGISTER(tle94103, LOG_LEVEL_DBG);
 #include "tle94103.h"
 
 
+Tle94103::Tle94103(spiInterface<uint8_t, int16_t> *spi)
+{
+  this->spi = spi;
+}
+
 void Tle94103::WriteRegister(uint8_t u8RegAddress, uint8_t *ptrU8Data)
 {
 
