@@ -31,13 +31,12 @@ spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
  *******************************************/
 void vMain(void)
 {
-  /* Create main spi */
-  Buttons *panelInput=new Buttons(spi);
+  
 	
 	//canConfig();
 	while (1)
 	{
-		panelInput->Read();		
+			
 		k_sleep(K_MSEC(10));
 	}
 }
