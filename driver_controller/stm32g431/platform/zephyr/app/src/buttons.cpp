@@ -34,10 +34,8 @@ void Buttons::Task(void)
   
   while(1){
     Read();	
-    if(rxBuffer != prevRxBuffer)
+    if(rxBuffer != prevRxBuffer){}
       
 
   }
-  
-
 }

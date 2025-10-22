@@ -5,6 +5,24 @@
   status = "okay";
 };
 
+&usart1{
+  pinctrl-0 = <&usart1_rx_pa10 &usart1_tx_pa9>;
+  pinctrl-names = "default";
+  current-speed = <115200>;  
+  status = "okay";
+  dmas = <&dmamux1 5 53 STM32_DMA_PERIPH_TX>,
+         <&dmamux1 4 52 STM32_DMA_PERIPH_RX>;
+  dma-names="tx","rx";
+};
+
+&dma1{
+  status="okay";
+};
+
+&dmamux1 {
+  status="okay";
+};
+
 &spi1{
   pinctrl-0 = </*&spi1_nss_pa4*/
                &spi1_sck_pa5
