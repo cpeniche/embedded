@@ -11,6 +11,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "canConfig.h"
 #include "spiBuilder.h"
 #include "buttons.h"
+#include "lin.h"
 
 
 static void vMain(void);
@@ -31,14 +32,13 @@ spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
  *******************************************/
 void vMain(void)
 {
-  
-	
-	//canConfig();
+
+	/*canConfig();
 	while (1)
 	{
 			
 		k_sleep(K_MSEC(10));
-	}
+	}*/
 }
 
 

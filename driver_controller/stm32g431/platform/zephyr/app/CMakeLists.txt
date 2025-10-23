@@ -9,7 +9,8 @@ set(sources src/main.cpp
             src/tle94103.cpp
             src/buttons.cpp
             src/dictionary.cpp
-            src/can/canConfig.cpp            
+            src/can/canConfig.cpp
+            src/lin/lin.cpp            
             src/spi/zephyrSpi.cpp 
             src/spi/spiFactory.cpp)
 
