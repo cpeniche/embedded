@@ -10,6 +10,7 @@
   pinctrl-names = "default";
   current-speed = <115200>;  
   status = "okay";
+  lin-mode;
   dmas = <&dmamux1 2 25 (STM32_DMA_PERIPH_TX |  STM32_DMA_PRIORITY_HIGH)>,
          <&dmamux1 1 24 (STM32_DMA_PERIPH_RX |  STM32_DMA_PRIORITY_HIGH)>;
   dma-names="tx","rx";

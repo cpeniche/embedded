@@ -26,8 +26,9 @@ K_THREAD_DEFINE(linThread, STACK_SIZE, LinTask, NULL, NULL, NULL,
 /* Maximum number of packets to generate per iteration */
 #define LOOP_ITER_MAX_TX 4
 /* Maximum size of our TX packets */
-#define MAX_TX_LEN 32
-#define RX_CHUNK_LEN 32
+#define MAX_TX_LEN 2  //IN BYTES
+#define RX_CHUNK_LEN 16
+
 
 /* Buffer pool for our TX payloads */
 NET_BUF_POOL_DEFINE(tx_pool, LOOP_ITER_MAX_TX, MAX_TX_LEN, 0, NULL);
@@ -40,6 +41,7 @@ volatile uint8_t async_rx_buffer_idx;
 static const struct device *const uart_dev = DEVICE_DT_GET(DT_NODELABEL(usart1));
 //static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 
+static uint8_t IdentifierFieldParity(uint8_t );
 LOG_MODULE_REGISTER(sample, LOG_LEVEL_INF);
 
 /*#ifdef __cplusplus
@@ -99,27 +101,31 @@ void LinTask(void)
 	bool rx_enabled = false;
 	struct net_buf *tx_buf;
 	int loop_counter = 0;
-	uint8_t num_tx;
+	uint8_t num_tx=51;
 	int tx_len;
 	int rc;
+	uint8_t data[2] = {0x55,0x67};
+	uint8_t parity = 0;
 
 	/* Register the async interrupt handler */
 	uart_callback_set(uart_dev, uart_callback, (void *)uart_dev);
   k_fifo_init(&tx_queue);
 
 	while (1) {
-		/* Wait a while until the next burst transmission */
-		k_sleep(K_SECONDS(5));
 
-		/* Each loop, try to send a random number of packets */
-		num_tx = (sys_rand32_get() % LOOP_ITER_MAX_TX) + 1;
+		/* Each loop, try to send a random number of packets */		
 		LOG_INF("Loop %d: Sending %d packets", loop_counter, num_tx);
 		for (int i = 0; i < num_tx; i++) {
+		  /* Wait a while until the next burst transmission */
+			k_sleep(K_SECONDS(1));
 			/* Allocate the data packet */
 			tx_buf = net_buf_alloc(&tx_pool, K_FOREVER);
-			/* Populate it with data */
-			tx_len = snprintk((char *)tx_buf->data, net_buf_tailroom(tx_buf),
-					  "Loop %d: Packet: %d\r\n", loop_counter, i);
+			/* Populate it with data */			
+			tx_len = 2;  //In bytes
+			parity=IdentifierFieldParity(i);
+			data[1] = (i << 2) | parity;
+			tx_buf->data = data ;
+			net_buf_tailroom(tx_buf);
 			net_buf_add(tx_buf, tx_len);
 
 			/* Queue packet for transmission */
@@ -136,7 +142,7 @@ void LinTask(void)
 			}
 		}
 
-		/* Toggle the RX state */
+		/* Toggle the RX state 
 		if (rx_enabled) {
 			uart_rx_disable(uart_dev);
 		} else {
@@ -146,12 +152,17 @@ void LinTask(void)
 		rx_enabled = !rx_enabled;
 		LOG_INF("RX is now %s", rx_enabled ? "enabled" : "disabled");
 
-		loop_counter += 1;
+		loop_counter += 1;*/
 	}
 }
 
-/*
-#ifdef __cplusplus
+uint8_t IdentifierFieldParity(uint8_t u8prvData)
+{
+	uint8_t u8p0, u8p1;
+
+	u8p0 = (u8prvData ^ (u8prvData >> 1) ^ (u8prvData >> 2) ^ (u8prvData >> 4)) & 0x1;
+	u8p1 = (~((u8prvData >> 1) ^ (u8prvData >> 3) ^ (u8prvData >> 4) ^ (u8prvData >> 5))) & 0x1;
+
+	return  (u8p0 << 1 | u8p1);
+
 }
-#endif
-*/
