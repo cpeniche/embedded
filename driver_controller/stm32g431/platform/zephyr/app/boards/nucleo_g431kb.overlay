@@ -8,7 +8,7 @@
 &usart1{
   pinctrl-0 = <&usart1_rx_pa10 &usart1_tx_pa9>;
   pinctrl-names = "default";
-  current-speed = <115200>;  
+  current-speed = <9600>;  
   status = "okay";
   lin-mode;
   dmas = <&dmamux1 2 25 (STM32_DMA_PERIPH_TX |  STM32_DMA_PRIORITY_HIGH)>,
