@@ -8,7 +8,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 
 
 static void ReadButtonsTask(void);
-#define STACK_SIZE 4096
+#define STACK_SIZE 1024
 #define PRIORITY K_PRIO_PREEMPT(15)
 
 /* Thread definitions*/

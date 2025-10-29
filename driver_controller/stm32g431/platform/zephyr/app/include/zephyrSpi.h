@@ -18,16 +18,14 @@ public:
 	errortype GetError() override;
 	void setDataLength(size_t size) { this->bufs.len = size; };
 	void setBuffer(datatype *buffer) { this->bufs.buf = buffer; };
-	
 
 private:
-	
 	errortype error;
 	struct spi_config spi_cfg = {
 			.frequency = 1000000U,
 			.operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB | SPI_WORD_SET(8),
-			.slave = 0x0,
-			.cs ={nullptr,0}
+			.slave = 0x0
+			/*	.cs ={nullptr,0}*/
 	};
 
 	/* array of buffers*/
@@ -36,9 +34,8 @@ private:
 	/* transmit buffers*/
 	struct spi_buf_set Buffer = {
 			.buffers = &bufs, /* buffer pointer */
-			.count = 1			 /* one buffer */
+			.count = 1				/* one buffer */
 	};
 
-	const struct device* spiDevice = DEVICE_DT_GET(DT_NODELABEL(spi1));
-	
+	const struct device *spiDevice = DEVICE_DT_GET(DT_NODELABEL(spi1));
 };

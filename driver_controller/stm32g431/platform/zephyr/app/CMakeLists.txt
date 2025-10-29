@@ -12,7 +12,8 @@ set(sources src/main.cpp
             src/can/canConfig.cpp
             src/lin/lin.cpp            
             src/spi/zephyrSpi.cpp 
-            src/spi/spiFactory.cpp)
+            src/spi/spiFactory.cpp
+            src/motorctrl.cpp)
 
 #add_subdirectory(src/can)
 
