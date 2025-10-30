@@ -3,7 +3,7 @@ LOG_MODULE_REGISTER(tle94103, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/spi.h>
 #include "spiBuilder.h"
-#include "motorctrl.h"
+#include "motorInterface.h"
 #include "tle94103.h"
 
 void Tle94103::Right(void)
@@ -30,9 +30,10 @@ void Tle94103::Up(void)
   WriteRegister(HBCTRL, &data);
 }
 
-Tle94103::Tle94103(spiInterface<uint8_t, int16_t> *spi)
+void Tle94103::Idle(void)
 {
-  this->spi = spi;
+  uint8_t data = 0x0;
+  WriteRegister(HBCTRL, &data);
 }
 
 void Tle94103::WriteRegister(uint8_t u8RegAddress, uint8_t *ptrU8Data)

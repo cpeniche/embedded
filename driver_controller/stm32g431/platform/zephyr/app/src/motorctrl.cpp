@@ -30,8 +30,7 @@ K_THREAD_DEFINE(MotorControl, STACK_SIZE, vMotorCtrl, NULL, NULL, NULL,
 								PRIORITY, 0, 0);
 
 const struct device *gpioa = DEVICE_DT_GET(DT_NODELABEL(gpioa));
-zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
-spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
+
 void setCs(uint8_t value) { gpio_pin_set(gpioa, 10, value); }
 
 static void vMotorCtrl(void)

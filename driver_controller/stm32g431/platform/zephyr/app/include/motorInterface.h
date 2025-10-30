@@ -1,10 +1,11 @@
 #pragma once
 
-class motor
+class motorInterface
 {
 
 public:
-  virtual ~motor() {};
+  virtual ~motorInterface() {};
+  virtual void Idle(void) = 0;
   virtual void Right(void) = 0;
   virtual void Left(void) = 0;
   virtual void Down(void) = 0;

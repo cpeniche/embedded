@@ -6,14 +6,16 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(driverModule)
 set(TARGET_NAME app)
 set(sources src/main.cpp
-            src/motordrv/tle94103.cpp
+            src/motor/tle94103.cpp
+            src/motor/drv8838.cpp
+            src/motor/vnh5019a.cpp
             src/buttons.cpp
             src/dictionary.cpp
             src/can/canConfig.cpp
             src/lin/lin.cpp            
             src/spi/zephyrSpi.cpp 
-            src/spi/spiFactory.cpp
-            src/motorctrl.cpp)
+            src/spi/spiFactory.cpp)
+            
 
 #add_subdirectory(src/can)
 

@@ -3,6 +3,14 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/spi.h>
+#include "spiBuilder.h"
+#include "zephyrSpi.h"
+#include "motorInterface.h"
+#include "motorBuilder.h"
+#include "tle94103.h"
+#include "drv8838.h"
+#include "vnh5019a.h"
 #include "lin.h"
 #include "buttons.h"
 
@@ -25,9 +33,6 @@ void linCallBack(const struct device *dev, struct uart_event *evt, void *user_da
 LIN linDriver((struct device *)DEVICE_DT_GET(DT_NODELABEL(usart1)),
                            rxBuffer, sizeof(rxBuffer), 0x10); 
 Buttons cButtons;
-
-
-
 
 struct k_queue *getQueue(void)
 {
@@ -60,8 +65,13 @@ void Buttons::Task(void)
           prevRxBuffer[idx]=rxBufferPtr[idx];
         }
         if(queueData)
-        {         
-          k_queue_append(&buttonsQueue, &rxBufferPtr);
+        {                   
+          mirror->Down();
+          latch->Down();
+          window->Down();
+          k_sleep(K_MSEC(1));
+          latch->Idle();
+          window->Idle();
           queueData=false;
         }
       }     

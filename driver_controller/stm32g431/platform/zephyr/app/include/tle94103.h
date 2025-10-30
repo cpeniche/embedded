@@ -10,7 +10,7 @@
 #define HB1HSEN 1 << 1
 #define HB1LSEN 1 << 5
 
-class Tle94103 : public motor
+class Tle94103 : public motorInterface
 {
 public:
   enum
@@ -22,14 +22,18 @@ public:
     STATUSREG = 0x6,
     SYSDIAG2 = 0x16,
     SYSDIAG3 = 0x1,
+  
   };
+  Tle94103(){};  
   void Right(void) override;
   void Left(void) override;
   void Down(void) override;
-  void Up(void) override;
-  Tle94103(spiInterface<uint8_t, int16_t> *);
+  void Up(void) override;  
+  void Idle(void) override;
   void WriteRegister(uint8_t, uint8_t *);
 
 private:
-  spiInterface<uint8_t, int16_t> *spi = nullptr;
+  
+  zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
+  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
 };

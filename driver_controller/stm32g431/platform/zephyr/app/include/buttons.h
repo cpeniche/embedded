@@ -5,7 +5,7 @@ extern "C" struct k_queue *getQueue(void);
 class Buttons{
 
 public:
-    Buttons(){}
+    Buttons(){};
     ~Buttons(){}
     int8_t Read(uint8_t *, size_t);
     void Task(void);           
@@ -15,5 +15,13 @@ public:
       
 private:  
   LIN *Driver;
-  
+  /* mirror motor interface*/
+  tle94103MotorBuilder mirrorMotorBuilder;
+  motorInterface *mirror = mirrorMotorBuilder.factoryMethod();
+  /* latch motor interface*/
+  drv8838MotorBuilder latchMotorBuilder;
+  motorInterface *latch = latchMotorBuilder.factoryMethod();
+  /*window motor interface*/
+  vnh5019aMotorBuilder windowMotorBuilder;
+  motorInterface *window = windowMotorBuilder.factoryMethod();
 };
