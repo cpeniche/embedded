@@ -8,6 +8,7 @@ LOG_MODULE_REGISTER(motorCtrl, LOG_LEVEL_DBG);
 #include <zephyr/drivers/spi.h>
 #include "spiBuilder.h"
 #include "zephyrSpi.h"
+#include "motorctrl.h"
 #include "tle94103.h"
 
 #define maskLOCK 0x01

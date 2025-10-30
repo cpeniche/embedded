@@ -6,7 +6,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(driverModule)
 set(TARGET_NAME app)
 set(sources src/main.cpp
-            src/tle94103.cpp
+            src/motordrv/tle94103.cpp
             src/buttons.cpp
             src/dictionary.cpp
             src/can/canConfig.cpp
