@@ -36,3 +36,35 @@
 &{/chosen}{
  zephyr,canbus =&fdcan1;
 };
+
+/{
+    drv8838_enable: drv8838_enable{
+      compatible = "ti,drv8838";
+      gpios = <&gpiof 0x0 GPIO_ACTIVE_HIGH>;
+    };
+
+    drv8838_phase: drv8838_phase{
+      compatible = "ti,drv8838";
+      gpios = <&gpiof 0x1 GPIO_ACTIVE_HIGH>;
+    };
+
+    vnh5019a_ina: vnh5019a_ina{
+      compatible = "st,vnh5019a";
+      gpios = <&gpiob 0x4 GPIO_ACTIVE_HIGH>;
+    };
+
+    vnh5019a_ena: vnh5019a_ena{
+      compatible = "st,vnh5019a";
+      gpios = <&gpiob 0x5 GPIO_ACTIVE_HIGH>;
+    };
+
+    vnh5019a_inb: vnh5019a_inb{
+      compatible = "st,vnh5019a";
+      gpios = <&gpioa 0x8 GPIO_ACTIVE_HIGH>;
+    };
+
+    vnh5019a_enb: vnh5019a_enb{
+      compatible = "st,vnh5019a";
+      gpios = <&gpiob 0x6 GPIO_ACTIVE_HIGH>;
+    };
+};
