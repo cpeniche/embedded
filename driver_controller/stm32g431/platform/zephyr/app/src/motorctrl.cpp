@@ -11,14 +11,7 @@ LOG_MODULE_REGISTER(motorCtrl, LOG_LEVEL_DBG);
 #include "motorctrl.h"
 #include "tle94103.h"
 
-#define maskLOCK 0x01
-#define maskUNLOCK 0x02
-#define maskRIGHWINDOWUP 0x04
-#define maskRIGHWINDOWDWON 0x08
-#define maskLEFTWINDOWUP 0x10
-#define maskLEFTWINDOWDWON 0x20
-#define maskMIRRORUP 0x40
-#define maskMIRRORDOWN 0x80
+
 
 #define PRIORITY K_PRIO_PREEMPT(15) // k_thread_priority_get(k_current_get())
 #define STACK_SIZE 1024
