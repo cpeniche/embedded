@@ -18,23 +18,25 @@ LIN::LIN(struct device *dev, uint8_t *rxBuffer, size_t length, uint8_t Identifie
 {	
 	setDevice(dev);	
 	setProtectedID(Identifier);
-	error = uart_rx_enable(this->dev, rxBuffer, length, 100);
+	this->rxBuffer = rxBuffer;
+	error = uart_rx_enable(this->dev, this->rxBuffer, length, 100);
 
 }
 
 int8_t LIN::Transmit(uint8_t *buffer, size_t size)
 {
-		txBuffer[0] = SynchData;
-		txBuffer[1] = (protectedId << 2) |  IdentifierFieldParity(protectedId);
-		if(buffer != NULL)
-			for(size_t idx=2; idx<size; idx++)
-				txBuffer[idx] = buffer[idx-2];
-		error = uart_tx(this->dev, txBuffer, size, SYS_FOREVER_US);
-		if(error != 0)
-			setFlag(RXERROR);
-		else
-			clearFlag(TXDONE);
-		return error;
+	clearFlag(TXDONE);	
+	txBuffer[0] = SynchData;
+	txBuffer[1] = (protectedId << 2) |  IdentifierFieldParity(protectedId);
+	if(buffer != NULL)
+		for(size_t idx=2; idx<size; idx++)
+			txBuffer[idx] = buffer[idx-2];
+	error = uart_tx(this->dev, txBuffer, size, SYS_FOREVER_US);
+	if(error != 0)
+		setFlag(RXERROR);
+	else
+		clearFlag(TXDONE);
+	return error;
 }
 
 void LIN::setCallback(uart_callback_t func)
@@ -75,14 +77,15 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
     clearFlag(LIN::RXDONE);
 		break;
   
-	case UART_RX_BUF_REQUEST:
+	case UART_RX_BUF_REQUEST:		
 	case UART_RX_BUF_RELEASED:
-	case UART_RX_DISABLED:
 		break;
-	case UART_RX_RDY:
-    rc = uart_rx_buf_rsp(getDevice(), rxBuffer,sizeof(rxBuffer));
+	case UART_RX_DISABLED:
+		uart_rx_enable(this->dev, this->rxBuffer, 7, 100);	  
+		break;
+	case UART_RX_RDY:    
 		setFlag(LIN::RXDONE);
-    clearFlag(LIN::RXERROR);
+    clearFlag(LIN::RXERROR);		
 		break;    
 	default:
 		LOG_WRN("Unhandled event %d", evt->type);

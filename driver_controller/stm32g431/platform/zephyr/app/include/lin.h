@@ -36,6 +36,6 @@ private:
   uint8_t flags;
   uint8_t protectedId;
   uint8_t txBuffer[10];
-  uint8_t rxBuffer[7];
+  uint8_t *rxBuffer;
 
 };
