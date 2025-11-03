@@ -2,6 +2,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/device.h>
 #include "motorInterface.h"
+#include "can.h"
 #include "drv8838.h"
 #define ACTIVEPULSEMS   50
 
@@ -18,9 +19,9 @@ static constexpr struct gpio_dt_spec phase =
     GPIO_DT_SPEC_GET_OR(DT_NODELABEL(drv8838_phase), gpios, {0}); 
 
 
-drv8838::drv8838()
+drv8838::drv8838(can *interface)
 {
-
+  CanDriver = interface;
   if(gpio_is_ready_dt(&enable)) 
   {	
     gpio_pin_configure_dt(&enable,GPIO_OUTPUT_INACTIVE);
@@ -28,31 +29,40 @@ drv8838::drv8838()
   }
 }
 
-void drv8838::Right(void)
+void drv8838::Right(uint8_t side)
 {
 }
 
-void drv8838::Left(void)
+void drv8838::Left(uint8_t side)
 {
 }
 
-void drv8838::Down(void)
+void drv8838::Down(uint8_t side)
 {  
+  canTxBufer[0]=0x0;
+  canTxBufer[0]=0x4;
+  CanDriver->sendCanMsg(canTxBufer);
   gpio_pin_set_dt(&phase,0);
   gpio_pin_set_dt(&enable,1);
   k_sleep(K_MSEC(ACTIVEPULSEMS));
-  Idle();
+  Idle(0x0);
 }
 
-void drv8838::Up(void)
+void drv8838::Up(uint8_t side)
 {  
+  canTxBufer[0]=0x0;
+  canTxBufer[0]=0x8;
+  CanDriver->sendCanMsg(canTxBufer);
   gpio_pin_set_dt(&phase,1);
   gpio_pin_set_dt(&enable,1);
   k_sleep(K_MSEC(ACTIVEPULSEMS));
-  Idle();
+  Idle(0x0);
 }
 
-void drv8838::Idle(void)
+void drv8838::Idle(uint8_t side)
 {
+  canTxBufer[0]=0x0;
+  canTxBufer[0]=0x0;
+  CanDriver->sendCanMsg(canTxBufer);
   gpio_pin_set_dt(&enable,0);
 }

@@ -5,8 +5,90 @@ LOG_MODULE_REGISTER(canConfig, LOG_LEVEL_DBG);
 #include <zephyr/net/socket.h>
 #include <zephyr/net/socketcan.h>
 #include <zephyr/net/socketcan_utils.h>
+#include "motorInterface.h"
+#include "can.h"
 #include "dictionary.h"
 
+can::can()
+{
+  error = can_start(dev);
+  if (error != 0)
+  {
+    LOG_ERR("Cannot start CAN controller (%d)", error);
+  }
+
+  /* Let the device start before doing anything */
+  k_sleep(K_SECONDS(2));
+
+  fileDescriptor = setupSocket();  
+}
+
+void can::sendCanMsg(uint8_t *data)
+{
+  
+  socketcan_from_can_frame(&zframe, &sframe);
+  for(int idx=0; idx<zframe.dlc; idx++)
+    zframe.data[idx]=data[idx];
+  error= send(fileDescriptor,&sframe,sizeof(sframe),0);
+
+}
+
+int can::setupSocket()
+{
+  
+  socketcan_from_can_filter(&zfilter, &sock_filter);
+  
+
+  iface = net_if_get_first_by_type(&NET_L2_GET_NAME(CANBUS_RAW));
+  if (!iface)
+  {
+    LOG_ERR("No CANBUS network interface found!");
+    return -ENOENT;
+  }
+
+  fileDescriptor = socket(AF_CAN, SOCK_RAW, CAN_RAW);
+  if (fileDescriptor < 0)
+  {
+    error = -errno;
+    LOG_ERR("Cannot create %s CAN socket (%d)", "1st", error);
+    return error;
+  }
+
+  canAddress.can_ifindex = net_if_get_by_iface(iface);
+  canAddress.can_family = PF_CAN;
+
+#ifdef PASSENGER_CONTROL  
+  error = bind(fd, (struct sockaddr *)&canAddress, sizeof(canAddress));
+  if (error < 0)
+  {
+    error = -errno;
+    LOG_ERR("Cannot bind %s CAN socket (%d)", "1st", ret);
+    goto cleanup;
+  }
+#endif
+
+  error = setsockopt(fileDescriptor, SOL_CAN_RAW, CAN_RAW_FILTER, &sock_filter,
+                   sizeof(sock_filter));
+  if (error < 0)
+  {
+    error = -errno;
+    LOG_ERR("Cannot set CAN sockopt (%d)", error);
+    goto cleanup;
+  }
+  LOG_INF("1st RX fd %d", fileDescriptor);
+
+  return fileDescriptor;
+
+cleanup:
+  (void)close(fileDescriptor);
+  return error;
+}
+
+
+
+
+
+#if 0
 #define PRIORITY K_PRIO_PREEMPT(15) // k_thread_priority_get(k_current_get())
 #define STACK_SIZE 1024
 #define SLEEP_PERIOD K_SECONDS(1)
@@ -317,3 +399,8 @@ static void rx(void *p1, void *p2, void *p3)
     }
   }
 }
+
+#endif
+
+
+

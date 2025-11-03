@@ -5,9 +5,9 @@ class motorInterface
 
 public:
   virtual ~motorInterface() {};
-  virtual void Idle(void) = 0;
-  virtual void Right(void) = 0;
-  virtual void Left(void) = 0;
-  virtual void Down(void) = 0;
-  virtual void Up(void) = 0;
+  virtual void Idle(uint8_t) = 0;
+  virtual void Right(uint8_t) = 0;
+  virtual void Left(uint8_t) = 0;
+  virtual void Down(uint8_t) = 0;
+  virtual void Up(uint8_t) = 0;
 };

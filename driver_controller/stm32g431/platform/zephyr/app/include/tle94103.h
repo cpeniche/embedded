@@ -24,16 +24,20 @@ public:
     SYSDIAG3 = 0x1,
   
   };
-  Tle94103(){};  
-  void Right(void) override;
-  void Left(void) override;
-  void Down(void) override;
-  void Up(void) override;  
-  void Idle(void) override;
+
+  Tle94103(can *interface){CanDriver = interface;};  
+  void Right(uint8_t) override;
+  void Left(uint8_t) override;
+  void Down(uint8_t) override;
+  void Up(uint8_t) override;  
+  void Idle(uint8_t) override;
   void WriteRegister(uint8_t, uint8_t *);
+  void setCanDriver(can *driver){CanDriver=driver;}
 
 private:
   
   zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
   spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
+  can *CanDriver;
+  uint8_t canTxBufer[2];
 };

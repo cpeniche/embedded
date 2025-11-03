@@ -7,6 +7,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/drivers/spi.h>
 #include "spiBuilder.h"
 #include "zephyrSpi.h"
+#include "can.h"
 #include "motorInterface.h"
 #include "motorBuilder.h"
 #include "tle94103.h"
@@ -30,13 +31,12 @@ int16_t error;
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
+
 LIN linDriver((struct device *)DEVICE_DT_GET(DT_NODELABEL(usart1)),
               rxBuffer, sizeof(rxBuffer), 0x10);
 Buttons cButtons;
 
-Buttons::Buttons()
-{
-}
+Buttons::Buttons(){}
 
 void Buttons::Task(void)
 {
@@ -46,6 +46,7 @@ void Buttons::Task(void)
   struct data *motorStructsPtr[4] = {&stWindow, &stMirror, &stLock, nullptr};
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
+ 
 
   while (1)
   {
@@ -57,6 +58,12 @@ void Buttons::Task(void)
       if (getDataReady())
       {
         rxBufferPtr = getData();
+
+        if(rxBufferPtr[1] == maskMIRRORSELECTRIGHT)        
+          *stMirror.stActions[0x0].side=RIGHT;
+        if(rxBufferPtr[1] == maskMIRRORSELECTLEFT)
+          *stMirror.stActions[0x0].side=LEFT;
+
         /*Loop through all motor structure data*/
         idy = 0;
         while (motorStructsPtr[idy] != nullptr)
@@ -72,7 +79,7 @@ void Buttons::Task(void)
                   motorData->stActions[idx].mask)
               {
                 CALL_MEMBER_FN(motorData->motorClassPtr,
-                               motorData->stActions[idx].motor)();
+                               motorData->stActions[idx].motor)(*motorData->stActions[idx].side);
                 break;
               }
               idx++;

@@ -7,15 +7,16 @@
 class motorBuilder{
   public:
     virtual ~motorBuilder(){};
-    virtual motorInterface *factoryMethod()=0;
+    virtual motorInterface *factoryMethod(can *interface)=0;
 
 };
 
 class tle94103MotorBuilder : public motorBuilder
 {
   public:
-    motorInterface *factoryMethod() override{
-      return new Tle94103();
+    
+    motorInterface *factoryMethod(can *interface) override{      
+      return new Tle94103(interface);      
   }
 
 };
@@ -23,8 +24,8 @@ class tle94103MotorBuilder : public motorBuilder
 class drv8838MotorBuilder : public motorBuilder
 {
   public:
-    motorInterface *factoryMethod() override{
-      return new drv8838();
+    motorInterface *factoryMethod(can *interface) override{     
+      return new drv8838(interface);
   }
 
 };
@@ -32,8 +33,8 @@ class drv8838MotorBuilder : public motorBuilder
 class vnh5019aMotorBuilder : public motorBuilder
 {
   public:
-    motorInterface *factoryMethod() override{
-      return new vnh5019a();
+    motorInterface *factoryMethod(can *interface) override{
+      return new vnh5019a(interface);
   }
 
 };
