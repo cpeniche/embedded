@@ -33,6 +33,24 @@
   status = "okay";
 };
 
+&adc1 {
+  pinctrl-0 = <&adc1_in1_pa0 &adc1_in2_pa1>;
+  pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+  st,adc-clock-source = "SYNC";
+  st,adc-prescaler = <1>; 
+	status = "okay";
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		/*zephyr,input-positive = <NRF_SAADC_AIN0>;  P0.02 for nRF52xx, P0.04 for nRF5340 */
+		zephyr,resolution = <12>;
+	};
+};
+
 &{/chosen}{
  zephyr,canbus =&fdcan1;
 };
@@ -67,4 +85,10 @@
       compatible = "st,vnh5019a";
       gpios = <&gpiob 0x6 GPIO_ACTIVE_HIGH>;
     };
+};
+
+/ {
+	  zephyr,user {
+		  io-channels = <&adc1 0>;
+	};
 };

@@ -11,10 +11,11 @@ set(sources src/main.cpp
             src/motor/vnh5019a.cpp
             src/buttons.cpp
             src/dictionary.cpp
-            src/can/canConfig.cpp
+            src/can/can.cpp
             src/lin/lin.cpp            
             src/spi/zephyrSpi.cpp 
             src/spi/spiFactory.cpp)
+#           src/adc/adc.cpp)
             
 
 #add_subdirectory(src/can)

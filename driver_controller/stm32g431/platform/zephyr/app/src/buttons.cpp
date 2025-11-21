@@ -13,7 +13,10 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include "tle94103.h"
 #include "drv8838.h"
 #include "vnh5019a.h"
+#include "inputInterface.h"
+#include "inputBuilder.h"
 #include "lin.h"
+// #include "adc.h"
 #include "buttons.h"
 
 #define STACK_SIZE 1024
@@ -26,43 +29,38 @@ static void DriverModuleTask(void);
 K_THREAD_DEFINE(DriverModule, STACK_SIZE, DriverModuleTask, NULL, NULL, NULL,
                 PRIORITY, 0, 0);
 
-uint8_t rxBuffer[7] = {0};
 int16_t error;
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
-
-LIN linDriver((struct device *)DEVICE_DT_GET(DT_NODELABEL(usart1)),
-              rxBuffer, sizeof(rxBuffer), 0x10);
 Buttons cButtons;
-
-Buttons::Buttons(){}
 
 void Buttons::Task(void)
 {
-  SetDriver(&linDriver);
-  linDriver.setCallback(linCallBack);
+
   uint8_t *rxBufferPtr;
   struct data *motorStructsPtr[4] = {&stWindow, &stMirror, &stLock, nullptr};
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
- 
-
+  inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
+  
   while (1)
   {
 
-    if (Read(NULL, 2) == 0)
+    // if (Read(NULL, 2) == 0)
+    if (input->readInput(nullptr, 2) == 0)
     {
       k_sleep(K_MSEC(20));
       /* wait for data */
-      if (getDataReady())
+      // if (getDataReady())
+      if (input->getDataReady())
       {
-        rxBufferPtr = getData();
+        rxBufferPtr = input->getInput(); //   getData();
 
-        if(rxBufferPtr[1] == maskMIRRORSELECTRIGHT)        
-          *stMirror.stActions[0x0].side=RIGHT;
-        if(rxBufferPtr[1] == maskMIRRORSELECTLEFT)
-          *stMirror.stActions[0x0].side=LEFT;
+        if (rxBufferPtr[1] == maskMIRRORSELECTRIGHT)
+          *stMirror.stActions[0x0].side = RIGHT;
+        if (rxBufferPtr[1] == maskMIRRORSELECTLEFT)
+          *stMirror.stActions[0x0].side = LEFT;
 
         /*Loop through all motor structure data*/
         idy = 0;
@@ -93,20 +91,6 @@ void Buttons::Task(void)
   }
 }
 
-bool Buttons::getDataReady()
-{
-  if ((Driver->getFlags() & (1 << Driver->RXDONE)) != 0)
-    return true;
-  else
-    return false;
-}
-
-int8_t Buttons::Read(uint8_t *Buffer, size_t length)
-{
-  // if(Driver->getFlags() & (1<<Driver->TXDONE))
-  return Driver->Transmit(Buffer, length);
-}
-
 void DriverModuleTask()
 {
 
@@ -115,5 +99,5 @@ void DriverModuleTask()
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data)
 {
-  linDriver.callBack(dev, evt, user_data);
+  cButtons.getDriver()->callBack(dev,evt,user_data);
 }

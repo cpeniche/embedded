@@ -9,30 +9,32 @@
 #include <zephyr/net_buf.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/uart.h>
+#include "inputInterface.h"
 #include "lin.h"
-
 LOG_MODULE_REGISTER(LIN, LOG_LEVEL_INF);
-void callBack(const struct device *dev, struct uart_event *evt, void *user_data);
+
+#define CALL_MEMBER_FN(object, ptrToMember) ((object)->*(ptrToMember))
+callBackPtr callback;
+void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
 LIN::LIN(struct device *dev, uint8_t *rxBuffer, size_t length, uint8_t Identifier)
-{	
-	setDevice(dev);	
+{
+	setDevice(dev);
 	setProtectedID(Identifier);
 	this->rxBuffer = rxBuffer;
 	error = uart_rx_enable(this->dev, this->rxBuffer, length, 100);
-
 }
 
 int8_t LIN::Transmit(uint8_t *buffer, size_t size)
 {
-	clearFlag(TXDONE);	
+	clearFlag(TXDONE);
 	txBuffer[0] = SynchData;
-	txBuffer[1] = (protectedId << 2) |  IdentifierFieldParity(protectedId);
-	if(buffer != NULL)
-		for(size_t idx=2; idx<size; idx++)
-			txBuffer[idx] = buffer[idx-2];
+	txBuffer[1] = (protectedId << 2) | IdentifierFieldParity(protectedId);
+	if (buffer != NULL)
+		for (size_t idx = 2; idx < size; idx++)
+			txBuffer[idx] = buffer[idx - 2];
 	error = uart_tx(this->dev, txBuffer, size, SYS_FOREVER_US);
-	if(error != 0)
+	if (error != 0)
 		setFlag(RXERROR);
 	else
 		clearFlag(TXDONE);
@@ -46,12 +48,12 @@ void LIN::setCallback(uart_callback_t func)
 
 void LIN::setFlag(eFlags flag)
 {
-	flags |= 1<<flag;
+	flags |= 1 << flag;
 }
 
 void LIN::clearFlag(eFlags flag)
 {
-	flags &= ~(1<<flag);
+	flags &= ~(1 << flag);
 }
 
 uint8_t LIN::IdentifierFieldParity(uint8_t u8prvData)
@@ -66,28 +68,45 @@ uint8_t LIN::IdentifierFieldParity(uint8_t u8prvData)
 
 void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_data)
 {
-	
-  int8_t rc;
+
 	LOG_DBG("EVENT: %d", evt->type);
 
 	switch (evt->type)
 	{
 	case UART_TX_DONE:
 		setFlag(LIN::TXDONE);
-    clearFlag(LIN::RXDONE);
+		clearFlag(LIN::RXDONE);
 		break;
-  
-	case UART_RX_BUF_REQUEST:		
+
+	case UART_RX_BUF_REQUEST:
 	case UART_RX_BUF_RELEASED:
 		break;
 	case UART_RX_DISABLED:
-		uart_rx_enable(this->dev, this->rxBuffer, 7, 100);	  
+		uart_rx_enable(this->dev, this->rxBuffer, 7, 100);
 		break;
-	case UART_RX_RDY:    
+	case UART_RX_RDY:
 		setFlag(LIN::RXDONE);
-    clearFlag(LIN::RXERROR);		
-		break;    
+		clearFlag(LIN::RXERROR);
+		break;
 	default:
 		LOG_WRN("Unhandled event %d", evt->type);
 	}
+}
+
+int8_t LIN::readInput(uint8_t *buffer, size_t size)
+{
+	return Transmit(buffer, size);
+}
+
+uint8_t *LIN::getInput(void)
+{
+	return getRxBuffer();
+}
+
+bool LIN::getDataReady(void)
+{
+	if ((getFlags() & (1 << RXDONE)) != 0)
+		return true;
+	else
+		return false;
 }
