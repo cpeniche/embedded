@@ -64,7 +64,8 @@ private:
   motorInterface *window = windowMotorBuilder.factoryMethod(&CanDriver);
 
   linInputBuilder linButtonsReader;
-
+  adcInputBuilder adcButtonsReader;
+  
   can CanDriver;
 
   uint8_t u8RightWindow = RIGHT;

@@ -20,24 +20,22 @@ can::can()
   /* Let the device start before doing anything */
   k_sleep(K_SECONDS(2));
 
-  fileDescriptor = setupSocket();  
+  fileDescriptor = setupSocket();
 }
 
 void can::sendCanMsg(uint8_t *data)
 {
-  
-  socketcan_from_can_frame(&zframe, &sframe);
-  for(int idx=0; idx<zframe.dlc; idx++)
-    zframe.data[idx]=data[idx];
-  error= send(fileDescriptor,&sframe,sizeof(sframe),0);
 
+  socketcan_from_can_frame(&zframe, &sframe);
+  for (int idx = 0; idx < zframe.dlc; idx++)
+    zframe.data[idx] = data[idx];
+  error = send(fileDescriptor, &sframe, sizeof(sframe), 0);
 }
 
 int can::setupSocket()
 {
-  
+
   socketcan_from_can_filter(&zfilter, &sock_filter);
-  
 
   iface = net_if_get_first_by_type(&NET_L2_GET_NAME(CANBUS_RAW));
   if (!iface)
@@ -57,18 +55,18 @@ int can::setupSocket()
   canAddress.can_ifindex = net_if_get_by_iface(iface);
   canAddress.can_family = PF_CAN;
 
-#ifdef PASSENGER_CONTROL  
-  error = bind(fd, (struct sockaddr *)&canAddress, sizeof(canAddress));
+  // #ifdef PASSENGER_CONTROL
+  error = bind(fileDescriptor, (struct sockaddr *)&canAddress, sizeof(canAddress));
   if (error < 0)
   {
     error = -errno;
-    LOG_ERR("Cannot bind %s CAN socket (%d)", "1st", ret);
+    LOG_ERR("Cannot bind %s CAN socket (%d)", "1st", error);
     goto cleanup;
   }
-#endif
+  // #endif
 
   error = setsockopt(fileDescriptor, SOL_CAN_RAW, CAN_RAW_FILTER, &sock_filter,
-                   sizeof(sock_filter));
+                     sizeof(sock_filter));
   if (error < 0)
   {
     error = -errno;
@@ -83,10 +81,6 @@ cleanup:
   (void)close(fileDescriptor);
   return error;
 }
-
-
-
-
 
 #if 0
 #define PRIORITY K_PRIO_PREEMPT(15) // k_thread_priority_get(k_current_get())
@@ -401,6 +395,3 @@ static void rx(void *p1, void *p2, void *p3)
 }
 
 #endif
-
-
-

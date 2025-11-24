@@ -14,8 +14,8 @@ set(sources src/main.cpp
             src/can/can.cpp
             src/lin/lin.cpp            
             src/spi/zephyrSpi.cpp 
-            src/spi/spiFactory.cpp)
-#           src/adc/adc.cpp)
+            src/spi/spiFactory.cpp
+            src/adc/adc.cpp)
             
 
 #add_subdirectory(src/can)

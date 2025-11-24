@@ -39,12 +39,13 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
   st,adc-clock-source = "SYNC";
-  st,adc-prescaler = <1>; 
+  st,adc-prescaler = <4>;   
 	status = "okay";
 	channel@0 {
 		reg = <0>;
 		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+    zephyr,vref-mv = <3300>;
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		/*zephyr,input-positive = <NRF_SAADC_AIN0>;  P0.02 for nRF52xx, P0.04 for nRF5340 */
 		zephyr,resolution = <12>;

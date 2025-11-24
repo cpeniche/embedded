@@ -1,6 +1,6 @@
 #pragma once
 #include "inputInterface.h"
-// #include "adc.h"
+#include "adc.h"
 #include "lin.h"
 
 class inputBuilder
@@ -32,6 +32,6 @@ class adcInputBuilder : public inputBuilder
 public:
   inputInterface *factoryMethod(struct device *device, uint8_t *rxBuffer, size_t size, uint8_t length, uart_callback_t func) override
   {
-    return nullptr;
+    return new adc();
   }
 };

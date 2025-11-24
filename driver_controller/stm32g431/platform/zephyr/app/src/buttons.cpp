@@ -4,6 +4,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/spi.h>
 #include "spiBuilder.h"
 #include "zephyrSpi.h"
@@ -16,7 +17,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include "inputInterface.h"
 #include "inputBuilder.h"
 #include "lin.h"
-// #include "adc.h"
+#include "adc.h"
 #include "buttons.h"
 
 #define STACK_SIZE 1024
@@ -43,14 +44,17 @@ void Buttons::Task(void)
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
   inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
-  
+  inputInterface *adcinput = adcButtonsReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
+
   while (1)
   {
 
     // if (Read(NULL, 2) == 0)
     if (input->readInput(nullptr, 2) == 0)
     {
-      k_sleep(K_MSEC(20));
+
+      adcinput->readInput(nullptr, 0);
+      k_sleep(K_MSEC(2000));
       /* wait for data */
       // if (getDataReady())
       if (input->getDataReady())
@@ -99,5 +103,5 @@ void DriverModuleTask()
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data)
 {
-  cButtons.getDriver()->callBack(dev,evt,user_data);
+  cButtons.getDriver()->callBack(dev, evt, user_data);
 }
