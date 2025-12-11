@@ -2,15 +2,13 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
   "name": "Zephyr",
-  "image": "localhost/zephyr:v4.2",
+  "image": "localhost/zephyr:4.3.0",
   "runArgs": ["--group-add=keep-groups"],
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
   "workspaceFolder": "/home/vscode/project",
-  "mounts": [
-    "source=/dev,target=/dev,type=bind"
-  ],
+  "mounts": ["source=/dev,target=/dev,type=bind"],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [3000],

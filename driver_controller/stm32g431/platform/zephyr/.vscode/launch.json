@@ -35,7 +35,7 @@
       "interface": "swd",
       "servertype": "jlink",
       "device": "STM32G431KB",
-      "gdbPath": "/home/vscode/zephyr-sdk-0.17.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+      "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
       "showDevDebugOutput": "vscode",
       "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
       "svdFile": "/home/vscode/project/openocd/STM32G431.svd"

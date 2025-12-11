@@ -10,10 +10,12 @@ ARG UID=1000
 ARG GID=$UID
 
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y --no-install-recommends git cmake ninja-build gperf gdebi-core \
+RUN apt-get install -y --no-install-recommends git cmake ninja-build  \
     ccache dfu-util device-tree-compiler wget pipx usbutils minicom locales patch vim\
     python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
     make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1 python3-venv libncurses-dev
+
+#gperf gdebi-core    
 
 RUN userdel -rf ubuntu 
 RUN if getent group ubuntu ; then groupdel ubuntu; fi \
@@ -38,7 +40,7 @@ ENV PATH=/home/$USERNAME/.local/bin:$PATH
 
 RUN pipx install west && pipx ensurepath
 
-#RUN west init -m https://github.com/zephyrproject-rtos/zephyr  --mr v4.1.0-rc1
+#RUN west init -m https://github.com/zephyrproject-rtos/zephyr  --mr
 RUN west init
 #changed manifest file to download only stm32 build enviroment
 COPY --chown=$USERNAME:$USERNAME west_stm32.yml /home/$USERNAME/zephyr
@@ -51,9 +53,9 @@ RUN west config manifest.file west_stm32.yml \
     && west sdk install -b /home/$USERNAME -t arm-zephyr-eabi
 
 USER root
-WORKDIR /home/${USERNAME}/temp
-COPY JLink_Linux_V812_x86_64.deb JLink_Linux_V812_x86_64.deb
-RUN gdebi --n JLink_Linux_V812_x86_64.deb; exit 0
+#WORKDIR /home/${USERNAME}/temp
+#COPY JLink_Linux_V812_x86_64.deb JLink_Linux_V812_x86_64.deb
+#RUN gdebi --n JLink_Linux_V812_x86_64.deb; exit 0
 COPY /udev/60-openocd.rules /etc/udev/rules.d/60-openocd.rules
 WORKDIR /home/${USERNAME}
 USER $USERNAME
