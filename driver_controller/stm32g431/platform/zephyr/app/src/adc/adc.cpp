@@ -90,7 +90,7 @@ int8_t adc::readInput(uint8_t *data, size_t size)
       printk(" = %" PRId32 " mV\n", val_mv);
     }
 
-    printk("Internal reference = %d\n", adc_ref_internal(adc_channels[0].dev));
+    //printk("Internal reference = %d\n", adc_ref_internal(adc_channels[0].dev));
   }
   return err;
 }
