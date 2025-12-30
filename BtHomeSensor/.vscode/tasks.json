@@ -1,0 +1,70 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "command": "${command:workbench.action.files.saveAll}",
+      "label": "SaveAllFiles",
+      "type": "shell",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash",
+      "type": "shell",
+      "command": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin; cd ~/zephyr; west flash --skip-rebuild -r openocd -d ${workspaceFolder}/build",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin; cd ~/zephyr; west build -p always -b xiao_esp32s3/esp32s3/procpu ${workspaceFolder}/app -d ${workspaceFolder}/build",
+      "group": "build",
+      "dependsOn": ["SaveAllFiles"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "cd ~/zephyr; west build -p auto -b xiao_esp32s3/esp32s3/procpu ${workspaceFolder}/app -d ${workspaceFolder}/build",
+      "group": "build",
+      "dependsOn": ["SaveAllFiles"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start OpenOCD Server",
+      "type": "shell",
+      "command": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
+      "args": [
+        "-f",
+        "/home/vscode/project/esp_usb_bridge.cfg", // Replace with your interface config
+        "-f",
+        "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/esp32s3.cfg"
+        /* "-c",
+        "program ${workspaceFolder}/build/zephyr/zephyr.bin 0x10000 verify reset" // Replace with your target config
+        // Add any other necessary arguments*/
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": "."
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Info : \\w+", // Regex for OpenOCD server start indicator
+            "endsPattern": "Error: \\w+|target halted" // Regex for server end or target halt
+          }
+        }
+      ]
+    }
+  ]
+}
