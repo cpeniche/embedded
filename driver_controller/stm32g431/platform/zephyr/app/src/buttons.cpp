@@ -52,47 +52,62 @@ void Buttons::Task(void)
     // if (Read(NULL, 2) == 0)
     if (input->readInput(nullptr, 2) == 0)
     {
-
       adcinput->readInput(nullptr, 0);
-      k_sleep(K_MSEC(2000));
+      k_sleep(K_MSEC(1000));
       /* wait for data */
-      // if (getDataReady())
       if (input->getDataReady())
       {
-        rxBufferPtr = input->getInput(); //   getData();
+        rxBufferPtr = input->getInput();
 
-        if (rxBufferPtr[1] == maskMIRRORSELECTRIGHT)
-          *stMirror.stActions[0x0].side = RIGHT;
-        if (rxBufferPtr[1] == maskMIRRORSELECTLEFT)
-          *stMirror.stActions[0x0].side = LEFT;
-
-        /*Loop through all motor structure data*/
-        idy = 0;
-        while (motorStructsPtr[idy] != nullptr)
+        if (CalculateChecksum(rxBufferPtr, 5) != rxBufferPtr[5])
         {
-          motorData = motorStructsPtr[idy];
-          if (rxBufferPtr[motorData->u8BufferIndex] ^ motorData->u8PrevState)
+          LOG_ERR("LIN Message Checksum Error");
+          continue;
+        }
+        else
+        {
+          if (rxBufferPtr[2] == maskMIRRORSELECTRIGHT)
+            *stMirror.stActions[0x0].side = RIGHT;
+          if (rxBufferPtr[2] == maskMIRRORSELECTLEFT)
+            *stMirror.stActions[0x0].side = LEFT;
+
+          /*Loop through all motor structure data*/
+          idy = 0;
+          while (motorStructsPtr[idy] != nullptr)
           {
-            idx = 0;
-            while (motorData->stActions[idx].motor != nullptr)
+            motorData = motorStructsPtr[idy];
+            if (rxBufferPtr[motorData->u8BufferIndex] ^ motorData->u8PrevState)
             {
-              if ((motorData->stActions[idx].mask &
-                   rxBufferPtr[motorData->u8BufferIndex]) ==
-                  motorData->stActions[idx].mask)
+              idx = 0;
+              while (motorData->stActions[idx].motor != nullptr)
               {
-                CALL_MEMBER_FN(motorData->motorClassPtr,
-                               motorData->stActions[idx].motor)(*motorData->stActions[idx].side);
-                break;
+                if ((motorData->stActions[idx].mask &
+                     rxBufferPtr[motorData->u8BufferIndex]) ==
+                    motorData->stActions[idx].mask)
+                {
+                  CALL_MEMBER_FN(motorData->motorClassPtr,
+                                 motorData->stActions[idx].motor)(*motorData->stActions[idx].side);
+                  break;
+                }
+                idx++;
               }
-              idx++;
             }
+            motorData->u8PrevState = rxBufferPtr[motorData->u8BufferIndex];
+            idy++;
           }
-          motorData->u8PrevState = rxBufferPtr[motorData->u8BufferIndex];
-          idy++;
         }
       }
     }
   }
+}
+
+uint8_t Buttons::CalculateChecksum(uint8_t *ptr, size_t length)
+{
+  uint16_t chkSum = 0;
+
+  for (uint8_t idx = 0; idx < length; idx++)
+    chkSum += ptr[idx];
+  return (~(uint8_t)chkSum) - 1;
 }
 
 void DriverModuleTask()

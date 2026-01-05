@@ -25,7 +25,7 @@ public:
   void clearFlag(eFlags flag);
   uint8_t getFlags(void) { return flags; }
   void setProtectedID(uint8_t id) { protectedId = id; }
-  uint8_t *getRxBuffer(void) { return &rxBuffer[2]; }
+  uint8_t *getRxBuffer(void) { return &rxBuffer[1]; }
   void callBack(const struct device *dev, struct uart_event *evt, void *user_data);
   int8_t readInput(uint8_t *, size_t) override;
   uint8_t *getInput(void) override;

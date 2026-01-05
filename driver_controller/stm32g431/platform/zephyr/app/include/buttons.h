@@ -50,6 +50,7 @@ public:
   ~Buttons() {}
   LIN *getDriver() { return linButtonsReader.getLinDriver(); }
   void Task(void);
+  uint8_t CalculateChecksum(uint8_t *ptr, size_t length);
 
 private:
   uint8_t rxBuffer[7] = {0};
@@ -65,7 +66,7 @@ private:
 
   linInputBuilder linButtonsReader;
   adcInputBuilder adcButtonsReader;
-  
+
   can CanDriver;
 
   uint8_t u8RightWindow = RIGHT;
@@ -75,7 +76,7 @@ private:
   struct data stWindow =
       {
           0x0,
-          0x0,
+          0x1,
           window,
           {{maskLEFTWINDOWUP, &u8LeftWindow, &motorInterface::Up},
            {maskLEFTWINDOWDOWN, &u8LeftWindow, &motorInterface::Down},
@@ -89,7 +90,7 @@ private:
   struct data stMirror =
       {
           0x0,
-          0x2,
+          0x3,
           mirror,
           {{maskMIRRORUP, &u8Mirror, &motorInterface::Up},
            {maskMIRRORDOWN, &u8Mirror, &motorInterface::Down},
@@ -101,7 +102,7 @@ private:
   struct data stLock =
       {
           0x0,
-          0x2,
+          0x3,
           lock,
           {{maskLOCK, nullptr, &motorInterface::Up},
            {maskUNLOCK, nullptr, &motorInterface::Down},
