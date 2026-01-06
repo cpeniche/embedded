@@ -5,6 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "cwd": "${workspaceRoot}",
+      "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "name": "nrf52 OpenOCD",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "configFiles": [
+        "${workspaceFolder}/openocd/minimodule-swd.cfg",
+        "target/nrf52.cfg"
+      ],
+      "showDevDebugOutput": "vscode",
+      "searchDir": [],
+      "runToEntryPoint": "main",
+      "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"
+    },
+    {
       "name": "(gdb) Attach",
       "type": "cppdbg",
       "request": "attach",
@@ -67,17 +83,15 @@
       "type": "cortex-debug",
       "servertype": "openocd",
       "interface": "jtag",
-      "serverpath": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
-      "configFiles": [
-        "/home/vscode/project/esp32s3-bridge.cfg",
-        "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/esp32s3.cfg"
-      ],
+      "serverpath": "openocd",
+      "configFiles": ["board/esp32s3-builtin.cfg"],
       "searchDir": [],
       "runToEntryPoint": "main",
       "showDevDebugOutput": "vscode",
       //"device": "esp32s3",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/xtensa-espressif_esp32s3_zephyr-elf/bin/xtensa-espressif_esp32s3_zephyr-elf-gdb",
       "debuggerArgs": ["target remote :50000", "monitor halt", "monitor reset"]
+      // "serverArgs": ["-d"]
       //"svdFile": "/home/vscode/project/openocd/STM32G431.svd"
     },
     {

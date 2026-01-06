@@ -19,7 +19,7 @@
     {
       "label": "Clean Build",
       "type": "shell",
-      "command": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin; cd ~/zephyr; west build -p always -b xiao_esp32s3/esp32s3/procpu ${workspaceFolder}/app -d ${workspaceFolder}/build",
+      "command": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin; cd ~/zephyr; west build -p always -b nrf52840dongle/nrf52840/bare ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
       "dependsOrder": "sequence",
@@ -28,7 +28,7 @@
     {
       "label": "build",
       "type": "shell",
-      "command": "cd ~/zephyr; west build -p auto -b xiao_esp32s3/esp32s3/procpu ${workspaceFolder}/app -d ${workspaceFolder}/build",
+      "command": "cd ~/zephyr; west build -p auto -b nrf52840dongle/nrf52840/bare ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
       "dependsOrder": "sequence",

@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-# podman build -t zephyr --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
+# podman build -t zephyr:v4.3.99 --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
 # Use bash as the default shell
 SHELL ["/bin/bash", "-c"]
 
@@ -10,10 +10,11 @@ ARG UID=1000
 ARG GID=$UID
 
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y --no-install-recommends git cmake ninja-build \
+RUN apt-get install -y --no-install-recommends git cmake ninja-build libtool pkg-config \
     ccache dfu-util device-tree-compiler wget pipx usbutils minicom locales patch vim\
     python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
-    make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1 python3-venv libncurses-dev
+    make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1 python3-venv libncurses-dev \
+    libjim-dev autoconf automake texinfo libusb-1.0
 
 #gperf gdebi-core    
 
@@ -60,5 +61,13 @@ USER root
 COPY /udev/60-openocd.rules /etc/udev/rules.d/60-openocd.rules
 WORKDIR /home/${USERNAME}/zephyr
 RUN west blobs fetch hal_espressif
+WORKDIR /home/${USERNAME}/temp
+RUN git clone https://github.com/openocd-org/openocd.git
+RUN cd ./openocd \
+    && ./bootstrap \
+    && ./configure \
+    && make \
+    && sudo make install
 WORKDIR /home/${USERNAME}
+ENV PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin
 USER $USERNAME
