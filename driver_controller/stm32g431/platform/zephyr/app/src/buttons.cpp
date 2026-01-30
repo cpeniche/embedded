@@ -22,6 +22,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 
 #define STACK_SIZE 1024
 #define PRIORITY K_PRIO_PREEMPT(15)
+#define ACVoltage(x) (float)(((float)x / 32768) - 1) * 3.3
 
 #define CALL_MEMBER_FN(object, ptrToMember) ((object)->*(ptrToMember))
 
@@ -31,6 +32,9 @@ K_THREAD_DEFINE(DriverModule, STACK_SIZE, DriverModuleTask, NULL, NULL, NULL,
                 PRIORITY, 0, 0);
 
 int16_t error;
+uint16_t temp;
+uint8_t adcDataRead[3] = {0};
+float voltage;
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
@@ -48,12 +52,14 @@ void Buttons::Task(void)
 
   while (1)
   {
+    adcinput->readInput(adcDataRead, sizeof(adcDataRead));
+    temp = (adcDataRead[0] << 8) + adcDataRead[1];
 
-    // if (Read(NULL, 2) == 0)
+    voltage = ACVoltage(temp);
+    LOG_INF("VOLTAGE : %f", voltage);
     if (input->readInput(nullptr, 2) == 0)
     {
-      adcinput->readInput(nullptr, 0);
-      k_sleep(K_MSEC(1000));
+
       /* wait for data */
       if (input->getDataReady())
       {

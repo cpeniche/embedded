@@ -4,18 +4,28 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/adc.h>
+// #include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/drivers/spi.h>
+#include "spiBuilder.h"
 #include "inputInterface.h"
 #include "adc.h"
 
+#if !DT_NODE_EXISTS(DT_NODELABEL(ad7171_pdrst))
+#error "Overlay for ad7171_pdrst pin not defined."
+#endif
+
+static constexpr struct gpio_dt_spec pdrst =
+    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(ad7171_pdrst), gpios, {1});
+
+#if 0
 #if !DT_NODE_EXISTS(DT_PATH(zephyr_user)) || \
     !DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
 #error "No suitable devicetree overlay specified"
 #endif
-
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
   ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
@@ -23,9 +33,17 @@
 static const struct adc_dt_spec adc_channels[] = {
     DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
                          DT_SPEC_AND_COMMA)};
+#endif
 
 adc::adc()
 {
+
+  if (gpio_is_ready_dt(&pdrst))
+  {
+    gpio_pin_configure_dt(&pdrst, GPIO_OUTPUT_ACTIVE);
+  }
+
+#if 0 
   /* Configure channels individually prior to sampling. */
   for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
   {
@@ -42,10 +60,19 @@ adc::adc()
       }
     }
   }
+#endif
 }
 
 int8_t adc::readInput(uint8_t *data, size_t size)
 {
+
+  gpio_pin_set_dt(&pdrst, 0);
+  k_usleep(1);
+  gpio_pin_set_dt(&pdrst, 1);
+  k_sleep(K_MSEC(26));
+  this->spi->Read(data, size);
+
+#if 0
 
   for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
   {
@@ -92,6 +119,8 @@ int8_t adc::readInput(uint8_t *data, size_t size)
 
     //printk("Internal reference = %d\n", adc_ref_internal(adc_channels[0].dev));
   }
+
+#endif
   return err;
 }
 uint8_t *adc::getInput(void)

@@ -13,8 +13,7 @@ set(sources src/main.cpp
             src/dictionary.cpp
             src/can/can.cpp
             src/lin/lin.cpp            
-            src/spi/zephyrSpi.cpp 
-            src/spi/spiFactory.cpp
+            src/spi/zephyrSpi.cpp             
             src/adc/adc.cpp)
             
 

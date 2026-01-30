@@ -12,18 +12,29 @@ public:
   int8_t readInput(uint8_t *, size_t) override;
   uint8_t *getInput(void) override;
   bool getDataReady(void) override;
-  int getError(void){return err;}
+  int getError(void) { return err; }
 
 private:
+  zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
+  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod(&spi_cfg);
+  int err;
+  struct spi_config spi_cfg =
+  {
+    .frequency = 1000000U,
+    .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB |
+                 SPI_WORD_SET(8) | SPI_MODE_CPOL | SPI_MODE_CPHA,
+  .slave = 0x0
+};
+
+#if 0  
   uint32_t count = 0;
 	uint16_t buf;
-  int err;
+  
 	struct adc_sequence sequence = {
 		.buffer = &buf,
 		/* buffer size in bytes, not number of samples */
 		.buffer_size = sizeof(buf),
 	};
-
- 
-
-};
+#endif
+}
+;

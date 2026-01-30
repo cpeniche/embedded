@@ -33,32 +33,11 @@
   status = "okay";
 };
 
-&adc1 {
-  pinctrl-0 = <&adc1_in1_pa0 &adc1_in2_pa1>;
-  pinctrl-names = "default";
-	#address-cells = <1>;
-	#size-cells = <0>;
-  st,adc-clock-source = "SYNC";  
-  st,adc-prescaler = <1>;
-  st,adc-internal-regulator = "startup-sw-delay";
-	status = "okay";
-	channel@1 {
-		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_INTERNAL";
-    zephyr,vref-mv = <3300>;
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;	
-		zephyr,resolution = <12>;
-  };
-  channel@2 {
-		reg = <2>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_INTERNAL";
-    zephyr,vref-mv = <3300>;
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;	
-		zephyr,resolution = <12>;
-	};
+&spi1_sck_pa5{
+  /delete-property/ bias-pull-down;
+  bias-pull-up;
 };
+
 
 &{/chosen}{
  zephyr,canbus =&fdcan1;
@@ -94,10 +73,49 @@
       compatible = "st,vnh5019a";
       gpios = <&gpiob 0x6 GPIO_ACTIVE_HIGH>;
     };
+
+    ad7171_pdrst: ad7171_pdrst{
+      compatible = "infineon,ad7171";
+      gpios = <&gpioa 0x1 GPIO_ACTIVE_HIGH>;
+    };
 };
 
+
+
+
+/*************************************
+&adc1 {
+  pinctrl-0 = <&adc1_in1_pa0 &adc1_in2_pa1>;
+  pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+  st,adc-clock-source = "SYNC";  
+  st,adc-prescaler = <1>;
+  st,adc-internal-regulator = "startup-sw-delay";
+	status = "okay";
+	channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+    zephyr,vref-mv = <3300>;
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;	
+		zephyr,resolution = <12>;
+  };
+  channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+    zephyr,vref-mv = <3300>;
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;	
+		zephyr,resolution = <12>;
+	};
+};
+****************************************/
+
+/************************
 / {
 	  zephyr,user {
 		  io-channels = <&adc1 1>,< &adc1 2>;
 	};
 };
+***********************/

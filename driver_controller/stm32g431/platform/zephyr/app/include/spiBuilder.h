@@ -1,5 +1,5 @@
 #pragma once
-//#include "spiInterface.h"
+// #include "spiInterface.h"
 #include "zephyrSpi.h"
 
 template <class basetype, class errortype>
@@ -8,16 +8,16 @@ class SpiBuilder
 
 public:
   virtual ~SpiBuilder() {};
-  virtual spiInterface<basetype, errortype> *factoryMethod() = 0;  
+  virtual spiInterface<basetype, errortype> *factoryMethod(struct spi_config *config) = 0;
 };
 
 template <class basetype, class errortype>
-class zephyrSpiBuilder : public SpiBuilder<basetype,errortype>
+class zephyrSpiBuilder : public SpiBuilder<basetype, errortype>
 {
 
 public:
-  spiInterface<basetype, errortype> *factoryMethod() override
+  spiInterface<basetype, errortype> *factoryMethod(struct spi_config *config) override
   {
-    return new zephyrSpi<basetype, errortype>();
+    return new zephyrSpi<basetype, errortype>(config);
   }
 };

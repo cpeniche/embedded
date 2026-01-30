@@ -8,7 +8,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 
-
 static void vMain(void);
 #define STACK_SIZE 512
 #define PRIORITY K_PRIO_PREEMPT(15)
@@ -24,12 +23,9 @@ void vMain(void)
 {
 
 	/*canConfig();
-	*/
+	 */
 	while (1)
 	{
-			
 		k_sleep(K_MSEC(10));
 	}
 }
-
-

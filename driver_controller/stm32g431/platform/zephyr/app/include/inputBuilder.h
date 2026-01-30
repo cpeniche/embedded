@@ -33,5 +33,5 @@ public:
   inputInterface *factoryMethod(struct device *device, uint8_t *rxBuffer, size_t size, uint8_t length, uart_callback_t func) override
   {
     return new adc();
-  }
+    }
 };
