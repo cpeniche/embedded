@@ -2,7 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
   "name": "Zephyr",
-  "image": "localhost/zephyr:4.3.0",
+  "image": "localhost/zephyr:4.3.99",
   "runArgs": ["--group-add=keep-groups"],
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},

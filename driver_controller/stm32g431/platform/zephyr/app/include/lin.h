@@ -1,4 +1,5 @@
 #pragma once
+#include "inputInterface.h"
 
 #define SynchData 0x55
 

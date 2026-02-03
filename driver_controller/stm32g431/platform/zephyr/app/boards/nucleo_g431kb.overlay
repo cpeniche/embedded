@@ -78,6 +78,11 @@
       compatible = "infineon,ad7171";
       gpios = <&gpioa 0x1 GPIO_ACTIVE_HIGH>;
     };
+
+    ad7171_pdrst_2: ad7171_pdrst_2{
+      compatible = "infineon,ad7171";
+      gpios = <&gpioa 0x2 GPIO_ACTIVE_HIGH>;
+    };
 };
 
 

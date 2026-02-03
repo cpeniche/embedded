@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 # podman build -t zephyr --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
 # Use bash as the default shell
 SHELL ["/bin/bash", "-c"]

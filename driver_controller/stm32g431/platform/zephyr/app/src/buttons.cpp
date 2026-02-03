@@ -4,7 +4,7 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
-#include <zephyr/drivers/adc.h>
+//#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/spi.h>
 #include "spiBuilder.h"
 #include "zephyrSpi.h"
@@ -14,15 +14,14 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include "tle94103.h"
 #include "drv8838.h"
 #include "vnh5019a.h"
-#include "inputInterface.h"
-#include "inputBuilder.h"
 #include "lin.h"
-#include "adc.h"
+#include "adcInputBuilder.h"
+#include "linInputBuilder.h"
 #include "buttons.h"
 
 #define STACK_SIZE 1024
 #define PRIORITY K_PRIO_PREEMPT(15)
-#define ACVoltage(x) (float)(((float)x / 32768) - 1) * 3.3
+
 
 #define CALL_MEMBER_FN(object, ptrToMember) ((object)->*(ptrToMember))
 
@@ -32,9 +31,6 @@ K_THREAD_DEFINE(DriverModule, STACK_SIZE, DriverModuleTask, NULL, NULL, NULL,
                 PRIORITY, 0, 0);
 
 int16_t error;
-uint16_t temp;
-uint8_t adcDataRead[3] = {0};
-float voltage;
 
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
@@ -48,15 +44,15 @@ void Buttons::Task(void)
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
   inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
-  inputInterface *adcinput = adcButtonsReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
+  //inputInterface *adcinput = adcButtonsReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
 
   while (1)
   {
-    adcinput->readInput(adcDataRead, sizeof(adcDataRead));
+    /*adcinput->readInput(adcDataRead, sizeof(adcDataRead));
     temp = (adcDataRead[0] << 8) + adcDataRead[1];
+    voltage = ACVoltage(temp);    
+    LOG_INF("VOLTAGE : %f", voltage);*/
 
-    voltage = ACVoltage(temp);
-    LOG_INF("VOLTAGE : %f", voltage);
     if (input->readInput(nullptr, 2) == 0)
     {
 

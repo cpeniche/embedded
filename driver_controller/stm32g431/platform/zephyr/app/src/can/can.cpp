@@ -5,6 +5,8 @@ LOG_MODULE_REGISTER(canConfig, LOG_LEVEL_DBG);
 #include <zephyr/net/socket.h>
 #include <zephyr/net/socketcan.h>
 #include <zephyr/net/socketcan_utils.h>
+#include <zephyr/posix/sys/socket.h>
+#include <zephyr/posix/unistd.h>
 #include "motorInterface.h"
 #include "can.h"
 #include "dictionary.h"
