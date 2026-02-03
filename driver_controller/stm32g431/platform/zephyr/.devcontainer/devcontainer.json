@@ -23,7 +23,8 @@
         "esbenp.prettier-vscode",
         "ms-vscode.cpptools",
         "rafaelrenanpacheco.darcula-theme",
-        "vscode-icons-team.vscode-icons"
+        "vscode-icons-team.vscode-icons",
+        "cschlosser.doxdocgen"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash"
