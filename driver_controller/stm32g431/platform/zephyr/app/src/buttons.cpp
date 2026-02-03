@@ -44,15 +44,11 @@ void Buttons::Task(void)
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
   inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
-  //inputInterface *adcinput = adcButtonsReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
+  
 
   while (1)
   {
-    /*adcinput->readInput(adcDataRead, sizeof(adcDataRead));
-    temp = (adcDataRead[0] << 8) + adcDataRead[1];
-    voltage = ACVoltage(temp);    
-    LOG_INF("VOLTAGE : %f", voltage);*/
-
+    
     if (input->readInput(nullptr, 2) == 0)
     {
 

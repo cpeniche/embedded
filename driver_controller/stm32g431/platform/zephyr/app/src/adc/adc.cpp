@@ -26,9 +26,9 @@ static /*constexpr*/ struct gpio_dt_spec pdrst =
     GPIO_DT_SPEC_GET_OR(DT_NODELABEL(ad7171_pdrst), gpios, {0});
 
 static /*constexpr*/ struct gpio_dt_spec pdrst_2 =
-    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(ad7171_pdrst_2), gpios, {0});   
-    
-struct gpio_dt_spec *ptrPdrst[]={&pdrst, &pdrst_2};
+    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(ad7171_pdrst_2), gpios, {0});
+
+struct gpio_dt_spec *ptrPdrst[] = {&pdrst, &pdrst_2};
 
 adc::adc()
 {
@@ -47,24 +47,16 @@ adc::adc()
 int8_t adc::readInput(uint8_t *data, size_t size)
 {
 
-  static uint8_t indx=0;
-
-  gpio_pin_set_dt(ptrPdrst[indx], 1);
-  
+  gpio_pin_set_dt(ptrPdrst[*data], 1);
   k_sleep(K_MSEC(26));
-  this->spi->Read(data, size);
-  gpio_pin_set_dt(ptrPdrst[indx], 0);
+  this->spi->Read(rxBuffer, size);
+  gpio_pin_set_dt(ptrPdrst[*data], 0);
 
-  if (indx)
-    indx=0;
-  else
-    indx++;
-
-  return err;
+  return this->spi->GetError();
 }
 uint8_t *adc::getInput(void)
 {
-  return nullptr;
+  return rxBuffer;
 }
 bool adc::getDataReady(void)
 {

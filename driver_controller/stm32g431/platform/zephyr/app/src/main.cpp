@@ -17,15 +17,13 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 static void vMain(void);
 #define STACK_SIZE 512
 #define PRIORITY K_PRIO_PREEMPT(15)
-#define ACVoltage(x) (float)(((float)x / 32768) - 1) * 3.3
+#define adcVolts(x) (float)(((float)x / 32768) - 1) * float(3.3)
 /* Thread definitions*/
 K_THREAD_DEFINE(MainThread, STACK_SIZE, vMain, NULL, NULL, NULL,
 								PRIORITY, 0, 0);
 
 adcInputBuilder adcReader;
-uint16_t temp;
-uint8_t adcDataRead[3] = {0};
-float voltage;
+float voltage[2] = {0.0};
 
 /******************************************
  *   Main
@@ -34,14 +32,21 @@ void vMain(void)
 {
 
 	inputInterface *adcinput = adcReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
-	/*canConfig();
-	 */
+	uint8_t adcNumber = 0;
+	uint8_t *adcRead = nullptr;
+
 	while (1)
 	{
-		adcinput->readInput(adcDataRead, sizeof(adcDataRead));
-    temp = (adcDataRead[0] << 8) + adcDataRead[1];
-    voltage = ACVoltage(temp);    
-    LOG_INF("VOLTAGE : %f", voltage);
+		adcNumber = 0;
+		adcinput->readInput(&adcNumber, 3);
+		adcRead = adcinput->getInput();
+		voltage[adcNumber] = adcVolts(float(adcRead[0]<<8 | adcRead[1]));
+
+		adcNumber = 1;
+		adcinput->readInput(&adcNumber, 3);
+		adcRead = adcinput->getInput();
+		voltage[adcNumber] = adcVolts(float(adcRead[0] <<8 | adcRead[1]));
+
 		k_sleep(K_MSEC(10));
 	}
 }
