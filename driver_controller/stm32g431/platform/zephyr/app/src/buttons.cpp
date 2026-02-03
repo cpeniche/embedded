@@ -6,7 +6,6 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/drivers/uart.h>
 //#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/spi.h>
-#include "spiBuilder.h"
 #include "zephyrSpi.h"
 #include "can.h"
 #include "motorInterface.h"
@@ -35,6 +34,10 @@ int16_t error;
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
 Buttons cButtons;
+/**
+ * @brief Buttons task declaration
+ * 
+ */
 
 void Buttons::Task(void)
 {
@@ -44,7 +47,6 @@ void Buttons::Task(void)
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
   inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
-  
 
   while (1)
   {
@@ -99,6 +101,13 @@ void Buttons::Task(void)
   }
 }
 
+/**
+ * @brief Lin frame checksum calculations
+ * 
+ * @param ptr       : buffer pointer
+ * @param length    : buffer length
+ * @return uint8_t  : checksum value
+ */
 uint8_t Buttons::CalculateChecksum(uint8_t *ptr, size_t length)
 {
   uint16_t chkSum = 0;
@@ -108,12 +117,23 @@ uint8_t Buttons::CalculateChecksum(uint8_t *ptr, size_t length)
   return (~(uint8_t)chkSum) - 1;
 }
 
+/**
+ * @brief Declare Driver task
+ * 
+ */
 void DriverModuleTask()
 {
 
   cButtons.Task();
 }
 
+/**
+ * @brief Callback routine called when a lin message is received
+ * 
+ * @param dev         : dts lin driver module
+ * @param evt         : event received
+ * @param user_data   : user data passed to the callback routine
+ */
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data)
 {
   cButtons.getDriver()->callBack(dev, evt, user_data);

@@ -17,6 +17,7 @@ public:
 
   virtual ~spiInterface() {};
   virtual void Init() = 0;
+  virtual void Configure(void *config) = 0;
   virtual void Read(basetype *, size_t) = 0;
   virtual void Write(basetype *, size_t) = 0;
   virtual errortype GetError() = 0;

@@ -10,7 +10,6 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/drivers/spi.h>
-#include "spiBuilder.h"
 #include "inputInterface.h"
 #include "adc.h"
 
@@ -21,6 +20,13 @@
 #if !DT_NODE_EXISTS(DT_NODELABEL(ad7171_pdrst_2))
 #error "Overlay for ad7171_pdrst_2 pin not defined."
 #endif
+
+struct spi_config adcSpiCfg =
+{
+		.frequency = 1000000U,
+		.operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB |
+									SPI_WORD_SET(8) | SPI_MODE_CPOL | SPI_MODE_CPHA,
+		.slave = 0x0};
 
 static /*constexpr*/ struct gpio_dt_spec pdrst =
     GPIO_DT_SPEC_GET_OR(DT_NODELABEL(ad7171_pdrst), gpios, {0});
@@ -49,6 +55,7 @@ int8_t adc::readInput(uint8_t *data, size_t size)
 
   gpio_pin_set_dt(ptrPdrst[*data], 1);
   k_sleep(K_MSEC(26));
+  this->spi->Configure(&adcSpiCfg);
   this->spi->Read(rxBuffer, size);
   gpio_pin_set_dt(ptrPdrst[*data], 0);
 

@@ -1,4 +1,8 @@
 #pragma once
+#include "spiInterface.h"
+#include "motorInterface.h"
+#include "zephyrSpiBuilder.h"
+
 #define W_R(BIT) (BIT << 7)
 #define LABT(BIT) (BIT << 1)
 #define ADDRESS(x) (uint8_t)(x << 2)
@@ -36,11 +40,7 @@ public:
 
 private:
   zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
-  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod(&spi_cfg);
-  struct spi_config spi_cfg = {
-      .frequency = 1000000U,
-      .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB | SPI_WORD_SET(8),
-      .slave = 0x0};
+  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();  
   can *CanDriver;
   uint8_t canTxBufer[2];
 };

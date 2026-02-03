@@ -11,26 +11,30 @@
 template <class datatype, class errortype>
 class zephyrSpi : public spiInterface<datatype, errortype>
 {
+
+protected:
+	zephyrSpi(){};
+	/*Static member declaration */	
+	static zephyrSpi *instance_;
+
 public:
-	zephyrSpi(struct spi_config *config);	
-	void Init() override;
+	
+	zephyrSpi(zephyrSpi &other) = delete;
+	void operator=(const zephyrSpi &) = delete;
+	static zephyrSpi *getInstance();	
+	void Init() override{};
 	void Read(datatype *, size_t) override;
 	void Write(datatype *, size_t) override;
+	void Configure(void *config) override;
 	errortype GetError() override;
 	void setDataLength(size_t size) { this->bufs.len = size; };
 	void setBuffer(datatype *buffer) { this->bufs.buf = buffer; };
 
 private:
+	
 	errortype error;
 	struct spi_config *spi_cfg;
 
-	/*= {
-			.frequency = 1000000U,
-			.operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB | SPI_WORD_SET(8),
-			.slave = 0x0
-			.cs ={nullptr,0}
-};
-*/
 /* array of buffers*/
 struct spi_buf bufs;
 
@@ -41,5 +45,4 @@ struct spi_buf_set Buffer = {
 };
 
 const struct device *spiDevice = DEVICE_DT_GET(DT_NODELABEL(spi1));
-}
-;
+};

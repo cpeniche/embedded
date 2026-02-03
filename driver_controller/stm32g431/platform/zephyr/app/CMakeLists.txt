@@ -20,4 +20,9 @@ set(sources src/main.cpp
 #add_subdirectory(src/can)
 
 target_sources(${TARGET_NAME} PRIVATE ${sources})
-target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include 
+                                                 ${PROJECT_SOURCE_DIR}/src/spi
+                                                 ${PROJECT_SOURCE_DIR}/src/adc
+                                                 ${PROJECT_SOURCE_DIR}/src/motor
+                                                 ${PROJECT_SOURCE_DIR}/src/can
+                                                 ${PROJECT_SOURCE_DIR}/src/lin)

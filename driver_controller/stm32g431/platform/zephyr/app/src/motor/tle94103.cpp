@@ -2,10 +2,15 @@
 LOG_MODULE_REGISTER(tle94103, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/spi.h>
-#include "spiBuilder.h"
 #include "motorInterface.h"
 #include "can.h"
 #include "tle94103.h"
+#include "main.h"
+
+struct spi_config tle94103SpiCfg = {
+      .frequency = 1000000U,
+      .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB | SPI_WORD_SET(8),
+      .slave = 0x0};
 
 void Tle94103::Right(uint8_t side)
 {
@@ -71,5 +76,8 @@ void Tle94103::WriteRegister(uint8_t u8RegAddress, uint8_t *ptrU8Data)
                                 ADDRESS(u8RegAddress) |
                                 LABT(1) | 0x1),
                         *ptrU8Data};
+  getSpiMutex();                        
+  spi->Configure(&tle94103SpiCfg);
   spi->Write(u8Buffer, 2);
+  releaseSpiMutex();
 }

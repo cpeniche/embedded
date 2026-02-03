@@ -1,5 +1,7 @@
 #pragma once
 
+#include "zephyrSpiBuilder.h"
+
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
   ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
@@ -16,14 +18,8 @@ public:
 
 private:
   zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
-  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod(&spi_cfg);
-  int err;
-  struct spi_config spi_cfg =
-      {
-          .frequency = 1000000U,
-          .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB |
-                       SPI_WORD_SET(8) | SPI_MODE_CPOL | SPI_MODE_CPHA,
-          .slave = 0x0};
+  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
+  int err;  
   uint8_t rxBuffer[3] = {0};
   float voltage;
 };
