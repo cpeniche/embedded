@@ -4,8 +4,10 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
-//#include <zephyr/drivers/adc.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/pm/pm.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/sys/poweroff.h>
 #include "zephyrSpi.h"
 #include "can.h"
 #include "motorInterface.h"
@@ -20,9 +22,10 @@ LOG_MODULE_REGISTER(button, LOG_LEVEL_DBG);
 
 #define STACK_SIZE 1024
 #define PRIORITY K_PRIO_PREEMPT(15)
-
-
 #define CALL_MEMBER_FN(object, ptrToMember) ((object)->*(ptrToMember))
+
+void ExecutePowerDown(struct k_timer *timer);
+K_TIMER_DEFINE(powerDown, ExecutePowerDown, nullptr);
 
 static void DriverModuleTask(void);
 /* Thread definitions*/
@@ -58,6 +61,8 @@ void Buttons::Task(void)
       if (input->getDataReady())
       {
         rxBufferPtr = input->getInput();
+
+        k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
 
         if (CalculateChecksum(rxBufferPtr, 5) != rxBufferPtr[5])
         {
@@ -137,4 +142,21 @@ void DriverModuleTask()
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data)
 {
   cButtons.getDriver()->callBack(dev, evt, user_data);
+}
+
+/**
+ * @brief Power down execution function
+ * 
+ * @param timer 
+ */
+void ExecutePowerDown(struct k_timer *timer)
+{
+
+  if(pm_device_wakeup_is_capable(device) && 
+     pm_device_wakeup_enable(device,true) &&
+     pm_device_wakeup_is_enabled(device))
+  {
+    LOG_INF("Entering low power mode");
+    pm_state_set(PM_STATE_SUSPEND_TO_IDLE,1);
+  }
 }
