@@ -36,7 +36,7 @@
 
 &spi1_sck_pa5{
   /delete-property/ bias-pull-down;
-  bias-pull-up;
+  drive-push-pull;
 };
 
 

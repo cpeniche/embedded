@@ -16,7 +16,7 @@ protected:
 	zephyrSpi(){};
 	/*Static member declaration */	
 	static zephyrSpi *instance_;
-
+	
 public:
 	
 	zephyrSpi(zephyrSpi &other) = delete;
