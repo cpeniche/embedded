@@ -23,6 +23,8 @@
 #define LEFT 0x0
 #define RIGHT 0x1
 
+#define RXMSGLENGTH 7
+
 struct device *device = (struct device *)DEVICE_DT_GET(DT_NODELABEL(usart1));
 
 typedef void (motorInterface::*motor_func_t)(uint8_t);
@@ -53,7 +55,7 @@ public:
   uint8_t CalculateChecksum(uint8_t *ptr, size_t length);
 
 private:
-  uint8_t rxBuffer[7] = {0};
+  
   /* mirror motor interface*/
   tle94103MotorBuilder mirrorMotorBuilder;
   motorInterface *mirror = mirrorMotorBuilder.factoryMethod(&CanDriver);

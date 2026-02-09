@@ -22,7 +22,8 @@ LIN::LIN(struct device *dev, uint8_t *rxBuffer, size_t length, uint8_t Identifie
 	setDevice(dev);
 	setProtectedID(Identifier);
 	this->rxBuffer = rxBuffer;
-	error = uart_rx_enable(this->dev, this->rxBuffer, length, 100);
+	this->buffLength = length;
+	error = uart_rx_enable(this->dev, this->rxBuffer, this->buffLength, 100);
 }
 
 int8_t LIN::Transmit(uint8_t *buffer, size_t size)
@@ -79,14 +80,21 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 		break;
 
 	case UART_RX_BUF_REQUEST:
-	case UART_RX_BUF_RELEASED:
-		break;
-	case UART_RX_DISABLED:
-		uart_rx_enable(this->dev, this->rxBuffer, 7, 100);
+		error=uart_rx_buf_rsp(this->dev, (rxBuffer+(this->buffLength*idxBuffer)), this->buffLength);
+		__ASSERT_NO_MSG(error == 0);
+		idxBuffer = idxBuffer ? 1 : 0;
+	case UART_RX_BUF_RELEASED:		
+	case UART_RX_DISABLED:			
 		break;
 	case UART_RX_RDY:
 		setFlag(LIN::RXDONE);
 		clearFlag(LIN::RXERROR);
+		if(evt->data.rx_stop.reason != 0)		
+			setFlag(LIN::RXERROR);					
+		break;
+	case UART_RX_STOPPED:
+		setFlag(LIN::RXERROR);
+		setFlag(LIN::RXDONE);		
 		break;
 	default:
 		LOG_WRN("Unhandled event %d", evt->type);
@@ -98,15 +106,28 @@ int8_t LIN::readInput(uint8_t *buffer, size_t size)
 	return Transmit(buffer, size);
 }
 
-uint8_t *LIN::getInput(void)
+int8_t LIN::getInput(uint8_t *buffer)
 {
-	return getRxBuffer();
+	
+	if ((getFlags() & (1 << RXERROR)) != 0)
+		error = -1;
+	else
+	{	
+		memcpy(buffer, (getRxBuffer()+(this->buffLength*idxBuffer)+1), this->buffLength-1);	
+		error = 0;
+	}
+	return error;
 }
 
-bool LIN::getDataReady(void)
+bool LIN::isDataReady(void)
 {
 	if ((getFlags() & (1 << RXDONE)) != 0)
 		return true;
 	else
 		return false;
+}
+
+int8_t LIN::getError(void)
+{
+  return error;
 }

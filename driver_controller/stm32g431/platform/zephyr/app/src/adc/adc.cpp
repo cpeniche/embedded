@@ -61,11 +61,12 @@ int8_t adc::readInput(uint8_t *data, size_t size)
 
   return this->spi->GetError();
 }
-uint8_t *adc::getInput(void)
+int8_t adc::getInput(uint8_t *buffer)
 {
-  return rxBuffer;
+  memcpy(buffer,rxBuffer,sizeof(rxBuffer));
+  return 0;
 }
-bool adc::getDataReady(void)
+bool adc::isDataReady(void)
 {
   return false;
 }

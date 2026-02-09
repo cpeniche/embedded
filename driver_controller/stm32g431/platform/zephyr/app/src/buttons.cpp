@@ -33,7 +33,8 @@ K_THREAD_DEFINE(DriverModule, STACK_SIZE, DriverModuleTask, NULL, NULL, NULL,
                 PRIORITY, 0, 0);
 
 int16_t error;
-
+uint8_t rxBuffer[2][RXMSGLENGTH] = {0};
+uint8_t currMsg[RXMSGLENGTH-1] = {0};
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
 Buttons cButtons;
@@ -45,11 +46,10 @@ Buttons cButtons;
 void Buttons::Task(void)
 {
 
-  uint8_t *rxBufferPtr;
   struct data *motorStructsPtr[4] = {&stWindow, &stMirror, &stLock, nullptr};
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
-  inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer, sizeof(rxBuffer), 0x10, linCallBack);
+  inputInterface *input = linButtonsReader.factoryMethod(device, (uint8_t*)rxBuffer, RXMSGLENGTH, 0x10, linCallBack);
 
   while (1)
   {
@@ -59,22 +59,21 @@ void Buttons::Task(void)
 
       k_msleep(20);
       /* wait for data */
-      if (input->getDataReady())
+      if (input->isDataReady() && input->getInput(currMsg) == 0)
       {
-        rxBufferPtr = input->getInput();
-
+        
         k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
 
-        if (CalculateChecksum(rxBufferPtr, 5) != rxBufferPtr[5])
+        if (CalculateChecksum(currMsg, 5) != currMsg[5])
         {
           LOG_ERR("LIN Message Checksum Error");
           continue;
         }
         else
         {
-          if (rxBufferPtr[2] == maskMIRRORSELECTRIGHT)
+          if (currMsg[2] == maskMIRRORSELECTRIGHT)
             *stMirror.stActions[0x0].side = RIGHT;
-          if (rxBufferPtr[2] == maskMIRRORSELECTLEFT)
+          if (currMsg[2] == maskMIRRORSELECTLEFT)
             *stMirror.stActions[0x0].side = LEFT;
 
           /*Loop through all motor structure data*/
@@ -82,13 +81,13 @@ void Buttons::Task(void)
           while (motorStructsPtr[idy] != nullptr)
           {
             motorData = motorStructsPtr[idy];
-            if (rxBufferPtr[motorData->u8BufferIndex] ^ motorData->u8PrevState)
+            if (currMsg[motorData->u8BufferIndex] ^ motorData->u8PrevState)
             {
               idx = 0;
               while (motorData->stActions[idx].motor != nullptr)
               {
                 if ((motorData->stActions[idx].mask &
-                     rxBufferPtr[motorData->u8BufferIndex]) ==
+                     currMsg[motorData->u8BufferIndex]) ==
                     motorData->stActions[idx].mask)
                 {
                   CALL_MEMBER_FN(motorData->motorClassPtr,
@@ -98,7 +97,7 @@ void Buttons::Task(void)
                 idx++;
               }
             }
-            motorData->u8PrevState = rxBufferPtr[motorData->u8BufferIndex];
+            motorData->u8PrevState = currMsg[motorData->u8BufferIndex];
             idy++;
           }
         }

@@ -34,7 +34,7 @@ void vMain(void)
 
 	inputInterface *adcinput = adcReader.factoryMethod(nullptr, nullptr, 0, 0, nullptr);
 	uint8_t adcNumber = 0;
-	uint8_t *adcRead = nullptr;
+	uint8_t adcRead[3] = {0};
 
 	while (1)
 	{
@@ -42,7 +42,7 @@ void vMain(void)
 		getSpiMutex();
 		adcinput->readInput(&adcNumber, 3);		
 		releaseSpiMutex();
-		adcRead = adcinput->getInput();
+		adcinput->getInput(adcRead);
 		voltage[adcNumber] = adcVolts(float(adcRead[0]<<8 | adcRead[1]));
 		
 
@@ -50,7 +50,7 @@ void vMain(void)
 		getSpiMutex();
 		adcinput->readInput(&adcNumber, 3);
 		releaseSpiMutex();
-		adcRead = adcinput->getInput();
+		adcinput->getInput(adcRead);
 		
 		voltage[adcNumber] = adcVolts(float(adcRead[0] <<8 | adcRead[1]));
 
