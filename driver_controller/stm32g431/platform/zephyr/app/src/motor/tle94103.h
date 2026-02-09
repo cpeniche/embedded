@@ -1,4 +1,5 @@
 #pragma once
+#include "tle94103.h"
 #include "spiInterface.h"
 #include "motorInterface.h"
 #include "zephyrSpiBuilder.h"
@@ -29,7 +30,7 @@ public:
 
   };
 
-  Tle94103(can *interface) { CanDriver = interface; };
+  Tle94103(can *interface);
   void Right(uint8_t) override;
   void Left(uint8_t) override;
   void Down(uint8_t) override;

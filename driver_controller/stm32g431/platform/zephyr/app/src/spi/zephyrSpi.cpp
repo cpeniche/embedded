@@ -11,12 +11,15 @@
 
 /* Static member class memory allocation */
 template <class datatype, class errortype>
-zephyrSpi<datatype, errortype> *zephyrSpi<datatype, errortype>::instance_ = new zephyrSpi<datatype, errortype>();;
+zephyrSpi<datatype, errortype> *zephyrSpi<datatype, errortype>::instance_ = nullptr;
 
 template <class datatype, class errortype>
 zephyrSpi<datatype, errortype> *zephyrSpi<datatype, errortype>::getInstance()
 {
-  return instance_;
+  if (instance_ == nullptr)
+    instance_ = new zephyrSpi<uint8_t, int16_t>();
+  else
+    return instance_;
 }
 
 template <class datatype, class errortype>

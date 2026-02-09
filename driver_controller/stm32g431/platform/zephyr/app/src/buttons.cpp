@@ -57,6 +57,7 @@ void Buttons::Task(void)
     if (input->readInput(nullptr, 2) == 0)
     {
 
+      k_msleep(20);
       /* wait for data */
       if (input->getDataReady())
       {
