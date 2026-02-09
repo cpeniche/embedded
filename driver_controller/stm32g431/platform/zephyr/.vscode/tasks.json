@@ -6,8 +6,16 @@
     {
       "command": "${command:workbench.action.files.saveAll}",
       "label": "SaveAllFiles",
-      "type": "shell",
-      "problemMatcher": []
+      "type": "shell",     
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      }
     },
     {
       "label": "Flash",
@@ -31,7 +39,7 @@
       "command": "cd ~/zephyr; west build -p auto -b nucleo_g431kb ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
-      "dependsOrder": "sequence",
+      "dependsOrder": "sequence",      
       "problemMatcher": []
     }
   ]
