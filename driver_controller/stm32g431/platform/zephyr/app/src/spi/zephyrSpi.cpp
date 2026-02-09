@@ -18,8 +18,7 @@ zephyrSpi<datatype, errortype> *zephyrSpi<datatype, errortype>::getInstance()
 {
   if (instance_ == nullptr)
     instance_ = new zephyrSpi<uint8_t, int16_t>();
-  else
-    return instance_;
+  return instance_;
 }
 
 template <class datatype, class errortype>
