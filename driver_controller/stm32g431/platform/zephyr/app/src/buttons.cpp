@@ -34,13 +34,13 @@ K_THREAD_DEFINE(DriverModule, STACK_SIZE, DriverModuleTask, NULL, NULL, NULL,
 
 int16_t error;
 uint8_t rxBuffer[2][RXMSGLENGTH] = {0};
-uint8_t currMsg[RXMSGLENGTH-1] = {0};
+uint8_t currMsg[RXMSGLENGTH - 1] = {0};
 void linCallBack(const struct device *dev, struct uart_event *evt, void *user_data);
 
 Buttons cButtons;
 /**
  * @brief Buttons task declaration
- * 
+ *
  */
 
 void Buttons::Task(void)
@@ -49,11 +49,11 @@ void Buttons::Task(void)
   struct data *motorStructsPtr[4] = {&stWindow, &stMirror, &stLock, nullptr};
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
-  inputInterface *input = linButtonsReader.factoryMethod(device, (uint8_t*)rxBuffer, RXMSGLENGTH, 0x10, linCallBack);
+  inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer[0], RXMSGLENGTH, 0x10, linCallBack);
 
   while (1)
   {
-    
+
     if (input->readInput(nullptr, 2) == 0)
     {
 
@@ -61,7 +61,7 @@ void Buttons::Task(void)
       /* wait for data */
       if (input->isDataReady() && input->getInput(currMsg) == 0)
       {
-        
+
         k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
 
         if (CalculateChecksum(currMsg, 5) != currMsg[5])
@@ -108,7 +108,7 @@ void Buttons::Task(void)
 
 /**
  * @brief Lin frame checksum calculations
- * 
+ *
  * @param ptr       : buffer pointer
  * @param length    : buffer length
  * @return uint8_t  : checksum value
@@ -124,7 +124,7 @@ uint8_t Buttons::CalculateChecksum(uint8_t *ptr, size_t length)
 
 /**
  * @brief Declare Driver task
- * 
+ *
  */
 void DriverModuleTask()
 {
@@ -134,7 +134,7 @@ void DriverModuleTask()
 
 /**
  * @brief Callback routine called when a lin message is received
- * 
+ *
  * @param dev         : dts lin driver module
  * @param evt         : event received
  * @param user_data   : user data passed to the callback routine
@@ -146,17 +146,17 @@ void linCallBack(const struct device *dev, struct uart_event *evt, void *user_da
 
 /**
  * @brief Power down execution function
- * 
- * @param timer 
+ *
+ * @param timer
  */
 void ExecutePowerDown(struct k_timer *timer)
 {
 
-  if(pm_device_wakeup_is_capable(device) && 
-     pm_device_wakeup_enable(device,true) &&
-     pm_device_wakeup_is_enabled(device))
+  if (pm_device_wakeup_is_capable(device) &&
+      pm_device_wakeup_enable(device, true) &&
+      pm_device_wakeup_is_enabled(device))
   {
     LOG_INF("Entering low power mode");
-    pm_state_set(PM_STATE_SUSPEND_TO_IDLE,1);
+    pm_state_set(PM_STATE_SUSPEND_TO_IDLE, 1);
   }
 }
