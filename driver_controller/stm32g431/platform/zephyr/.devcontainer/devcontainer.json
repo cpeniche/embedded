@@ -24,12 +24,11 @@
         "ms-vscode.cpptools",
         "rafaelrenanpacheco.darcula-theme",
         "vscode-icons-team.vscode-icons",
-        "cschlosser.doxdocgen"
+        "cschlosser.doxdocgen"       
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
-  },
-  "postCreateCommand": "mkdir /home/vscode/build && chown vscode /home/vscode/build"
+  }
 }

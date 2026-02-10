@@ -6,7 +6,7 @@
     {
       "command": "${command:workbench.action.files.saveAll}",
       "label": "SaveAllFiles",
-      "type": "shell",     
+      "type": "shell",
       "problemMatcher": [],
       "presentation": {
         "echo": true,
@@ -39,8 +39,30 @@
       "command": "cd ~/zephyr; west build -p auto -b nucleo_g431kb ${workspaceFolder}/app -d ${workspaceFolder}/build",
       "group": "build",
       "dependsOn": ["SaveAllFiles"],
-      "dependsOrder": "sequence",      
+      "dependsOrder": "sequence",
       "problemMatcher": []
+    },
+    {
+      "label": "openocd",
+      "type": "shell",
+      "isBackground": true,
+      "command": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd -f /home/vscode/project/openocd/minimodule-swd.cfg -f /home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg",
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": ".*",
+              "file": 0,
+              "location": 1,
+              "message": 2
+            }
+          ],
+          "background": {
+            "beginsPattern": "Open *",
+            "endsPattern": "Listening on port *"
+          }
+        }
+      ]
     }
   ]
 }

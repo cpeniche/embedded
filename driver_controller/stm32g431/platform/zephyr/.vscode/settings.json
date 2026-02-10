@@ -23,5 +23,6 @@
   },
   "[c]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
-  }
+  },
+  "mcu-debug.rtos-views.showRTOS": true
 }

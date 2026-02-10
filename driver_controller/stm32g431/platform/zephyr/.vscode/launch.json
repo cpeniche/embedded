@@ -5,6 +5,39 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "MIMode": "gdb",
+      "preLaunchTask": "openocd",
+      "cwd": "${workspaceFolder}",
+      "miDebuggerPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+      "miDebuggerServerAddress": "localhost:3333",
+      "stopAtEntry": true,
+      "useExtendedRemote": true,
+      "svdPath": "${workspaceFolder}/openocd/STM32G431.svd",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "monitor reset halt",
+          "ignoreFailures": true
+        }
+      ],
+      "logging": { "moduleLoad": true, "trace": false, "traceResponse": false }
+    },
+
+    {
       "cwd": "${workspaceRoot}",
       "executable": "./build/zephyr/zephyr.elf",
       "name": "OpenOCD",
@@ -18,27 +51,14 @@
         "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg"
       ],
       "searchDir": [],
-      "runToEntryPoint": "_start",
+      "runToEntryPoint": "vMain",
       "showDevDebugOutput": "vscode",
       "device": "STM32G431KB",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
       "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
-      "svdFile": "/home/vscode/project/openocd/STM32G431.svd"
-    },
-    {
-      "name": "Jlink",
-      "cwd": "${workspaceFolder}",
-      "executable": "./build/zephyr/zephyr.elf",
-      "request": "launch",
-      "type": "cortex-debug",
-      "runToEntryPoint": "main",
-      "interface": "swd",
-      "servertype": "jlink",
-      "device": "STM32G431KB",
-      "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
-      "showDevDebugOutput": "vscode",
-      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
-      "svdFile": "/home/vscode/project/openocd/STM32G431.svd"
+      "svdFile": "/home/vscode/project/openocd/STM32G431.svd",
+      "rtos": "Zephyr",
+      "cpu": "cortex-m4"
     }
   ]
 }
