@@ -32,6 +32,7 @@ public:
   int8_t getInput(uint8_t *) override;
   bool isDataReady(void) override;
   int8_t getError(void) override;
+  uint8_t CalculateChecksum(uint8_t *ptr, size_t length);
 
 private:
   uint8_t IdentifierFieldParity(uint8_t);

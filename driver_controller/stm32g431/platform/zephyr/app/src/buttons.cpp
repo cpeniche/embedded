@@ -62,45 +62,35 @@ void Buttons::Task(void)
       /* wait for data */
       if (input->isDataReady() && input->getInput(currMsg) == 0)
       {
+        if (currMsg[2] == maskMIRRORSELECTRIGHT)
+          *stMirror.stActions[0x0].side = RIGHT;
+        if (currMsg[2] == maskMIRRORSELECTLEFT)
+          *stMirror.stActions[0x0].side = LEFT;
 
-        k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
-
-        if (CalculateChecksum(currMsg, 5) != currMsg[5])
+        /*Loop through all motor structure data*/
+        idy = 0;
+        while (motorStructsPtr[idy] != nullptr)
         {
-          LOG_ERR("LIN Message Checksum Error");
-          continue;
-        }
-        else
-        {
-          if (currMsg[2] == maskMIRRORSELECTRIGHT)
-            *stMirror.stActions[0x0].side = RIGHT;
-          if (currMsg[2] == maskMIRRORSELECTLEFT)
-            *stMirror.stActions[0x0].side = LEFT;
-
-          /*Loop through all motor structure data*/
-          idy = 0;
-          while (motorStructsPtr[idy] != nullptr)
+          motorData = motorStructsPtr[idy];
+          if (currMsg[motorData->u8BufferIndex] ^ motorData->u8PrevState)
           {
-            motorData = motorStructsPtr[idy];
-            if (currMsg[motorData->u8BufferIndex] ^ motorData->u8PrevState)
+            idx = 0;
+            k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
+            while (motorData->stActions[idx].motor != nullptr)
             {
-              idx = 0;
-              while (motorData->stActions[idx].motor != nullptr)
+              if ((motorData->stActions[idx].mask &
+                   currMsg[motorData->u8BufferIndex]) ==
+                  motorData->stActions[idx].mask)
               {
-                if ((motorData->stActions[idx].mask &
-                     currMsg[motorData->u8BufferIndex]) ==
-                    motorData->stActions[idx].mask)
-                {
-                  CALL_MEMBER_FN(motorData->motorClassPtr,
-                                 motorData->stActions[idx].motor)(*motorData->stActions[idx].side);
-                  break;
-                }
-                idx++;
+                CALL_MEMBER_FN(motorData->motorClassPtr,
+                               motorData->stActions[idx].motor)(*motorData->stActions[idx].side);
+                break;
               }
+              idx++;
             }
-            motorData->u8PrevState = currMsg[motorData->u8BufferIndex];
-            idy++;
           }
+          motorData->u8PrevState = currMsg[motorData->u8BufferIndex];
+          idy++;
         }
       }
     }

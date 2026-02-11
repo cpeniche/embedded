@@ -79,12 +79,12 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 		clearFlag(LIN::RXDONE);
 		break;
 	case UART_RX_BUF_REQUEST:
-		error=uart_rx_buf_rsp(dev, (rxBuffer+(this->buffLength*idxBuffer)), this->buffLength);
+		error = uart_rx_buf_rsp(dev, (rxBuffer + (this->buffLength * idxBuffer)), this->buffLength);
 		__ASSERT_NO_MSG(error == 0);
 		idxBuffer = idxBuffer ? 1 : 0;
 		break;
-	case UART_RX_BUF_RELEASED:		
-	case UART_RX_DISABLED:			
+	case UART_RX_BUF_RELEASED:
+	case UART_RX_DISABLED:
 		break;
 	case UART_RX_RDY:
 		setFlag(LIN::RXDONE);
@@ -92,7 +92,7 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 		break;
 	case UART_RX_STOPPED:
 		setFlag(LIN::RXERROR);
-		setFlag(LIN::RXDONE);		
+		setFlag(LIN::RXDONE);
 		break;
 	default:
 		LOG_WRN("Unhandled event %d", evt->type);
@@ -111,13 +111,23 @@ int8_t LIN::readInput(uint8_t *buffer, size_t size)
 
 int8_t LIN::getInput(uint8_t *buffer)
 {
-	
+
+	uint8_t *rxBuffPtr = (getRxBuffer() + (this->buffLength * idxBuffer) + 1);
+
 	if ((getFlags() & (1 << RXERROR)) != 0)
 		error = -1;
 	else
-	{	
-		memcpy(buffer, (getRxBuffer()+(this->buffLength*idxBuffer)+1), this->buffLength-1);	
-		error = 0;
+	{
+		if (CalculateChecksum(rxBuffPtr, this->buffLength - 1) != rxBuffPtr[5])
+		{
+			uart_rx_disable(dev);
+			setFlag(LIN::RXERROR);
+		}
+		else
+		{
+			memcpy(buffer, rxBuffPtr, this->buffLength - 1);
+			error = 0;
+		}
 	}
 	return error;
 }
@@ -132,5 +142,14 @@ bool LIN::isDataReady(void)
 
 int8_t LIN::getError(void)
 {
-  return error;
+	return error;
+}
+
+uint8_t LIN::CalculateChecksum(uint8_t *ptr, size_t length)
+{
+	uint16_t chkSum = 0;
+
+	for (uint8_t idx = 0; idx < length; idx++)
+		chkSum += ptr[idx];
+	return (~(uint8_t)chkSum) - 1;
 }

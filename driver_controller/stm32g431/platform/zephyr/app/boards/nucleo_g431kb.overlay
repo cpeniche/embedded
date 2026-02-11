@@ -8,10 +8,12 @@
 &usart1{
   pinctrl-0 = <&usart1_rx_pa10 &usart1_tx_pa9>;
   pinctrl-names = "default";
-  current-speed = <9600>;  
+  current-speed = <9600>;
+  clocks = <&rcc STM32_CLOCK(APB2, 14)>,<&rcc STM32_SRC_HSI USART1_SEL(2)>;  
   status = "okay";
   lin-mode;
   wakeup-source;
+  wakeup-line = <25>;
   dmas = <&dmamux1 2 25 (STM32_DMA_PERIPH_TX |  STM32_DMA_PRIORITY_HIGH)>,
          <&dmamux1 1 24 (STM32_DMA_PERIPH_RX |  STM32_DMA_PRIORITY_HIGH)>;
   dma-names="tx","rx";
