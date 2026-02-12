@@ -71,7 +71,7 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 {
 
 	LOG_DBG("EVENT: %d", evt->type);
-
+	
 	switch (evt->type)
 	{
 	case UART_TX_DONE:
@@ -79,7 +79,7 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 		clearFlag(LIN::RXDONE);
 		break;
 	case UART_RX_BUF_REQUEST:
-		error = uart_rx_buf_rsp(dev, (rxBuffer + (this->buffLength * idxBuffer)), this->buffLength);
+		error = uart_rx_buf_rsp(dev, (rxBuffer + (buffLength * idxBuffer)), buffLength);
 		__ASSERT_NO_MSG(error == 0);
 		idxBuffer = idxBuffer ? 1 : 0;
 		break;
@@ -88,10 +88,17 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 		break;
 	case UART_RX_RDY:
 		setFlag(LIN::RXDONE);
-		clearFlag(LIN::RXERROR);
+		rxReadyDataPtr = evt->data.rx.buf+evt->data.rx.offset;
+		if(evt->data.rx.len != buffLength)
+			setFlag(LIN::RXERROR);
+		else
+		{
+			if(CalculateChecksum(rxReadyDataPtr, buffLength - 1) != rxReadyDataPtr[5]) 
+				setFlag(LIN::RXERROR);
+		}		
 		break;
 	case UART_RX_STOPPED:
-		setFlag(LIN::RXERROR);
+		setFlag(LIN::RXSTOP);
 		setFlag(LIN::RXDONE);
 		break;
 	default:
@@ -101,36 +108,31 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 
 int8_t LIN::enableReceive()
 {
-	return uart_rx_enable(dev, rxBuffer, buffLength, 100);
+	clearFlag(LIN::RXSTOP);
+	return error=uart_rx_enable(dev, rxBuffer, buffLength, 100);
 }
 
 int8_t LIN::readInput(uint8_t *buffer, size_t size)
 {
-	return Transmit(buffer, size);
+	return error=Transmit(buffer, size);
 }
 
 int8_t LIN::getInput(uint8_t *buffer)
 {
 
-	uint8_t *rxBuffPtr = (getRxBuffer() + (this->buffLength * idxBuffer) + 1);
-
 	if ((getFlags() & (1 << RXERROR)) != 0)
-		error = -1;
-	else
 	{
-		if (CalculateChecksum(rxBuffPtr, this->buffLength - 1) != rxBuffPtr[5])
-		{
-			uart_rx_disable(dev);
-			setFlag(LIN::RXERROR);
-		}
-		else
-		{
-			memcpy(buffer, rxBuffPtr, this->buffLength - 1);
-			error = 0;
-		}
+		error = -1;
+		buffer = nullptr;
+	}
+	else
+	{		
+		memcpy(buffer, rxReadyDataPtr, this->buffLength - 1);
+		error = 0;		
 	}
 	return error;
 }
+
 
 bool LIN::isDataReady(void)
 {

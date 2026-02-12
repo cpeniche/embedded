@@ -12,6 +12,7 @@ public:
     TXDONE,
     RXDONE,
     RXERROR,
+    RXSTOP
   } eFlags;
 
   LIN(struct device *, uint8_t *, size_t, uint8_t, uart_callback_t);
@@ -25,7 +26,7 @@ public:
   void clearFlag(eFlags flag);
   uint8_t getFlags(void) { return flags; }
   void setProtectedID(uint8_t id) { protectedId = id; }
-  uint8_t *getRxBuffer(void) { return rxBuffer; }
+  uint8_t *getRxBuffer(void) { return rxReadyDataPtr; }
   void callBack(const struct device *dev, struct uart_event *evt, void *user_data);
   int8_t enableReceive();
   int8_t readInput(uint8_t *, size_t) override;
@@ -45,6 +46,7 @@ private:
   uint8_t *rxBuffer;
   uint8_t buffLength;
   uint8_t idxBuffer = 0;
+  uint8_t *rxReadyDataPtr=nullptr;
 };
 
 typedef void (LIN::*callBackPtr)(const struct device *, struct uart_event *, void *);

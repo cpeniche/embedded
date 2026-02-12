@@ -50,6 +50,11 @@ void Buttons::Task(void)
   struct data *motorData = nullptr;
   uint8_t idx, idy = 0;
   inputInterface *input = linButtonsReader.factoryMethod(device, rxBuffer[0], RXMSGLENGTH, 0x10, linCallBack);
+  if(input == nullptr)
+  {
+    LOG_ERR("Failed to initialize LIN driver");
+    return;
+  }
   k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
 
   while (1)
