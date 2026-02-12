@@ -71,7 +71,7 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 {
 
 	LOG_DBG("EVENT: %d", evt->type);
-	
+
 	switch (evt->type)
 	{
 	case UART_TX_DONE:
@@ -81,21 +81,21 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 	case UART_RX_BUF_REQUEST:
 		error = uart_rx_buf_rsp(dev, (rxBuffer + (buffLength * idxBuffer)), buffLength);
 		__ASSERT_NO_MSG(error == 0);
-		idxBuffer = idxBuffer ? 1 : 0;
+		idxBuffer = idxBuffer ? 0 : 1;
 		break;
 	case UART_RX_BUF_RELEASED:
 	case UART_RX_DISABLED:
 		break;
 	case UART_RX_RDY:
 		setFlag(LIN::RXDONE);
-		rxReadyDataPtr = evt->data.rx.buf+evt->data.rx.offset;
-		if(evt->data.rx.len != buffLength)
+		rxReadyDataPtr = evt->data.rx.buf + evt->data.rx.offset;
+		if (evt->data.rx.len != buffLength)
 			setFlag(LIN::RXERROR);
 		else
 		{
-			if(CalculateChecksum(rxReadyDataPtr, buffLength - 1) != rxReadyDataPtr[5]) 
+			if (CalculateChecksum((rxReadyDataPtr + 1), buffLength - 2) != rxReadyDataPtr[6])
 				setFlag(LIN::RXERROR);
-		}		
+		}
 		break;
 	case UART_RX_STOPPED:
 		setFlag(LIN::RXSTOP);
@@ -109,12 +109,12 @@ void LIN::callBack(const struct device *dev, struct uart_event *evt, void *user_
 int8_t LIN::enableReceive()
 {
 	clearFlag(LIN::RXSTOP);
-	return error=uart_rx_enable(dev, rxBuffer, buffLength, 100);
+	return error = uart_rx_enable(dev, rxBuffer, buffLength, 100);
 }
 
 int8_t LIN::readInput(uint8_t *buffer, size_t size)
 {
-	return error=Transmit(buffer, size);
+	return error = Transmit(buffer, size);
 }
 
 int8_t LIN::getInput(uint8_t *buffer)
@@ -126,13 +126,12 @@ int8_t LIN::getInput(uint8_t *buffer)
 		buffer = nullptr;
 	}
 	else
-	{		
-		memcpy(buffer, rxReadyDataPtr, this->buffLength - 1);
-		error = 0;		
+	{
+		memcpy(buffer, rxReadyDataPtr+1, this->buffLength - 1);
+		error = 0;
 	}
 	return error;
 }
-
 
 bool LIN::isDataReady(void)
 {

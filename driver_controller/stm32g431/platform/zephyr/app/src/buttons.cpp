@@ -55,7 +55,7 @@ void Buttons::Task(void)
     LOG_ERR("Failed to initialize LIN driver");
     return;
   }
-  k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
+ // k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
 
   while (1)
   {
@@ -80,7 +80,7 @@ void Buttons::Task(void)
           if (currMsg[motorData->u8BufferIndex] ^ motorData->u8PrevState)
           {
             idx = 0;
-            k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
+            //k_timer_start(&powerDown, K_MSEC(5000), K_NO_WAIT);
             while (motorData->stActions[idx].motor != nullptr)
             {
               if ((motorData->stActions[idx].mask &
