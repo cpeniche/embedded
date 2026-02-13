@@ -87,10 +87,11 @@
     };
 
     tle94103_cs: tle94103_cs{
-      compatible = "infineon,ad7171";
-      gpios = <&gpioa 0x4 GPIO_ACTIVE_HIGH>;
+      compatible = "infineon,ad7171";      
+      gpios = <&gpioa 0x4 (GPIO_ACTIVE_HIGH | GPIO_LINE_OPEN_DRAIN) >;
     };
 };
+
 
 
 

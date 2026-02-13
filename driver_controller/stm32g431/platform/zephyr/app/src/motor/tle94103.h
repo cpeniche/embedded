@@ -13,7 +13,7 @@
 #define HB2HSEN 1 << 3
 #define HB2LSEN 1 << 2
 #define HB1HSEN 1 << 1
-#define HB1LSEN 1 << 5
+#define HB1LSEN 1 << 0
 
 class Tle94103 : public motorInterface
 {
@@ -41,7 +41,7 @@ public:
 
 private:
   zephyrSpiBuilder<uint8_t, int16_t> spibuilder;
-  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();  
+  spiInterface<uint8_t, int16_t> *spi = spibuilder.factoryMethod();
   can *CanDriver;
   uint8_t canTxBufer[2];
 };

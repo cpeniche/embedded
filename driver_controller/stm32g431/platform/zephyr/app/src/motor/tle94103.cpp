@@ -17,10 +17,9 @@ static constexpr struct gpio_dt_spec tle94103_cs =
 
 struct spi_config tle94103SpiCfg = {
     .frequency = 1000000U,
-    .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_MSB | SPI_WORD_SET(8),
+    .operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_LSB | SPI_WORD_SET(8) | SPI_MODE_CPHA,
     .slave = 0x0,
-    .cs = nullptr
-};
+    .cs = nullptr};
 
 Tle94103::Tle94103(can *interface)
 {
