@@ -13,9 +13,9 @@
       "servertype": "openocd",
       "configFiles": [
         "${workspaceFolder}/openocd/minimodule-swd.cfg",
-        "target/nrf52.cfg"
+        "target/nordic/nrf52.cfg"
       ],
-      "showDevDebugOutput": "vscode",
+      "showDevDebugOutput": "parsed",
       "searchDir": [],
       "runToEntryPoint": "main",
       "gdbPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"
