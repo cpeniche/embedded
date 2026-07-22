@@ -1,0 +1,73 @@
+FROM ubuntu:latest
+# podman build -t zephyr:v4.3.99 --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
+# Use bash as the default shell
+SHELL ["/bin/bash", "-c"]
+
+USER root
+
+ARG USERNAME
+ARG UID=1000
+ARG GID=$UID
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y --no-install-recommends git cmake ninja-build libtool pkg-config \
+    ccache dfu-util device-tree-compiler wget pipx usbutils minicom locales patch vim\
+    python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
+    make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1 python3-venv libncurses-dev \
+    libjim-dev autoconf automake texinfo libusb-1.0
+
+#gperf gdebi-core    
+
+RUN userdel -rf ubuntu 
+RUN if getent group ubuntu ; then groupdel ubuntu; fi \
+    && groupadd -g ${GID} ${USERNAME} \
+    && useradd --uid $UID --gid $GID -m $USERNAME \
+    && usermod -aG dialout,plugdev $USERNAME\
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+USER $USERNAME
+
+#build zephyr west enviroment
+WORKDIR /home/$USERNAME 
+# Init zephyr Project
+ENV PATH=/home/$USERNAME/.local/bin:$PATH
+
+RUN pipx install west && pipx ensurepath
+#RUN west init -m https://github.com/zephyrproject-rtos/zephyr  --mr
+RUN west init
+#changed manifest file to download only stm32 build enviroment
+#COPY --chown=$USERNAME:$USERNAME west.yml /home/$USERNAME/zephyr
+
+#upload project submodules
+#RUN west config manifest.file west.yml \
+RUN west config manifest.project-filter -- -hal_adi,-hal_afbr,-hal_ambiq,-hal_atmel,-hal_bouffalolab,-hal_ethos_u,-hal_gigadevice,-hal_infineon,-hal_microchip,-hal_nuvoton,-hal_nxp,-hal_openisa,-hal_quicklogic,-hal_realtek,-hal_renesas,-hal_rpi_pico,-hal_sifli,-hal_silabs,-hal_tdk,-hal_ti,-_hal_wch,-hal_wurthelektronik,-percepio,-segger
+RUN west update
+RUN west packages pip --install
+RUN west zephyr-export
+RUN west sdk install -b /home/$USERNAME -t arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf
+    
+
+USER root
+#WORKDIR /home/${USERNAME}/temp
+#COPY JLink_Linux_V812_x86_64.deb JLink_Linux_V812_x86_64.deb
+#RUN gdebi --n JLink_Linux_V812_x86_64.deb; exit 0
+COPY /udev/60-openocd.rules /etc/udev/rules.d/60-openocd.rules
+WORKDIR /home/${USERNAME}/zephyr
+RUN west blobs fetch hal_espressif
+WORKDIR /home/${USERNAME}/temp
+RUN git clone https://github.com/openocd-org/openocd.git
+RUN cd ./openocd \
+    && ./bootstrap \
+    && ./configure \
+    && make \
+    && sudo make install
+WORKDIR /home/${USERNAME}
+ENV PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin
+USER $USERNAME
