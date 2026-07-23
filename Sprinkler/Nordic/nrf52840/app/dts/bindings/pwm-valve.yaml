@@ -1,0 +1,18 @@
+description: "PWM-driven valve"
+compatible: "pwm-valve"
+include: "base.yaml"
+properties:
+  pwms:
+    required: true
+    type: phandle-array
+    description: PWM specifier driving the valves.
+
+  min-pulse:
+    required: true
+    type: int
+    description: Minimum pulse width (nanoseconds).
+
+  max-pulse:
+    required: true
+    type: int
+    description: Maximum pulse width (nanoseconds).
