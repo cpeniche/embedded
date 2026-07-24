@@ -1,6 +1,5 @@
 
 #include <zephyr/sys/printk.h>
-#include "pwmInterface.h"
 #include "nrfPwm.h"
 
 nrfPwm* nrfPwm::_instance=nullptr;
@@ -8,23 +7,24 @@ nrfPwm* nrfPwm::_instance=nullptr;
 nrfPwm *nrfPwm::getInstance(void)
 {
   if (_instance == nullptr)
-  {
-    static nrfPwm instance;
-    _instance = new nrfPwm();
-    _instance->init();
+  {   
+    _instance = new nrfPwm();    
   }    
   return _instance;
 }
 
 int8_t nrfPwm::setDutyCycle(uint8_t dutyCycle)
 {
-  uint32_t pulse=valve.period/100*dutyCycle;
-  return pwm_set_dt(&valve, valve.period,pulse);
+  uint32_t pulse=_valve.period/100*dutyCycle;
+  _dutyCycle=dutyCycle;
+  return pwm_set_dt(&_valve, _valve.period,pulse);
 }
 
-int8_t nrfPwm::setFrequency(float frequency)
+int8_t nrfPwm::setFrequency(uint32_t period)
 {
-  return 0;
+  
+  uint32_t pulse=period/100*_dutyCycle;
+  return pwm_set_dt(&_valve, period, pulse);
 }
 
 int8_t nrfPwm::start()
@@ -37,16 +37,20 @@ int8_t nrfPwm::stop()
   return 0;
 }
 
-void nrfPwm::init(void)
+nrfPwm::nrfPwm(void)
 {
-
-  uint32_t pulse=0;
-  if(pwm_is_ready_dt(&valve))
+    
+  if(pwm_is_ready_dt(&_valve))
   {
-    pwm_set_dt(&valve, valve.period, 0);
+    pwm_set_dt(&_valve, _valve.period, 0);
   }
   else
   {
     printk("PWM device not ready\n");
   }
+}
+
+extern "C" void CreatePwmInstance(void)
+{
+  nrfPwm::getInstance();
 }
