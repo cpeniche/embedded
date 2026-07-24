@@ -1,4 +1,7 @@
 {
+  "zephyrSDKVersion":"zephyr-sdk-1.0.1",
+  "armGDBPath":"/home/vscode/${config:zephyrSDKVersion}/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"
+  
   "cortex-debug.variableUseNaturalFormat": false,
   "files.associations": {
     "ff_gen_drv.h": "c",

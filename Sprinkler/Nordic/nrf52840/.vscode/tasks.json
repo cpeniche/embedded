@@ -59,15 +59,16 @@
       "isBackground": true,
       "problemMatcher": [
         {
-          "pattern": [
-            {
-              "regexp": "."
-            }
-          ],
+          "owner": "openocd",
+          "severity": "info",
+          "pattern": {
+            "regexp": ".*",
+            "message": 0
+          },
           "background": {
             "activeOnStart": true,
-            "beginsPattern": "Info : \\w+", // Regex for OpenOCD server start indicator
-            "endsPattern": "Error: \\w+|target halted" // Regex for server end or target halt
+            "beginsPattern": "^Info : .*",
+            "endsPattern": "^(Error: .*|target halted)$"
           }
         }
       ]
