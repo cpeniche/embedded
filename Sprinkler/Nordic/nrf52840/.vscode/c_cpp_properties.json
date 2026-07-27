@@ -7,7 +7,7 @@
                 "${workspaceFolder}/../zephyr"
             ],
             "defines": [],
-            "compilerPath": "/home/vscode/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "gcc-arm"

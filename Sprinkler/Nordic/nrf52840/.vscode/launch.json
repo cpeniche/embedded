@@ -18,6 +18,23 @@
       "showDevDebugOutput": "parsed",
       "searchDir": [],
       "runToEntryPoint": "main",
+      "gdbPath": "${config:armGDBPath}",
+      "openOCDLaunchCommands": ["init", "nrf52_recover"]
+    },
+    {
+      "cwd": "${workspaceRoot}",
+      "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "name": "nrf52 No Erase OpenOCD",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "configFiles": [
+        "${workspaceFolder}/openocd/minimodule-swd.cfg",
+        "target/nordic/nrf52.cfg"
+      ],
+      "showDevDebugOutput": "parsed",
+      "searchDir": [],
+      "runToEntryPoint": "main",
       "gdbPath": "${config:armGDBPath}"
     },
     {

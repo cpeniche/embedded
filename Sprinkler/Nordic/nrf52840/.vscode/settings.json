@@ -41,6 +41,7 @@
       "color": "default",
       "alignment": "left"
     },
+/*    
     {
       "label": "$(rocket) Flash",
       "task": "Flash",
@@ -52,6 +53,6 @@
       "task": "Start OpenOCD Server",
       "color": "default",
       "alignment": "left"
-    }
+    }*/
   ]
 }
