@@ -6,7 +6,8 @@ project(peripheral)
 
 add_subdirectory(src/drivers)
 target_sources(app PRIVATE
-  src/main.c
+  src/main.cpp
+  src/bmp280.cpp
 )
 target_link_libraries(app PRIVATE drivers)
 

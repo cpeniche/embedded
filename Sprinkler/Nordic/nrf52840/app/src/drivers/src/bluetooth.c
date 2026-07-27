@@ -271,7 +271,7 @@ static struct bt_conn_auth_cb auth_cb_display = {
 		.cancel = auth_cancel,
 };
 
-int main(void)
+int8_t initBluetooth(void)
 {
 	struct bt_gatt_attr *vnd_ind_attr;
 	char str[BT_UUID_STR_LEN];
@@ -281,7 +281,7 @@ int main(void)
 	if (err)
 	{
 		printk("Bluetooth init failed (err %d)\n", err);
-		return 0;
+		return err;
 	}
 
 	bt_ready();
@@ -293,32 +293,5 @@ int main(void)
 	bt_uuid_to_str(&vnd_enc_uuid.uuid, str, sizeof(str));
 	printk("Indicate VND attr %p (UUID %s)\n", vnd_ind_attr, str);
 
-	/* Implement notification. At the moment there is no suitable way
-	 * of starting delayed work so we do it here
-	 */
-	while (1)
-	{
-		k_sleep(K_SECONDS(1));
-
-		/* Vendor indication simulation */
-		if (simulate_vnd && vnd_ind_attr)
-		{
-			if (indicating)
-			{
-				continue;
-			}
-
-			ind_params.attr = vnd_ind_attr;
-			ind_params.func = indicate_cb;
-			ind_params.destroy = indicate_destroy;
-			ind_params.data = &indicating;
-			ind_params.len = sizeof(indicating);
-
-			if (bt_gatt_indicate(NULL, &ind_params) == 0)
-			{
-				indicating = 1U;
-			}
-		}
-	}
 	return 0;
 }

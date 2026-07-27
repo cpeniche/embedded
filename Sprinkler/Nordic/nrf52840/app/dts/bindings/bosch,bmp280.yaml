@@ -1,0 +1,41 @@
+description: |
+  Bosch BMP280 pressure and temperature sensor accessed through I2C bus
+
+compatible: "bosch,bmp180"
+
+include: [i2c-device.yaml, sensor-device, yaml]
+
+properties:
+  osrs-press:
+    type: int
+    required: true
+    description: |
+      Default pressure oversampling rate. Only the following values are
+      allow:
+      0 skipped
+      1 ultra low power,  1 sample
+      2 low power,        2 samples
+      3 standard,         4 samples
+      4 high,             8 samples
+      5 ultra high,       16 samples
+
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+
+  osrs-temp:
+  type: int
+  required: true
+  description: |
+    Default pressure oversampling rate. Only the following values are
+    allow:
+    0 skipped
+    1 ultra low power,  1 sample     16 bits
+    2 low power,        2 samples    17 bits 
+    3 standard,         4 samples    18 bits
+    4 high,             8 samples    19 bits
+    5 ultra high,       16 samples   20 bits

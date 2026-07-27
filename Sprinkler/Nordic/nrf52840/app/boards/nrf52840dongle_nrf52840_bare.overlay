@@ -55,6 +55,23 @@
 			label = "Red LED 1";
 		};
 
+&i2c0_default{
+	group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 23)>,
+				<NRF_PSEL(TWIM_SCL, 0, 24)>;
+	};
+};	
+
+&i2c0 {
+	bmp280:bmp280@76{
+		status = "okay";
+		compatible = "bosch,bmp280";
+		reg =<0x77>;
+		osrs-press = <1>;
+		osrs-temp = <1>;
+	};
+};
+
 /{
 	valve_1:valve{		
 		compatible = "pwm-valve";
