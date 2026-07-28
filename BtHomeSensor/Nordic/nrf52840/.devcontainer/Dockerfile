@@ -40,18 +40,18 @@ WORKDIR /home/$USERNAME
 ENV PATH=/home/$USERNAME/.local/bin:$PATH
 
 RUN pipx install west && pipx ensurepath
-
 #RUN west init -m https://github.com/zephyrproject-rtos/zephyr  --mr
 RUN west init
 #changed manifest file to download only stm32 build enviroment
-COPY --chown=$USERNAME:$USERNAME west.yml /home/$USERNAME/zephyr
+#COPY --chown=$USERNAME:$USERNAME west.yml /home/$USERNAME/zephyr
 
 #upload project submodules
-RUN west config manifest.file west.yml \
-    && west update\
-    && west zephyr-export \
-    && west packages pip --install \
-    && west sdk install -b /home/$USERNAME -t arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf
+#RUN west config manifest.file west.yml \
+RUN west config manifest.project-filter -- -hal_adi,-hal_afbr,-hal_ambiq,-hal_atmel,-hal_bouffalolab,-hal_ethos_u,-hal_gigadevice,-hal_infineon,-hal_microchip,-hal_nuvoton,-hal_nxp,-hal_openisa,-hal_quicklogic,-hal_realtek,-hal_renesas,-hal_rpi_pico,-hal_sifli,-hal_silabs,-hal_tdk,-hal_ti,-_hal_wch,-hal_wurthelektronik,-percepio,-segger
+RUN west update
+RUN west packages pip --install
+RUN west zephyr-export
+RUN west sdk install -b /home/$USERNAME -t arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf
     
 
 USER root
