@@ -16,18 +16,28 @@ int bmp280_write_array(uint8_t deviceAddress, uint8_t startRegisterAddress, uint
 {
 	uint8_t buffer[20] = {0};
 	buffer[0] = startRegisterAddress;
-	memcpy(buffer, data, dataLength);
+	memcpy(&buffer[1], data, dataLength);
 	return i2c_write_dt(&device, buffer, dataLength + 1);
 }
 
 /*reads an array (data[]) of arbitrary size (dataLength) from I2C address (deviceAddress), starting from an internal register address (startRegisterAddress)*/
 int bmp280_read_array(uint8_t deviceAddress, uint8_t startRegisterAddress, uint8_t *data, uint8_t dataLength)
 {
+	int8_t err = 0;
 
-	if (i2c_write_dt(&device, &startRegisterAddress, 1) < 1)
-		return -1;
+	if ((err = i2c_write_dt(&device, &startRegisterAddress, 1)) < 0)
+	{
+		printk("I2C Write error code %d", err);
+		return err;
+	}
 
-	return i2c_read_dt(&device, data, dataLength);
+	if ((err = i2c_read_dt(&device, data, dataLength)) < 0)
+	{
+		printk("I2C Read error code %d", err);
+		return err;
+	}
+
+	return err;
 }
 
 /*initiates the I2C peripheral and sets its speed*/
@@ -60,4 +70,9 @@ int power_function(float x, float y, float *result)
 	*result = pow(x, y);
 
 	return 0;
+}
+
+int getMode()
+{
+	return DT_PROP(DT_NODELABEL(bmp280), mode);
 }

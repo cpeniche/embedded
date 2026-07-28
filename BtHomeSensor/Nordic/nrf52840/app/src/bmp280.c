@@ -353,7 +353,7 @@ bmp280_error_code_t bmp280_get_temperature(
 
   handle->t_fine = var1 + var2;
   int32_t temp_temperature = (handle->t_fine * 5 + 128) >> 8;
-  *temperature = ((float)temp_temperature) / 100.0;
+  *temperature = ((float)temp_temperature) / 100.0f;
 
   return BMP280_ERROR_OK;
 }
@@ -416,7 +416,7 @@ bmp280_error_code_t bmp280_calculate_altitude_quick(
     return BMP280_ERROR_INTERFACE_MATH_POW;
   }
 
-  *alt = 44307.69396 * (1 - 0.111555816 * temp_result); /*calculating altitude from barometric formula*/
+  *alt = 44307.69396f * (1 - 0.111555816f * temp_result); /*calculating altitude from barometric formula*/
 
   return BMP280_ERROR_OK;
 }

@@ -63,11 +63,13 @@
 };	
 
 &i2c0 {
-	bmp280:bmp280@76{
+	bmp280:bmp280@77{
 		status = "okay";
 		compatible = "bosch,bmp280";
 		reg =<0x77>;
-		osrs-press = <1>;
-		osrs-temp = <1>;
+		mode = <3>;
+		osrs-p = <5>;
+		osrs-t = <3>;
+		filter = <4>;
 	};
 };

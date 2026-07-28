@@ -23,12 +23,6 @@ bmp280_handle_t handle;
 int main(int argc, char *argv[])
 {
 
-	// uint8_t code;
-	// bmp280 *pressure = new bmp280();
-
-	// if (initBluetooth() < 0)
-	// return -1;
-
 	handle.dependency_interface.bmp280_interface_init = bmp280_i2c_init;
 	handle.dependency_interface.bmp280_interface_deinit = bmp280_i2c_deinit;
 	handle.dependency_interface.bmp280_write_array = bmp280_write_array;
@@ -71,10 +65,10 @@ int main(int argc, char *argv[])
 
 		bmp280_calculate_altitude_hypsometric(&handle, &altitudeHypsometric, sensorsData.pressure, sensorsData.temperature);
 
-		printk("Temperature = %f °C\n", sensorsData.temperature);
-		printk("Pressure = %d Pa\n", sensorsData.pressure);
-		printk("Altitude (quick) = %f m\n", sensorsData.altitude);
-		printk("Altitude (hypsometric) = %f m\n", altitudeHypsometric);
+		printk("Temperature = %f °C\n", (double)sensorsData.temperature);
+		printk("Pressure = %" PRIu32 "Pa\n", sensorsData.pressure);
+		printk("Altitude (quick) = %f m\n", (double)sensorsData.altitude);
+		printk("Altitude (hypsometric) = %f m\n", (double)altitudeHypsometric);
 
 		k_sleep(K_SECONDS(2));
 		// pressure->ReadDeviceCode(&code);
