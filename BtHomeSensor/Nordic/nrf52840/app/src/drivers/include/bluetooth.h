@@ -8,6 +8,7 @@ extern "C"
 #include <stdint.h>
 
   int8_t initBluetooth(void);
+  int updateBluetoothData(uint8_t *temperature, uint8_t *pressure);
 
 #ifdef __cplusplus
 }

@@ -7,10 +7,13 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/uuid.h>
 
-#define SERVICE_DATA_LEN 9
+#define SERVICE_DATA_LEN 10
 #define SERVICE_UUID 0xfcd2 /* BTHome service UUID */
 #define IDX_TEMPL 4					/* Index of lo byte of temp in service data*/
 #define IDX_TEMPH 5					/* Index of hi byte of temp in service data*/
+#define IDX_PRESL 7
+#define IDX_PRESM 8
+#define IDX_PRESH 9
 
 #define ADV_PARAM BT_LE_ADV_PARAM(BT_LE_ADV_OPT_USE_IDENTITY, \
 																	BT_GAP_ADV_SLOW_INT_MIN,    \
@@ -22,9 +25,10 @@ static uint8_t service_data[SERVICE_DATA_LEN] = {
 		0x02, /* Temperature */
 		0xc4, /* Low byte */
 		0x00, /* High byte */
-		0x03, /* Humidity */
-		0xbf, /* 50.55%  low byte*/
-		0x13, /* 50.55%  high byte*/
+		0x04, /* Pressure */
+		0xbf, /* low byte*/
+		0x13, /* middle byte*/
+		0x00, /* high byte*/
 };
 
 static struct bt_data ad[] = {
@@ -34,8 +38,7 @@ static struct bt_data ad[] = {
 
 int initBluetooth(void)
 {
-	int err;
-	int temp = 0;
+	int err = 0;
 
 	printk("Starting BTHome sensor template\n");
 
@@ -54,24 +57,28 @@ int initBluetooth(void)
 	if (err)
 	{
 		printk("Advertising failed to start (err %d)\n", err);
-		return 0;
+		return err;
+	}
+	return err;
+}
+
+int updateBluetoothData(uint8_t *temperature, uint8_t *pressure)
+{
+
+	int err = 0;
+
+	service_data[IDX_TEMPL] = temperature[0];
+	service_data[IDX_TEMPH] = temperature[1];
+	service_data[IDX_PRESL] = pressure[0];
+	service_data[IDX_PRESM] = pressure[1];
+	service_data[IDX_PRESH] = pressure[2];
+
+	err = bt_le_adv_update_data(ad, ARRAY_SIZE(ad), NULL, 0);
+
+	if (err)
+	{
+		printk("Failed to update advertising data (err %d)\n", err);
 	}
 
-	for (;;)
-	{
-		/* Simulate temperature from 0C to 25C */
-		service_data[IDX_TEMPH] = (temp * 100) >> 8;
-		service_data[IDX_TEMPL] = (temp * 100) & 0xff;
-		if (temp++ == 25)
-		{
-			temp = 0;
-		}
-		err = bt_le_adv_update_data(ad, ARRAY_SIZE(ad), NULL, 0);
-		if (err)
-		{
-			printk("Failed to update advertising data (err %d)\n", err);
-		}
-		k_sleep(K_MSEC(BT_GAP_ADV_SLOW_INT_MIN));
-	}
 	return err;
 }

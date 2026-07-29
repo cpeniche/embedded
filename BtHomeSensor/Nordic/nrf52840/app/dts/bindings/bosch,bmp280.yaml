@@ -9,19 +9,24 @@ properties:
   osrs-p:
     type: int
     required: true
-    description: Default pressure oversampling rate. Only the following values are
+    description: "Default pressure oversampling rate"
 
   osrs-t:
     type: int
     required: true
-    description: Default pressure oversampling rate.
+    description: "Default pressure oversampling rate."
 
   mode:
     type: int
     required: true
-    description: Power Modes
+    description: "Power Modes"
+    # power mode Sleep = 0, Force = 1 Normal = 3
+    enum:
+      - 0
+      - 1
+      - 3
 
   filter:
     type: int
     required: true
-    description: Filter settings
+    description: "Filter settings"

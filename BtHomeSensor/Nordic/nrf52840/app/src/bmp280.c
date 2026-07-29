@@ -430,12 +430,12 @@ bmp280_error_code_t bmp280_calculate_altitude_hypsometric(
 {
   float temp_result;
 
-  if (handle->dependency_interface.bmp280_power_function((float)SEA_LEVEL_PRESSURE / (float)barometricPressure, (float)1 / 5.257, &temp_result) != 0)
+  if (handle->dependency_interface.bmp280_power_function((float)SEA_LEVEL_PRESSURE / (float)barometricPressure, (float)1 / 5.257f, &temp_result) != 0)
   {
     return BMP280_ERROR_INTERFACE_MATH_POW;
   }
 
-  *alt = ((ambientTemperatureInC + 273.15) * (temp_result - 1)) / 0.0065;
+  *alt = ((ambientTemperatureInC + 273.15f) * (temp_result - 1)) / 0.0065f;
 
   return BMP280_ERROR_OK;
 }

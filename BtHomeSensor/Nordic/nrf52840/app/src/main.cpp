@@ -23,6 +23,13 @@ bmp280_handle_t handle;
 int main(int argc, char *argv[])
 {
 
+	uint16_t bTemp = 0;
+	uint32_t bPress = 0;
+	int8_t err = 0;
+
+	if ((err = initBluetooth()) < 0)
+		printk("Bluetooth Init Error = %" PRIo8 "\n", err);
+
 	handle.dependency_interface.bmp280_interface_init = bmp280_i2c_init;
 	handle.dependency_interface.bmp280_interface_deinit = bmp280_i2c_deinit;
 	handle.dependency_interface.bmp280_write_array = bmp280_write_array;
@@ -42,7 +49,7 @@ int main(int argc, char *argv[])
 
 	printk("SUCCESS\n");
 
-	error = bmp280_set_mode(&handle, BMP280_MODE_NORMAL);
+	error = bmp280_set_mode(&handle, (bmp280_operation_mode_t)getMode());
 	error = bmp280_set_temperature_oversampling(&handle, BMP280_OVERSAMPLING_4X);
 	error = bmp280_set_pressure_oversampling(&handle, BMP280_OVERSAMPLING_16X);
 	error = bmp280_set_standby_time(&handle, BMP280_T_STANDBY_250MS);
@@ -64,15 +71,15 @@ int main(int argc, char *argv[])
 		float altitudeHypsometric;
 
 		bmp280_calculate_altitude_hypsometric(&handle, &altitudeHypsometric, sensorsData.pressure, sensorsData.temperature);
-
+		bTemp = (uint16_t)(sensorsData.temperature * 100);
+		bPress = (uint32_t)(sensorsData.pressure);
+		updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress);
 		printk("Temperature = %f °C\n", (double)sensorsData.temperature);
 		printk("Pressure = %" PRIu32 "Pa\n", sensorsData.pressure);
 		printk("Altitude (quick) = %f m\n", (double)sensorsData.altitude);
 		printk("Altitude (hypsometric) = %f m\n", (double)altitudeHypsometric);
 
 		k_sleep(K_SECONDS(2));
-		// pressure->ReadDeviceCode(&code);
-		// printk("BMP280 Device Code: %x\n", code);
 	}
 	return 0;
 }
