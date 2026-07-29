@@ -13,9 +13,12 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(main_app,LOG_LEVEL_DBG);
 #include "bmp280.h"
 #include "interface.h"
 #include "bluetooth.h"
+
 
 bmp280_sensors_data_t sensorsData;
 bmp280_handle_t handle;
@@ -28,7 +31,7 @@ int main(int argc, char *argv[])
 	int8_t err = 0;
 
 	if ((err = initBluetooth()) < 0)
-		printk("Bluetooth Init Error = %" PRIo8 "\n", err);
+		LOG_ERR("Bluetooth Init Error = %" PRIo8, err);
 
 	handle.dependency_interface.bmp280_interface_init = bmp280_i2c_init;
 	handle.dependency_interface.bmp280_interface_deinit = bmp280_i2c_deinit;
@@ -41,15 +44,15 @@ int main(int argc, char *argv[])
 
 	if (error != BMP280_ERROR_OK)
 	{
-		printk("FAIL");
+		LOG_ERR("FAIL");
 
 		for (;;)
 			;
 	}
 
-	printk("SUCCESS\n");
+	LOG_DBG("SUCCESS");
 
-	error = bmp280_set_mode(&handle, (bmp280_operation_mode_t)getMode());
+	error = bmp280_set_mode(&handle, BMP280_MODE_NORMAL);
 	error = bmp280_set_temperature_oversampling(&handle, BMP280_OVERSAMPLING_4X);
 	error = bmp280_set_pressure_oversampling(&handle, BMP280_OVERSAMPLING_16X);
 	error = bmp280_set_standby_time(&handle, BMP280_T_STANDBY_250MS);
@@ -62,7 +65,7 @@ int main(int argc, char *argv[])
 
 		if (error != BMP280_ERROR_OK)
 		{
-			printk("FAIL\n");
+			LOG_ERR("FAIL");
 
 			for (;;)
 				;
@@ -74,10 +77,10 @@ int main(int argc, char *argv[])
 		bTemp = (uint16_t)(sensorsData.temperature * 100);
 		bPress = (uint32_t)(sensorsData.pressure);
 		updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress);
-		printk("Temperature = %f °C\n", (double)sensorsData.temperature);
-		printk("Pressure = %" PRIu32 "Pa\n", sensorsData.pressure);
-		printk("Altitude (quick) = %f m\n", (double)sensorsData.altitude);
-		printk("Altitude (hypsometric) = %f m\n", (double)altitudeHypsometric);
+		LOG_DBG("Temperature = %f °C", (double)sensorsData.temperature);
+		LOG_DBG("Pressure = %" PRIu32 "Pa", sensorsData.pressure);
+		LOG_DBG("Altitude (quick) = %f m", (double)sensorsData.altitude);
+		LOG_DBG("Altitude (hypsometric) = %f m", (double)altitudeHypsometric);
 
 		k_sleep(K_SECONDS(2));
 	}
