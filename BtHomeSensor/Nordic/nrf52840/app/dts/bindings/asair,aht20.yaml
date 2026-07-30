@@ -1,0 +1,5 @@
+description: Asair aht20 humidity and temperature sensor
+
+compatible: "asair,aht20"
+
+include: [i2c-device.yaml, sensor-device.yaml]

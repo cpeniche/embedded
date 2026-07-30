@@ -72,4 +72,9 @@
 		osrs-t = <3>;
 		filter = <4>;
 	};
+	aht20:aht20@38{
+		status = "okay";
+		compatible = "asair,ath20";
+		reg = <0x38>;
+	};
 };

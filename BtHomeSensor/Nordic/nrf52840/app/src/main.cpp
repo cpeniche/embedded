@@ -14,14 +14,16 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(main_app,LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(main_app, LOG_LEVEL_DBG);
 #include "bmp280.h"
+#include "aht20.hpp"
 #include "interface.h"
 #include "bluetooth.h"
 
-
 bmp280_sensors_data_t sensorsData;
 bmp280_handle_t handle;
+
+void DelayFunc(uint32_t ms);
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +31,7 @@ int main(int argc, char *argv[])
 	uint16_t bTemp = 0;
 	uint32_t bPress = 0;
 	int8_t err = 0;
+	aht20 *aht20Sensor = aht20::getInstance();
 
 	if ((err = initBluetooth()) < 0)
 		LOG_ERR("Bluetooth Init Error = %" PRIo8, err);
@@ -41,6 +44,8 @@ int main(int argc, char *argv[])
 	handle.dependency_interface.bmp280_power_function = power_function;
 
 	bmp280_error_code_t error = bmp280_init(&handle, BMP280_I2C, BMP280_I2C_ADDRESS_2);
+
+	aht20Sensor->TriggerMeasurement(DelayFunc, 100);
 
 	if (error != BMP280_ERROR_OK)
 	{
@@ -85,4 +90,9 @@ int main(int argc, char *argv[])
 		k_sleep(K_SECONDS(2));
 	}
 	return 0;
+}
+
+void DelayFunc(uint32_t ms)
+{
+	k_msleep((int32_t)ms);
 }

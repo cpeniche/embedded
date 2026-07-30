@@ -7,12 +7,14 @@ project(BtHome)
 set(TARGET app)
 add_subdirectory(drivers)
 add_subdirectory(library/bmp280)
+add_subdirectory(library/aht20)
 include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/bmp280/include>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/aht20/include>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/drivers/include>)
 target_sources(${TARGET} PRIVATE
   src/main.cpp
   src/interface.c  
   )
 #target_link_directories(${TARGET} PRIVATE ~/project/build/library/bmp280)
-target_link_libraries(${TARGET} PRIVATE drivers bmp280)
+target_link_libraries(${TARGET} PRIVATE drivers bmp280 aht20)
 
