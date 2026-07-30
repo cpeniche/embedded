@@ -11,15 +11,18 @@ public:
   void operator=(const aht20 &) = delete;
   static aht20 *getInstance(void);
   int8_t Init() override;
-  uint32_t ReadHumidity(void) override;
-  uint32_t ReadTemperature(void) override;
+  float ReadHumidity(void) override;
+  float ReadTemperature(void) override;
   int8_t TriggerMeasurement(void (*delayFunc)(uint32_t), uint32_t ms) override;
 
 protected:
   aht20();
   static aht20 *_instance;
-  uint8_t data[7] = {0};
+ 
 
 private:
   i2cInterface *bus = nullptr;
+  uint8_t _rxBuffer[7] = {0};
+  uint32_t _humidity;
+  uint32_t _temperature;
 };

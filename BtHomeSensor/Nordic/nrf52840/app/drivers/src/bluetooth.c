@@ -7,13 +7,15 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/uuid.h>
 
-#define SERVICE_DATA_LEN 10
+#define SERVICE_DATA_LEN 13
 #define SERVICE_UUID 0xfcd2 /* BTHome service UUID */
 #define IDX_TEMPL 4					/* Index of lo byte of temp in service data*/
 #define IDX_TEMPH 5					/* Index of hi byte of temp in service data*/
 #define IDX_PRESL 7
 #define IDX_PRESM 8
 #define IDX_PRESH 9
+#define IDX_HUML 11
+#define IDX_HUMH 12
 
 #define ADV_PARAM BT_LE_ADV_PARAM(BT_LE_ADV_OPT_USE_IDENTITY, \
 																	BT_GAP_ADV_SLOW_INT_MIN,    \
@@ -29,6 +31,9 @@ static uint8_t service_data[SERVICE_DATA_LEN] = {
 		0xbf, /* low byte*/
 		0x13, /* middle byte*/
 		0x00, /* high byte*/
+		0x03, /* Humidity */
+		0x00, /* low byte */
+		0x00, /* high byte */
 };
 
 static struct bt_data ad[] = {
@@ -62,7 +67,7 @@ int initBluetooth(void)
 	return err;
 }
 
-int updateBluetoothData(uint8_t *temperature, uint8_t *pressure)
+int updateBluetoothData(uint8_t *temperature, uint8_t *pressure, uint8_t *humidity)
 {
 
 	int err = 0;
@@ -72,6 +77,8 @@ int updateBluetoothData(uint8_t *temperature, uint8_t *pressure)
 	service_data[IDX_PRESL] = pressure[0];
 	service_data[IDX_PRESM] = pressure[1];
 	service_data[IDX_PRESH] = pressure[2];
+	service_data[IDX_HUML] = humidity[0];
+	service_data[IDX_HUMH] = humidity[1];
 
 	err = bt_le_adv_update_data(ad, ARRAY_SIZE(ad), NULL, 0);
 

@@ -30,7 +30,8 @@ int main(int argc, char *argv[])
 
 	uint16_t bTemp = 0;
 	uint32_t bPress = 0;
-	int8_t err = 0;
+	uint16_t bHum = 0;
+	int err=0;
 	aht20 *aht20Sensor = aht20::getInstance();
 
 	if ((err = initBluetooth()) < 0)
@@ -45,7 +46,7 @@ int main(int argc, char *argv[])
 
 	bmp280_error_code_t error = bmp280_init(&handle, BMP280_I2C, BMP280_I2C_ADDRESS_2);
 
-	aht20Sensor->TriggerMeasurement(DelayFunc, 100);
+	
 
 	if (error != BMP280_ERROR_OK)
 	{
@@ -67,6 +68,7 @@ int main(int argc, char *argv[])
 	{
 
 		bmp280_error_code_t error = bmp280_get_all(&handle, &sensorsData);
+		aht20Sensor->TriggerMeasurement(DelayFunc, 100);
 
 		if (error != BMP280_ERROR_OK)
 		{
@@ -81,11 +83,16 @@ int main(int argc, char *argv[])
 		bmp280_calculate_altitude_hypsometric(&handle, &altitudeHypsometric, sensorsData.pressure, sensorsData.temperature);
 		bTemp = (uint16_t)(sensorsData.temperature * 100);
 		bPress = (uint32_t)(sensorsData.pressure);
-		updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress);
-		LOG_DBG("Temperature = %f °C", (double)sensorsData.temperature);
-		LOG_DBG("Pressure = %" PRIu32 "Pa", sensorsData.pressure);
-		LOG_DBG("Altitude (quick) = %f m", (double)sensorsData.altitude);
-		LOG_DBG("Altitude (hypsometric) = %f m", (double)altitudeHypsometric);
+		bHum = (uint32_t)(aht20Sensor->ReadHumidity()*100);
+		updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress, (uint8_t *)&bHum);
+		LOG_DBG("[bmp20]Temperature = %f °C", (double)sensorsData.temperature);
+		LOG_DBG("[bmp20]Pressure = %" PRIu32 "Pa", sensorsData.pressure);
+		LOG_DBG("[bmp20]Altitude (quick) = %f m", (double)sensorsData.altitude);
+		LOG_DBG("[bmp20]Altitude (hypsometric) = %f m", (double)altitudeHypsometric);
+
+		LOG_DBG("*************************************");
+		LOG_DBG("[aht20] Humidity = %f %%",(double)aht20Sensor->ReadHumidity());
+		LOG_DBG("[aht20] Temperature = %f °C",(double)aht20Sensor->ReadTemperature());
 
 		k_sleep(K_SECONDS(2));
 	}
