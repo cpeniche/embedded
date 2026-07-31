@@ -19,6 +19,9 @@ LOG_MODULE_REGISTER(main_app, LOG_LEVEL_DBG);
 #include "aht20.hpp"
 #include "interface.h"
 #include "bluetooth.h"
+#include "zephyrSpiWrapperBuilder.hpp"
+#include "waveShareDisplayBuilder.hpp"
+
 
 bmp280_sensors_data_t sensorsData;
 bmp280_handle_t handle;
@@ -32,6 +35,18 @@ int main(int argc, char *argv[])
 	uint32_t bPress = 0;
 	uint16_t bHum = 0;
 	int err=0;
+
+
+  displayInterfaceBuilder<int8_t> *displayBuilder = new waveShareDisplayBuilder<int8_t>();
+	displayInterface<int8_t> *_display = displayBuilder->Build();
+
+	busInterfaceBuilder *interfaceBuilder = new zephyrSpiWrapperBuilder();
+	busInterface *_zephyrSpi = interfaceBuilder->Build();
+	_zephyrSpi->SetDevice(nullptr);
+
+	_display->SetInterface(_zephyrSpi);
+	_display->Init();
+
 	aht20 *aht20Sensor = aht20::getInstance();
 
 	if ((err = initBluetooth()) < 0)

@@ -8,8 +8,10 @@ set(TARGET app)
 add_subdirectory(drivers)
 add_subdirectory(library/bmp280)
 add_subdirectory(library/aht20)
-include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/bmp280/include>
+include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/bmp280/include>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/aht20/include>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/library/waveshare/include>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/drivers/include>)
 target_sources(${TARGET} PRIVATE
   src/main.cpp
