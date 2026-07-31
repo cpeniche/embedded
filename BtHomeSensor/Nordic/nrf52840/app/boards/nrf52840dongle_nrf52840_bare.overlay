@@ -78,3 +78,18 @@
 		reg = <0x38>;
 	};
 };
+
+&spi0{
+	display:display@0{
+		compatible = waveshare,e-paper-display"
+		status = "okay";
+		reg =<0>;		
+		gpios = <&gpio0 2 GPIO_ACTIVE_LOW>, 
+						 &gpio0 2 GPIO_ACTIVE_LOW>,
+						 &gpio0 2 GPIO_ACTIVE_LOW>, 
+						 &gpio0 2 GPIO_ACTIVE_LOW>;
+		gpio-names = <"dc","reset","busy","power">;
+	};
+};
+
+
