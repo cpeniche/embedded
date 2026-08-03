@@ -15,7 +15,8 @@ include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/drivers/include>)
 target_sources(${TARGET} PRIVATE
   src/main.cpp
-  src/interface.c  
+  src/interface.c
+  src/display.cpp  
   )
 #target_link_directories(${TARGET} PRIVATE ~/project/build/library/bmp280)
 target_link_libraries(${TARGET} PRIVATE drivers bmp280 aht20)

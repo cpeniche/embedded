@@ -21,12 +21,18 @@ LOG_MODULE_REGISTER(main_app, LOG_LEVEL_DBG);
 #include "bluetooth.h"
 #include "zephyrSpiWrapperBuilder.hpp"
 #include "waveShareDisplayBuilder.hpp"
-
+#include <lvgl.h>
 
 bmp280_sensors_data_t sensorsData;
 bmp280_handle_t handle;
+// uint8_t displayBuffer[160 * 296] = {0x0};
 
 void DelayFunc(uint32_t ms);
+void screenExample();
+
+/*struct spi_dt_spec displaySpi = SPI_DT_SPEC_GET(DT_NODELABEL(display),
+																								SPI_WORD_SET(8) | SPI_MODE_GET(0));
+*/
 
 int main(int argc, char *argv[])
 {
@@ -34,18 +40,20 @@ int main(int argc, char *argv[])
 	uint16_t bTemp = 0;
 	uint32_t bPress = 0;
 	uint16_t bHum = 0;
-	int err=0;
+	int err = 0;
+	float altitudeHypsometric;
 
-
-  displayInterfaceBuilder<int8_t> *displayBuilder = new waveShareDisplayBuilder<int8_t>();
+	/*
+	displayInterfaceBuilder<int8_t> *displayBuilder = new waveShareDisplayBuilder<int8_t>();
 	displayInterface<int8_t> *_display = displayBuilder->Build();
 
 	busInterfaceBuilder *interfaceBuilder = new zephyrSpiWrapperBuilder();
 	busInterface *_zephyrSpi = interfaceBuilder->Build();
-	_zephyrSpi->SetDevice(nullptr);
+	_zephyrSpi->SetDevice((void *)&displaySpi);
 
+	_display->SetBuffer(displayBuffer);
 	_display->SetInterface(_zephyrSpi);
-	_display->Init();
+	_display->Init();*/
 
 	aht20 *aht20Sensor = aht20::getInstance();
 
@@ -61,23 +69,20 @@ int main(int argc, char *argv[])
 
 	bmp280_error_code_t error = bmp280_init(&handle, BMP280_I2C, BMP280_I2C_ADDRESS_2);
 
-	
-
-	if (error != BMP280_ERROR_OK)
-	{
-		LOG_ERR("FAIL");
-
-		for (;;)
-			;
-	}
-
-	LOG_DBG("SUCCESS");
-
 	error = bmp280_set_mode(&handle, BMP280_MODE_NORMAL);
 	error = bmp280_set_temperature_oversampling(&handle, BMP280_OVERSAMPLING_4X);
 	error = bmp280_set_pressure_oversampling(&handle, BMP280_OVERSAMPLING_16X);
 	error = bmp280_set_standby_time(&handle, BMP280_T_STANDBY_250MS);
 	error = bmp280_set_filter_coefficient(&handle, BMP280_FILTER_16X);
+
+	if (error != BMP280_ERROR_OK)
+	{
+		LOG_ERR("FAIL");
+		while (1)
+			k_sleep(K_SECONDS(2));
+	}
+
+	LOG_DBG("SUCCESS");
 
 	while (1)
 	{
@@ -88,27 +93,24 @@ int main(int argc, char *argv[])
 		if (error != BMP280_ERROR_OK)
 		{
 			LOG_ERR("FAIL");
-
-			for (;;)
-				;
 		}
+		else
+		{
 
-		float altitudeHypsometric;
+			bmp280_calculate_altitude_hypsometric(&handle, &altitudeHypsometric, sensorsData.pressure, sensorsData.temperature);
+			bTemp = (uint16_t)(sensorsData.temperature * 100);
+			bPress = (uint32_t)(sensorsData.pressure);
+			bHum = (uint32_t)(aht20Sensor->ReadHumidity() * 100);
+			updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress, (uint8_t *)&bHum);
+			LOG_DBG("[bmp20]Temperature = %f °C", (double)sensorsData.temperature);
+			LOG_DBG("[bmp20]Pressure = %" PRIu32 "Pa", sensorsData.pressure);
+			LOG_DBG("[bmp20]Altitude (quick) = %f m", (double)sensorsData.altitude);
+			LOG_DBG("[bmp20]Altitude (hypsometric) = %f m", (double)altitudeHypsometric);
 
-		bmp280_calculate_altitude_hypsometric(&handle, &altitudeHypsometric, sensorsData.pressure, sensorsData.temperature);
-		bTemp = (uint16_t)(sensorsData.temperature * 100);
-		bPress = (uint32_t)(sensorsData.pressure);
-		bHum = (uint32_t)(aht20Sensor->ReadHumidity()*100);
-		updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress, (uint8_t *)&bHum);
-		LOG_DBG("[bmp20]Temperature = %f °C", (double)sensorsData.temperature);
-		LOG_DBG("[bmp20]Pressure = %" PRIu32 "Pa", sensorsData.pressure);
-		LOG_DBG("[bmp20]Altitude (quick) = %f m", (double)sensorsData.altitude);
-		LOG_DBG("[bmp20]Altitude (hypsometric) = %f m", (double)altitudeHypsometric);
-
-		LOG_DBG("*************************************");
-		LOG_DBG("[aht20] Humidity = %f %%",(double)aht20Sensor->ReadHumidity());
-		LOG_DBG("[aht20] Temperature = %f °C",(double)aht20Sensor->ReadTemperature());
-
+			LOG_DBG("*************************************");
+			LOG_DBG("[aht20] Humidity = %f %%", (double)aht20Sensor->ReadHumidity());
+			LOG_DBG("[aht20] Temperature = %f °C", (double)aht20Sensor->ReadTemperature());
+		}
 		k_sleep(K_SECONDS(2));
 	}
 	return 0;

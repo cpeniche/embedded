@@ -5,10 +5,10 @@
 #include "aht20.hpp"
 #include "nrfI2c.hpp"
 
-#define BSWAP_32(x) ((uint32_t) ((((x) >> 24) & 0xff) | \
-                    (((x) >> 8) & 0xff00) | \
-                    (((x) & 0xff00) << 8) | \
-                    (((x) & 0xff) << 24)))
+#define BSWAP_32(x) ((uint32_t)((((x) >> 24) & 0xff) |  \
+                                (((x) >> 8) & 0xff00) | \
+                                (((x) & 0xff00) << 8) | \
+                                (((x) & 0xff) << 24)))
 
 aht20 *aht20::_instance = nullptr;
 struct i2c_dt_spec aht20Device = I2C_DT_SPEC_GET(DT_NODELABEL(aht20));
@@ -31,33 +31,28 @@ int8_t aht20::Init()
 
 float aht20::ReadHumidity(void)
 {
-  return ((float)_humidity/1048576.0f)*100.0f;
+  return ((float)_humidity / 1048576.0f) * 100.0f;
 }
 
 float aht20::ReadTemperature(void)
 {
 
-  return ((float)_temperature/1048576.0f)*200.0f-50.0f;
+  return ((float)_temperature / 1048576.0f) * 200.0f - 50.0f;
 }
 
 int8_t aht20::TriggerMeasurement(void (*delayFunc)(uint32_t), uint32_t ms)
 {
-  int8_t err=0;
-  //uint8_t temp[4]={0};
+  int8_t err = 0;
+  // uint8_t temp[4]={0};
 
   bus->SetDevice(&aht20Device);
   bus->Write(triggerMeasurement, sizeof(triggerMeasurement));
   delayFunc(ms);
-  err=bus->Read(_rxBuffer, 7);
- /* temp[0] = _rxBuffer[4]; 
-  temp[1] = _rxBuffer[3]; 
-  temp[2] = _rxBuffer[2];
-  temp[3] = _rxBuffer[1];*/
-  _humidity= BSWAP_32((*((uint32_t*)&_rxBuffer[1])))>>12;
-  //_humidity = _humidity >> 12;
-  _temperature=(BSWAP_32((*((uint32_t*)&_rxBuffer[3])))>>8) & 0x0FFFFF;
-  return err;
+  err = bus->Read(_rxBuffer, 7);
 
+  _humidity = BSWAP_32((*((uint32_t *)&_rxBuffer[1]))) >> 12;
+  _temperature = (BSWAP_32((*((uint32_t *)&_rxBuffer[3]))) >> 8) & 0x0FFFFF;
+  return err;
 }
 
 aht20::aht20()
