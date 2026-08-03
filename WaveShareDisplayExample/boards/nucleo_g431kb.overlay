@@ -1,0 +1,21 @@
+&spi1{
+  pinctrl-0 = <&spi1_sck_pa5               
+               &spi1_mosi_pa7>;
+  cs-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;           
+  pinctrl-names = "default";  
+  status = "okay";
+};
+
+&spi1_sck_pa5{
+  /delete-property/ bias-pull-down;
+  drive-push-pull;
+};
+
+/{
+  zephyr,user{
+    display-gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>, /* cn */
+                    <&gpioa 1 GPIO_ACTIVE_HIGH>, /* busy */
+                    <&gpioa 2 GPIO_ACTIVE_HIGH>, /* reset */
+                    <&gpioa 3 GPIO_ACTIVE_HIGH>; /* power */
+  };
+};

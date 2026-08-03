@@ -1,0 +1,68 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "command": "${command:workbench.action.files.saveAll}",
+      "label": "SaveAllFiles",
+      "type": "shell",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      }
+    },
+    {
+      "label": "Flash",
+      "type": "shell",
+      "command": "cd ~/zephyr; west flash --skip-rebuild -r openocd -d ${workspaceFolder}/build",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "cd ~/zephyr; west build -p always -b nucleo_g431kb ${workspaceFolder} -d ${workspaceFolder}/build",
+      "group": "build",
+      "dependsOn": ["SaveAllFiles"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "cd ~/zephyr; west build -p auto -b nucleo_g431kb ${workspaceFolder} -d ${workspaceFolder}/build",
+      "group": "build",
+      "dependsOn": ["SaveAllFiles"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "openocd",
+      "type": "shell",
+      "isBackground": true,
+      "command": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd -f /home/vscode/project/openocd/minimodule-swd.cfg -f /home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts/target/stm32g4x.cfg",
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": ".*",
+              "file": 0,
+              "location": 1,
+              "message": 2
+            }
+          ],
+          "background": {
+            "beginsPattern": "Open *",
+            "endsPattern": "Listening on port *"
+          }
+        }
+      ]
+    }
+  ]
+}

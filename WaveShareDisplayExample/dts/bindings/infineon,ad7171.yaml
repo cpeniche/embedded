@@ -1,0 +1,9 @@
+description: GPIOs for the AD7171 Analog to Digital converter
+
+compatible: "infineon,ad7171"
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      gpios use for the ad7171.

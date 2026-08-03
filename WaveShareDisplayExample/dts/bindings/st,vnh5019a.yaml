@@ -1,0 +1,9 @@
+description: GPIOs for the vnhs5019a motor driver
+
+compatible: "st,vnh5019a"
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      gpios use for the vnhs5019a motor driver.
