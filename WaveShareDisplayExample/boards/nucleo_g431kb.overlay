@@ -4,6 +4,11 @@
   cs-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;           
   pinctrl-names = "default";  
   status = "okay";
+  display: display@0{ 
+      compatible = "vnd,spi-device";
+      reg = <0>;
+      spi-max-frequency = <1000000>;
+    };
 };
 
 &spi1_sck_pa5{
@@ -15,7 +20,7 @@
   zephyr,user{
     display-gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>, /* cn */
                     <&gpioa 1 GPIO_ACTIVE_HIGH>, /* busy */
-                    <&gpioa 2 GPIO_ACTIVE_HIGH>, /* reset */
+                    <&gpioa 4 GPIO_ACTIVE_HIGH>, /* reset */
                     <&gpioa 3 GPIO_ACTIVE_HIGH>; /* power */
   };
 };

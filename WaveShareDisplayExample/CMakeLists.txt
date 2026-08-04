@@ -6,6 +6,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(display)
 set(TARGET_NAME app)
 set(sources src/main.c
+    User/Config/DEV_Config.c
     User/e-Paper/EPD_2in15g.c
     User/Examples/EPD_2in15g_test.c
     User/Examples/ImageData.c
@@ -17,9 +18,9 @@ set(sources src/main.c
     User/Fonts/font24CN.c
     User/GUI/GUI_Paint.c)            
 target_sources(${TARGET_NAME} PRIVATE ${sources})
-target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/User/e-Paper 
-                                                 ${PROJECT_SOURCE_DIR}/User/Examples
-                                                 ${PROJECT_SOURCE_DIR}/User/Fonts
-                                                 ${PROJECT_SOURCE_DIR}/User/GUI
-                                                 ${PROJECT_SOURCE_DIR}/User/Config
+target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User/e-Paper 
+                                                 ${CMAKE_CURRENT_SOURCE_DIR}/User/Examples
+                                                 ${CMAKE_CURRENT_SOURCE_DIR}/User/Fonts
+                                                 ${CMAKE_CURRENT_SOURCE_DIR}/User/GUI
+                                                 ${CMAKE_CURRENT_SOURCE_DIR}/User/Config
                                                  )

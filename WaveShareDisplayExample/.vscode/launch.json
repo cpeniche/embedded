@@ -36,29 +36,22 @@
       ],
       "logging": { "moduleLoad": true, "trace": false, "traceResponse": false }
     },
-
     {
       "cwd": "${workspaceRoot}",
-      "executable": "./build/zephyr/zephyr.elf",
-      "name": "OpenOCD",
+      "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "name": "OpenOCD Debug",
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
-      "interface": "swd",
-      "serverpath": "/home/vscode/zephyr-sdk-0.17.4/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
       "configFiles": [
         "${workspaceFolder}/openocd/minimodule-swd.cfg",
         "target/stm32g4x.cfg"
       ],
-      "searchDir": [],
-      "runToEntryPoint": "_start",
       "showDevDebugOutput": "vscode",
-      "device": "STM32G431KB",
+      "searchDir": [],
+      "runToEntryPoint": "main",
       "gdbPath": "${config:armGDBPath}",
-      "debuggerArgs": ["target remote :2331", "monitor halt", "monitor reset"],
-      "svdFile": "/home/vscode/project/openocd/STM32G431.svd",
-      "rtos": "Zephyr",
-      "cpu": "cortex-m4"
+      "svdFile": "${workspaceFolder}/openocd/STM32G431.svd"
     }
   ]
 }

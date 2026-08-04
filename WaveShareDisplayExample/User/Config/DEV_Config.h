@@ -63,11 +63,11 @@
 /**
  * e-Paper GPIO
  **/
-struct gpio_dt_spec EPD_RST_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 2);
-struct gpio_dt_spec EPD_DC_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 0);
-struct gpio_dt_spec EPD_PWR_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 3);
-struct gpio_dt_spec EPD_BUSY_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 1);
 
+extern struct gpio_dt_spec EPD_RST_PIN;
+extern struct gpio_dt_spec EPD_DC_PIN;
+extern struct gpio_dt_spec EPD_PWR_PIN;
+extern struct gpio_dt_spec EPD_BUSY_PIN;
 #define EPD_CS_PIN 0
 /**
  * GPIO read and write

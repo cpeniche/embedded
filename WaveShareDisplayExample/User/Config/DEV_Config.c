@@ -31,26 +31,39 @@
 ******************************************************************************/
 #include "DEV_Config.h"
 #include <zephyr/drivers/spi.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/kernel.h>
 
-struct spi_dt_spec hspi1 = SPI_DT_SPECT_GET(spi1);
+struct gpio_dt_spec EPD_RST_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 2);
+struct gpio_dt_spec EPD_DC_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 0);
+struct gpio_dt_spec EPD_PWR_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 3);
+struct gpio_dt_spec EPD_BUSY_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 1);
+struct spi_dt_spec hspi1 = SPI_DT_SPEC_GET(DT_NODELABEL(display), SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA);
+
 void DEV_SPI_WriteByte(UBYTE value)
 {
-    struct spi_buf_set tx_bufs = {.buffers = {.buf = &value,
-                                              .len = 1},
-                                  .count = 1};
+    struct spi_buf value_buf = {.buf = &value, .len = 1};
+
+    struct spi_buf_set tx_bufs =
+        {
+            .buffers = &value_buf,
+            .count = 1};
 
     spi_write_dt(&hspi1, &tx_bufs);
 }
 
 void DEV_SPI_Write_nByte(UBYTE *value, UDOUBLE len)
 {
-    struct spi_buf_set tx_bufs = {.buffers = {.buf = value,
-                                              .len = 1},
-                                  .count = len};
+    struct spi_buf value_buf = {.buf = value, .len = len};
+    struct spi_buf_set tx_bufs =
+        {
+            .buffers = &value_buf,
+            .count = 1};
 
     spi_write_dt(&hspi1, &tx_bufs);
 }
 
+#if 0
 void DEV_GPIO_Mode(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, UWORD Mode)
 {
 
@@ -88,9 +101,13 @@ void DEV_SPI_Init()
     //    __HAL_RCC_SPI1_CLK_DISABLE();
     //    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5|GPIO_PIN_7);
 }
-
+#endif
 void DEV_SPI_SendData(UBYTE Reg)
 {
+
+#if 0    
+    
+    
     UBYTE i, j = Reg;
     DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
     DEV_GPIO_Mode(EPD_SCLK_PIN, 1);
@@ -112,10 +129,14 @@ void DEV_SPI_SendData(UBYTE Reg)
     }
     DEV_Digital_Write(EPD_SCLK_PIN, 0);
     DEV_Digital_Write(EPD_CS_PIN, 1);
+#endif
 }
 
 UBYTE DEV_SPI_ReadData()
 {
+
+    return 0;
+#if 0    
     UBYTE i, j = 0xff;
     DEV_GPIO_Mode(EPD_MOSI_PIN, 0);
     DEV_GPIO_Mode(EPD_SCLK_PIN, 1);
@@ -134,26 +155,32 @@ UBYTE DEV_SPI_ReadData()
         }
         DEV_Digital_Write(EPD_SCLK_PIN, 1);
     }
-    DEV_Digital_Write(EPD_SCLK_PIN, 0);
-    DEV_Digital_Write(EPD_CS_PIN, 1);
+    DEV_Digital_Write(&EPD_SCLK_PIN, 0);
+    //DEV_Digital_Write(EPD_CS_PIN, 1);
     return j;
+#endif
 }
 
 int DEV_Module_Init(void)
 {
-    DEV_Digital_Write(EPD_DC_PIN, 0);
-    DEV_Digital_Write(EPD_CS_PIN, 0);
-    DEV_Digital_Write(EPD_PWR_PIN, 1);
-    DEV_Digital_Write(EPD_RST_PIN, 1);
+    gpio_pin_configure_dt(&EPD_RST_PIN, GPIO_OUTPUT_ACTIVE);
+    gpio_pin_configure_dt(&EPD_DC_PIN, GPIO_OUTPUT_ACTIVE);
+    gpio_pin_configure_dt(&EPD_PWR_PIN, GPIO_OUTPUT_ACTIVE);
+    gpio_pin_configure_dt(&EPD_BUSY_PIN, GPIO_INPUT);
+
+    DEV_Digital_Write(&EPD_DC_PIN, 0);
+    // DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_Digital_Write(&EPD_PWR_PIN, 1);
+    DEV_Digital_Write(&EPD_RST_PIN, 1);
     return 0;
 }
 
 void DEV_Module_Exit(void)
 {
-    DEV_Digital_Write(EPD_DC_PIN, 0);
-    DEV_Digital_Write(EPD_CS_PIN, 0);
+    DEV_Digital_Write(&EPD_DC_PIN, 0);
+    // DEV_Digital_Write(EPD_CS_PIN, 0);
 
     // close 5V
-    DEV_Digital_Write(EPD_PWR_PIN, 0);
-    DEV_Digital_Write(EPD_RST_PIN, 0);
+    DEV_Digital_Write(&EPD_PWR_PIN, 0);
+    DEV_Digital_Write(&EPD_RST_PIN, 0);
 }

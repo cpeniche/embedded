@@ -30,6 +30,7 @@
 ******************************************************************************/
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
+#include "DEV_Config.h"
 #include "EPD_2in15g.h"
 #include "Debug.h"
 #include "time.h"
