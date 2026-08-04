@@ -38,7 +38,7 @@ struct gpio_dt_spec EPD_RST_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 
 struct gpio_dt_spec EPD_DC_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 0);
 struct gpio_dt_spec EPD_PWR_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 3);
 struct gpio_dt_spec EPD_BUSY_PIN = GPIO_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), display_gpios, 1);
-struct spi_dt_spec hspi1 = SPI_DT_SPEC_GET(DT_NODELABEL(display), SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA);
+struct spi_dt_spec hspi1 = SPI_DT_SPEC_GET(DT_NODELABEL(display), SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_OP_MODE_MASTER);
 
 void DEV_SPI_WriteByte(UBYTE value)
 {

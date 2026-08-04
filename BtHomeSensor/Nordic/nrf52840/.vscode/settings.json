@@ -33,7 +33,7 @@
       "label": "$(rocket) Build",
       "task": "build",
       "color": "default",
-      "alignment": 
+      "alignment": "left"
     },
     {
       "label": "$(rocket) Clean Build",
