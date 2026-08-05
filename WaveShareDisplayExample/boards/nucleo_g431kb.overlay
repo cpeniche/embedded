@@ -18,7 +18,7 @@
 
 /{
   zephyr,user{
-    display-gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>, /* cn */
+    display-gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>, /* dc */
                     <&gpioa 1 GPIO_ACTIVE_HIGH>, /* busy */
                     <&gpioa 4 GPIO_ACTIVE_HIGH>, /* reset */
                     <&gpioa 3 GPIO_ACTIVE_HIGH>; /* power */
