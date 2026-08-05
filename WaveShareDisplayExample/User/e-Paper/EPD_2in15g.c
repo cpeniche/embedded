@@ -227,9 +227,9 @@ void EPD_2IN15G_Clear(UBYTE color)
 function :	Sends the image buffer in RAM to e-Paper and displays
 parameter:
 ******************************************************************************/
-void EPD_2IN15G_Display(UBYTE *Image)
+void EPD_2IN15G_Display(UBYTE *Image, UWORD Width, UWORD Height)
 {
-    UWORD Width, Height;
+
     Width = (EPD_2IN15G_WIDTH % 4 == 0) ? (EPD_2IN15G_WIDTH / 4) : (EPD_2IN15G_WIDTH / 4 + 1);
     Height = EPD_2IN15G_HEIGHT;
 
@@ -238,7 +238,7 @@ void EPD_2IN15G_Display(UBYTE *Image)
     {
         for (UWORD i = 0; i < Width; i++)
         {
-            EPD_2IN15G_SendData(Image[i + j * Width]);
+            EPD_2IN15G_SendData(Image[i + j * Width] & 0x55);
         }
     }
 

@@ -32,9 +32,12 @@
 LOG_MODULE_REGISTER(EPD_2IN15G, LOG_LEVEL_DBG);
 #include "EPD_Test.h"
 #include "EPD_2in15g.h"
+#include "Frame_4_bit.h"
 
 int EPD_test(void)
 {
+
+    uint8_t test[40] = {0x0};
     LOG_DBG("EPD_2IN15G_test Demo");
     if (DEV_Module_Init() != 0)
     {
@@ -43,12 +46,14 @@ int EPD_test(void)
 
     LOG_DBG("e-Paper Init and Clear...");
     EPD_2IN15G_Init();
-    EPD_2IN15G_Clear(EPD_2IN15G_WHITE); // White
-    DEV_Delay_ms(2000);
+
+    // EPD_2IN15G_Clear(EPD_2IN15G_WHITE); // White
+    // DEV_Delay_ms(2000);
 
     // Create a new image cache
     UBYTE *BlackImage;
     UWORD Imagesize = ((EPD_2IN15G_WIDTH % 4 == 0) ? (EPD_2IN15G_WIDTH / 4) : (EPD_2IN15G_WIDTH / 4 + 1)) * EPD_2IN15G_HEIGHT;
+#if 0     
     if ((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL)
     {
         LOG_ERR("Failed to apply for black memory...");
@@ -57,10 +62,13 @@ int EPD_test(void)
     LOG_DBG("Paint_NewImage");
     Paint_NewImage(BlackImage, EPD_2IN15G_WIDTH, EPD_2IN15G_HEIGHT, 90, EPD_2IN15G_WHITE);
     Paint_SetScale(4);
-
+#endif
 #if 1 // show image for array
     LOG_DBG("show image for array");
-    EPD_2IN15G_Display((uint8_t *)gImage_2in15g);
+    // EPD_2IN15G_Display((uint8_t *)gImage_2in15g);
+
+    EPD_2IN15G_Display((uint8_t *)gImage_Frame_4_bit, EPD_2IN15G_HEIGHT, EPD_2IN15G_WIDTH);
+
     DEV_Delay_ms(2000);
 #endif
 
@@ -91,7 +99,7 @@ int EPD_test(void)
     Paint_DrawNum(10, 35, 123456, &Font12, EPD_2IN15G_RED, EPD_2IN15G_WHITE);
 
     LOG_DBG("EPD_Display");
-    EPD_2IN15G_Display(BlackImage);
+    EPD_2IN15G_Display(BlackImage, EPD_2IN15G_WIDTH, EPD_2IN15G_HEIGHT);
     DEV_Delay_ms(3000);
 #endif
 
