@@ -1,0 +1,92 @@
+/*
+ * Copyright (c) 2025 Cactus Engineering S.L
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Common devicetree fragment wiring up the Jadard JD79661AA EPD
+ * controller (Waveshare 2.15inch e-Paper (G) panel, 160x296) over
+ * MIPI-DBI Mode C (4-wire SPI), using drivers/jd79661.c.
+ *
+ * This file only declares the parts that don't vary per board: the
+ * mipi-dbi-spi wrapper's addressing, the panel's electrical/protocol
+ * settings (resolution, soft-start, power tuning), and the profile
+ * values taken from Waveshare's reference driver
+ * (User/e-Paper/EPD_2in15g.c), which are already known to work on
+ * this exact panel.
+ *
+ * "spi1" must already be configured (pinctrl, cs-gpios, status =
+ * "okay") by the including board overlay, as
+ * boards/nucleo_g431kb.overlay and
+ * boards/nrf52840dongle_nrf52840_bare.overlay already do today for
+ * their placeholder "vnd,spi-device" node.
+ *
+ * Every board overlay that includes this file MUST also override the
+ * GPIO pins below to match its own wiring - they differ per board and
+ * are intentionally left unset here (an unresolved GPIO bank label,
+ * e.g. "gpioa" on an nRF board, would fail to compile even if later
+ * overridden). Use the pins already listed under each board's
+ * "zephyr,user { display-gpios = ... }" node:
+ *
+ *   &mipi_dbi_epd {
+ *           dc-gpios = <&gpioX N GPIO_ACTIVE_HIGH>;
+ *           reset-gpios = <&gpioX N GPIO_ACTIVE_HIGH>;
+ *   };
+ *
+ *   &epd_jd79661 {
+ *           busy-gpios = <&gpioX N GPIO_ACTIVE_HIGH>;
+ *   };
+ *
+ * The panel's power-enable pin (the 4th entry of "display-gpios" in
+ * the board overlays today) is not part of the MIPI-DBI/display
+ * bindings and must still be toggled by the application.
+ *
+ * Once a board overlay includes this file, its old placeholder
+ * "display: display@0 { compatible = "vnd,spi-device"; ... }" node
+ * under &spi1 is superseded and should be removed.
+ */
+
+/ {
+	chosen {
+		zephyr,display = &epd_jd79661;
+	};
+
+	mipi_dbi_epd: mipi_dbi_epd {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&spi1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		write-only;
+    dc-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+    reset-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+
+		epd_jd79661: jd79661aa@0 {
+			compatible = "jadard,jd79661aa";
+			reg = <0>;
+			mipi-max-frequency = <1000000>;
+      busy-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
+
+			width = <160>;
+			height = <296>;
+
+			/*
+			 * Booster soft start (R06h), verbatim from the
+			 * vendor reference driver's EPD_2IN15G_Init().
+			 */
+			softstart = [0F 0A 2F 25 22 2E 21];
+
+			full {
+				/*
+				 * Power setting (R01h): only the first two
+				 * bytes (VDG/VDS/VSC enables and VGPN) are
+				 * overridden, same as the reference driver;
+				 * the remaining analog voltage bytes keep
+				 * their MTP defaults.
+				 */
+				pwr = [07 00];
+
+				/* Gate/source non-overlap (R60h): S2G, G2S */
+				tcon = [02 02];
+			};
+		};
+	};
+};

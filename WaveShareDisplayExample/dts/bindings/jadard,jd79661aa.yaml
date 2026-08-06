@@ -1,0 +1,71 @@
+# Copyright (c) 2025 Cactus Engineering S.L
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Jadard JD79661AA all-in-one EPD driver/TCON, used on 4-level color
+  (e.g. black/white/yellow/red) panels up to 176x296, 2 bits per
+  pixel, such as the Waveshare 2.15inch e-Paper (G) / 2.15inch e-Paper
+  HAT+.
+
+compatible: "jadard,jd79661aa"
+
+include: [mipi-dbi-spi-device.yaml, display-controller.yaml]
+
+properties:
+  busy-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      BUSY_N pin. Active low on the JD79661AA: "0" = busy, "1" = idle.
+      If connected directly the MCU pin should be configured as
+      active low.
+
+  softstart:
+    type: uint8-array
+    description: Booster Soft Start (BTST, R06h) values, 7 bytes.
+
+child-binding:
+  description: |
+    Child nodes describe refresh profiles. Each refresh profile
+    specifies a set of values used to drive the refresh cycle.
+    Refresh nodes are optional and are used to override the defaults
+    loaded from the controller's MTP.
+
+    The partial refresh profile is used when performing a partial
+    refresh (writes while blanking is off). Since the controller
+    always supports partial updates, the driver uses the full refresh
+    profile and scans the partial window corresponding to the write
+    if no partial profile has been provided.
+
+    The driver looks for the following child nodes:
+
+      - 'full' - Normal / full refresh.
+      - 'partial' - Partial refresh, defaults to the values in the
+        full profile if not present.
+
+    Unlike the UC81xx family, the JD79661AA only ever loads its LUTs
+    from on-chip MTP, so profiles cannot override them.
+
+  properties:
+    pwr:
+      type: uint8-array
+      description: Power Setting (PWR, R01h) values, up to 6 bytes.
+
+    tcon:
+      type: uint8-array
+      description: |
+        Gate/source non-overlap setting (R60h), 2 bytes: S2G, G2S.
+
+    cdi:
+      type: int
+      description: |
+        VCOM and data interval (CDI[3:0] of R50h). This value is
+        optional; the VBD/DDX bits always keep their reset default.
+
+    pll:
+      type: int
+      description: PLL / frame rate control (R30h).
+
+    vdcs:
+      type: int
+      description: VCOM DC setting (R82h).

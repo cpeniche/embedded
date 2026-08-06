@@ -21,7 +21,7 @@
     "cryptography.h": "c"
   },
   "C_Cpp.default.compilerPath": "/home/vscode/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
-  "cmake.sourceDirectory": "/home/vscode/project/app",
+  "cmake.sourceDirectory": "/home/vscode/project",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "[javascript]": {

@@ -24,7 +24,9 @@
         "ms-vscode.cpptools",
         "rafaelrenanpacheco.darcula-theme",
         "vscode-icons-team.vscode-icons",
-        "spencerwmiles.vscode-task-buttons"
+        "spencerwmiles.vscode-task-buttons",
+        "anthropic.claude-code",
+        "HarshAgarwal1012.claude-usage-bar"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash"

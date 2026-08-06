@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "display"
+
+# Note: 'source' statements resolve relative to the Zephyr root
+# directory ($ZEPHYR_BASE), so this still pulls in the normal Zephyr
+# Kconfig tree. 'rsource' resolves relative to this file instead, to
+# reach our own out-of-tree driver options.
+source "Kconfig.zephyr"
+
+rsource "drivers/Kconfig.jd79661"

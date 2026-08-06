@@ -1,0 +1,14 @@
+# JD79661AA display controller configuration options
+
+# Copyright (c) 2025 Cactus Engineering S.L
+# SPDX-License-Identifier: Apache-2.0
+
+config JD79661
+	bool "Jadard JD79661AA compatible display controller driver"
+	default y
+	depends on DISPLAY
+	depends on DT_HAS_JADARD_JD79661AA_ENABLED
+	select MIPI_DBI
+	help
+	  Enable driver for the JD79661AA all-in-one EPD driver/TCON,
+	  used e.g. on the Waveshare 2.15inch e-Paper (G) panel.
