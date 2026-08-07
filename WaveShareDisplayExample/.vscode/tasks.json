@@ -10,6 +10,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Kill Debug Session",
+      "type": "shell",
+      "command": "pkill -f openocd || true",
+      "problemMatcher": []
+    },
+    {
       "label": "Flash",
       "type": "shell",
       "command": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin; cd ~/zephyr; west flash --skip-rebuild -r openocd -d ${config:buildDirectory}",

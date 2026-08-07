@@ -24,6 +24,23 @@ properties:
     type: uint8-array
     description: Booster Soft Start (BTST, R06h) values, 7 bytes.
 
+  max-width:
+    type: int
+    default: 176
+    description: |
+      Maximum horizontal resolution supported by this instance, in
+      pixels. Defaults to the JD79661AA's single-chip maximum (176).
+      Only needs overriding for a cascaded (multi-chip) panel, up to
+      352 for a 2-chip cascade - see section 3 "Block Diagram" /
+      "Cascade type" in the datasheet.
+
+  max-height:
+    type: int
+    default: 296
+    description: |
+      Maximum vertical resolution supported by this instance, in
+      pixels. Defaults to the JD79661AA's maximum (296).
+
 child-binding:
   description: |
     Child nodes describe refresh profiles. Each refresh profile

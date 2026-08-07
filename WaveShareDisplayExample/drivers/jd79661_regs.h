@@ -246,12 +246,19 @@ BUILD_ASSERT(sizeof(struct jd79661_ptl) == 9);
 
 /*
  * Native 2-bit color codes (R10h/DTM pixel values), matching the
- * vendor reference driver's EPD_2IN15G_BLACK/WHITE (Waveshare's
- * EPD_2in15g.h) rather than a plain grayscale ramp: this is a
- * quad-tone (black/white/yellow/red) panel, not 4 shades of gray.
+ * vendor reference driver's EPD_2IN15G_BLACK/WHITE/YELLOW/RED
+ * (Waveshare's EPD_2in15g.h) rather than a plain grayscale ramp:
+ * this is a quad-tone (black/white/yellow/red) panel, not 4 shades
+ * of gray. The actual color each code produces is whatever waveform
+ * the on-chip MTP LUT has programmed for that gray level (R10h/DTM
+ * in the datasheet calls the codes "Gray0".."Gray3"), not a fixed
+ * voltage - these values just have to match what the vendor driver
+ * (and therefore the MTP LUT on panels built for it) expects.
  */
 #define JD79661_COLOR_BLACK			0x0U
 #define JD79661_COLOR_WHITE			0x1U
+#define JD79661_COLOR_YELLOW			0x2U
+#define JD79661_COLOR_RED			0x3U
 
 /* Replicate a 2-bit color code across all 4 pixels of a native byte. */
 #define JD79661_COLOR_BYTE(c) (((c) << 6) | ((c) << 4) | ((c) << 2) | (c))

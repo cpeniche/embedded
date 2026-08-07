@@ -30,8 +30,6 @@
 #include <zephyr/drivers/display.h>
 #include <zephyr/logging/log.h>
 #include <lvgl.h>
-#include "Frame_4_bit.h"
-#include "EPD_2in15g.h"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 /* Private includes ----------------------------------------------------------*/
@@ -41,42 +39,35 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
  * @brief  The application entry point.
  * @retval int
  */
+
+lv_obj_t *label;
+lv_obj_t *screen;
+
 int main(void)
 {
+  const struct device *display_dev;
+  int ret;
 
-  // EPD_test();
-  /*const struct device *display_dev;
-  lv_obj_t *label;
-  int ret;*/
+  display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+  if (!device_is_ready(display_dev))
+  {
+    LOG_ERR("Display device not ready");
+    return 0;
+  }
 
-  /* display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-   if (!device_is_ready(display_dev))
-   {
-     LOG_ERR("Display device not ready");
-     return 0;
-   }*/
-  EPD_2IN15G_Init();
-  EPD_2IN15G_Display((uint8_t *)gImage_Frame_4_bit, EPD_2IN15G_HEIGHT, EPD_2IN15G_WIDTH);
-  /* ret = display_blanking_on(display_dev);
-   if (ret < 0 && ret != -ENOSYS) {
-     LOG_ERR("Failed to turn blanking on (error %d)", ret);
-     return 0;
-   }
+  screen = lv_screen_active();
 
-   label = lv_label_create(lv_screen_active());
-   lv_label_set_text(label, "Hello world!");
-   lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+  label = lv_label_create(screen);
+  lv_obj_set_style_bg_opa(label, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_text_color(label, lv_color_black(), LV_PART_MAIN);
+  lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_text(label, "Hello world!");
 
-   lv_timer_handler();
+  lv_timer_handler();
 
-   ret = display_blanking_off(display_dev);
-   if (ret < 0 && ret != -ENOSYS) {
-     LOG_ERR("Failed to turn blanking off (error %d)", ret);
-     return 0;
-   }*/
   while (1)
   {
-    // lv_timer_handler();
+    lv_timer_handler();
     k_msleep(100);
   }
   /* USER CODE END 3 */

@@ -10,9 +10,7 @@
 #include <zephyr/drivers/display.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/mipi_dbi.h>
-
 #include "jd79661_regs.h"
-
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(jd79661, CONFIG_DISPLAY_LOG_LEVEL);
 
@@ -33,9 +31,14 @@ LOG_MODULE_REGISTER(jd79661, CONFIG_DISPLAY_LOG_LEVEL);
  *
  * Zephyr's display API has no pixel format for the panel's native
  * 2-bit-per-pixel (4 pixels/byte) encoding, so this driver advertises
- * the standard 1-bit-per-pixel PIXEL_FORMAT_MONO10 (8 pixels/byte,
- * MSB first, 1=black/0=white) instead and repacks incoming buffers
- * from 8 to 4 pixels/byte itself - see jd79661_write_cmd_packed().
+ * two standard formats instead and repacks incoming buffers into the
+ * native encoding itself - see jd79661_write_cmd_packed():
+ *   - PIXEL_FORMAT_MONO01 (8 pixels/byte, MSB first, 0=black/1=white),
+ *     for black/white-only content.
+ *   - PIXEL_FORMAT_I_4 (2 pixels/byte, high nibble first), for full
+ *     black/white/yellow/red content. Only the low 2 bits of each
+ *     nibble are meaningful; they are the native color code (see
+ *     JD79661_COLOR_* in jd79661_regs.h) and are used as-is.
  *
  * Mostly the documented register set is used, plus PFS (0x03), TSE
  * (0x41), GSST (0x65) and PWS (0xE3) with the vendor reference
@@ -53,7 +56,11 @@ LOG_MODULE_REGISTER(jd79661, CONFIG_DISPLAY_LOG_LEVEL);
 
 #define JD79661_PIXELS_PER_BYTE 4U
 #define JD79661_MONO_PIXELS_PER_BYTE 8U
+#define JD79661_I4_PIXELS_PER_BYTE 2U
 
+/* Single-chip hardware maximums; fallback for the optional devicetree
+ * "max-width"/"max-height" properties (e.g. for a cascaded panel).
+ */
 #define JD79661_MAX_WIDTH 176U
 #define JD79661_MAX_HEIGHT 296U
 
@@ -92,6 +99,8 @@ struct jd79661_config
 
 	uint16_t height;
 	uint16_t width;
+	uint16_t max_width;
+	uint16_t max_height;
 
 	struct jd79661_dt_array softstart;
 
@@ -102,6 +111,7 @@ struct jd79661_data
 {
 	bool blanking_on;
 	enum jd79661_profile_type profile;
+	enum display_pixel_format pixel_format;
 };
 
 static inline void jd79661_busy_wait(const struct device *dev)
@@ -109,7 +119,7 @@ static inline void jd79661_busy_wait(const struct device *dev)
 	const struct jd79661_config *config = dev->config;
 	int pin = gpio_pin_get_dt(&config->busy_gpio);
 
-	while (pin > 0)
+	while (pin == 0)
 	{
 		__ASSERT(pin >= 0, "Failed to get pin level");
 		k_sleep(K_MSEC(JD79661_BUSY_DELAY));
@@ -137,7 +147,7 @@ static inline int jd79661_write_data_byte(const struct device *dev, uint8_t byte
 	};
 
 	return mipi_dbi_write_display(config->mipi_dev, &config->dbi_config,
-														 &byte, &mipi_desc, PIXEL_FORMAT_MONO10);
+																&byte, &mipi_desc, PIXEL_FORMAT_MONO01);
 }
 
 static inline int jd79661_write_cmd(const struct device *dev, uint8_t cmd,
@@ -170,35 +180,43 @@ out:
 }
 
 /*
- * Pack 4 monochrome pixels (1 = black, 0 = white) into a single
- * JD79661AA data byte: 4 x 2-bit color codes, MSB first, matching the
- * Pixel1..Pixel4 layout of JD79661_CMD_DTM. Black maps to
- * JD79661_COLOR_BLACK and white to JD79661_COLOR_WHITE - see the
- * comment there for why this isn't a plain grayscale ramp.
+ * Pack 4 native 2-bit color codes (see JD79661_COLOR_* in
+ * jd79661_regs.h) into a single JD79661AA data byte, MSB first,
+ * matching the Pixel1..Pixel4 layout of JD79661_CMD_DTM.
  */
 static inline uint8_t jd79661_pack4(uint8_t p0, uint8_t p1, uint8_t p2, uint8_t p3)
 {
-#define JD79661_GRAY(px) ((px) ? JD79661_COLOR_BLACK : JD79661_COLOR_WHITE)
-	return (JD79661_GRAY(p0) << 6) | (JD79661_GRAY(p1) << 4) |
-				 (JD79661_GRAY(p2) << 2) | JD79661_GRAY(p3);
+	return ((p0 & 0x3) << 6) | ((p1 & 0x3) << 4) | ((p2 & 0x3) << 2) | (p3 & 0x3);
+}
+
+/*
+ * Expand one PIXEL_FORMAT_MONO01 byte (8 pixels, MSB first, 0=black/
+ * 1=white) into two native JD79661AA bytes (4 pixels each).
+ */
+static inline void jd79661_pack_mono_byte(uint8_t mono, uint8_t out[2])
+{
+#define JD79661_GRAY(px) ((px) ? JD79661_COLOR_WHITE : JD79661_COLOR_BLACK)
+	out[0] = jd79661_pack4(JD79661_GRAY((mono >> 7) & 1), JD79661_GRAY((mono >> 6) & 1),
+												 JD79661_GRAY((mono >> 5) & 1), JD79661_GRAY((mono >> 4) & 1));
+	out[1] = jd79661_pack4(JD79661_GRAY((mono >> 3) & 1), JD79661_GRAY((mono >> 2) & 1),
+												 JD79661_GRAY((mono >> 1) & 1), JD79661_GRAY(mono & 1));
 #undef JD79661_GRAY
 }
 
 /*
- * Expand one PIXEL_FORMAT_MONO10 byte (8 pixels, MSB first) into two
- * native JD79661AA bytes (4 pixels each).
+ * Fold two PIXEL_FORMAT_I_4 bytes (4 pixels, high nibble first; only
+ * the low 2 bits of each nibble are used, as the native color code -
+ * see JD79661_COLOR_* in jd79661_regs.h) into a single native
+ * JD79661AA data byte.
  */
-static inline void jd79661_pack_mono_byte(uint8_t mono, uint8_t out[2])
+static inline uint8_t jd79661_pack_i4_bytes(uint8_t i4_0, uint8_t i4_1)
 {
-	out[0] = jd79661_pack4((mono >> 7) & 1, (mono >> 6) & 1,
-											 (mono >> 5) & 1, (mono >> 4) & 1);
-	out[1] = jd79661_pack4((mono >> 3) & 1, (mono >> 2) & 1,
-											 (mono >> 1) & 1, mono & 1);
+	return jd79661_pack4((i4_0 >> 4) & 0x3, i4_0 & 0x3, (i4_1 >> 4) & 0x3, i4_1 & 0x3);
 }
 
 static inline int jd79661_write_cmd_pattern(const struct device *dev,
-																							uint8_t cmd,
-																							uint8_t pattern, size_t len)
+																						uint8_t cmd,
+																						uint8_t pattern, size_t len)
 {
 	const struct jd79661_config *config = dev->config;
 	int err;
@@ -228,12 +246,13 @@ out:
 
 /*
  * Like jd79661_write_cmd(), but the caller's buffer is a standard
- * PIXEL_FORMAT_MONO10 buffer (8 pixels/byte) that gets repacked into
- * the panel's native 2-bit-per-pixel encoding (4 pixels/byte) as it
- * is streamed out, one native byte at a time.
+ * PIXEL_FORMAT_MONO01 (8 pixels/byte) or PIXEL_FORMAT_I_4 (2
+ * pixels/byte) buffer that gets repacked into the panel's native
+ * 2-bit-per-pixel encoding (4 pixels/byte) as it is streamed out.
  */
 static inline int jd79661_write_cmd_packed(const struct device *dev, uint8_t cmd,
-																								 const uint8_t *mono_buf, size_t mono_len)
+																							 enum display_pixel_format pixel_format,
+																							 const uint8_t *buf, size_t buf_len)
 {
 	const struct jd79661_config *config = dev->config;
 	int err;
@@ -247,11 +266,25 @@ static inline int jd79661_write_cmd_packed(const struct device *dev, uint8_t cmd
 		return err;
 	}
 
-	for (size_t i = 0; i < mono_len; i++)
+	if (pixel_format == PIXEL_FORMAT_I_4)
+	{
+		for (size_t i = 0; i < buf_len; i += 2)
+		{
+			err = jd79661_write_data_byte(dev, jd79661_pack_i4_bytes(buf[i], buf[i + 1]));
+			if (err < 0)
+			{
+				goto out;
+			}
+		}
+
+		goto out;
+	}
+
+	for (size_t i = 0; i < buf_len; i++)
 	{
 		uint8_t packed[2];
 
-		jd79661_pack_mono_byte(mono_buf[i], packed);
+		jd79661_pack_mono_byte(buf[i], packed);
 
 		for (size_t j = 0; j < 2; j++)
 		{
@@ -533,12 +566,12 @@ static int jd79661_update_display(const struct device *dev)
 {
 	LOG_DBG("Trigger update sequence");
 
-	/* Turn on: booster, controller, regulators, and sensor.
+	/* Turn on: booster, controller, regulators, and sensor.*/
 	if (jd79661_write_cmd(dev, JD79661_CMD_PON, NULL, 0))
 	{
 		return -EIO;
 	}
-*/
+
 	k_sleep(K_MSEC(JD79661_PON_DELAY));
 
 	if (jd79661_write_cmd_uint8(dev, JD79661_CMD_DRF, 0x00))
@@ -548,12 +581,12 @@ static int jd79661_update_display(const struct device *dev)
 
 	k_sleep(K_MSEC(JD79661_BUSY_DELAY));
 
-	/* Turn off: booster, controller, regulators, and sensor.
+	/* Turn off: booster, controller, regulators, and sensor.*/
 	if (jd79661_write_cmd(dev, JD79661_CMD_POF, NULL, 0))
 	{
 		return -EIO;
 	}
-*/
+
 	return 0;
 }
 
@@ -601,18 +634,20 @@ static int jd79661_write(const struct device *dev, const uint16_t x, const uint1
 
 	uint16_t x_end_idx = x + desc->width - 1;
 	uint16_t y_end_idx = y + desc->height - 1;
+	unsigned int pixels_per_byte = (data->pixel_format == PIXEL_FORMAT_I_4) ?
+											 JD79661_I4_PIXELS_PER_BYTE : JD79661_MONO_PIXELS_PER_BYTE;
 	size_t buf_len;
 
 	LOG_DBG("x %u, y %u, height %u, width %u, pitch %u",
 					x, y, desc->height, desc->width, desc->pitch);
 
 	buf_len = MIN(desc->buf_size,
-								desc->height * desc->width / JD79661_MONO_PIXELS_PER_BYTE);
+								desc->height * desc->width / pixels_per_byte);
 	__ASSERT(desc->width <= desc->pitch, "Pitch is smaller than width");
 	__ASSERT(buf != NULL, "Buffer is not available");
 	__ASSERT(buf_len != 0U, "Buffer of length zero");
-	__ASSERT(!(desc->width % JD79661_MONO_PIXELS_PER_BYTE),
-					 "Buffer width not multiple of %d", JD79661_MONO_PIXELS_PER_BYTE);
+	__ASSERT(!(desc->width % pixels_per_byte),
+					 "Buffer width not multiple of %d", pixels_per_byte);
 	__ASSERT(!(x % JD79661_PIXELS_PER_BYTE) && !((x_end_idx + 1) % JD79661_PIXELS_PER_BYTE),
 					 "Horizontal window not aligned to %d pixels", JD79661_PIXELS_PER_BYTE);
 
@@ -653,7 +688,8 @@ static int jd79661_write(const struct device *dev, const uint16_t x, const uint1
 		return -EIO;
 	}
 
-	if (jd79661_write_cmd_packed(dev, JD79661_CMD_DTM, (const uint8_t *)buf, buf_len))
+	if (jd79661_write_cmd_packed(dev, JD79661_CMD_DTM, data->pixel_format,
+																	 (const uint8_t *)buf, buf_len))
 	{
 		return -EIO;
 	}
@@ -676,6 +712,7 @@ static void jd79661_get_capabilities(const struct device *dev,
 																		 struct display_capabilities *caps)
 {
 	const struct jd79661_config *config = dev->config;
+	struct jd79661_data *data = dev->data;
 
 	memset(caps, 0, sizeof(struct display_capabilities));
 	caps->x_resolution = config->width;
@@ -684,21 +721,39 @@ static void jd79661_get_capabilities(const struct device *dev,
 	/*
 	 * The JD79661AA's native format is 2 bits/pixel (4 pixels/byte,
 	 * see JD79661_CMD_DTM / R10h in the datasheet), for which Zephyr's
-	 * display API has no dedicated pixel format. Standard 8
-	 * pixels/byte PIXEL_FORMAT_MONO10 is advertised instead;
-	 * jd79661_write() repacks it into the panel's native encoding
-	 * before sending it (see jd79661_write_cmd_packed()).
+	 * display API has no dedicated pixel format. Two standard formats
+	 * are advertised instead; jd79661_write() repacks them into the
+	 * panel's native encoding before sending it (see
+	 * jd79661_write_cmd_packed()):
+	 *   - PIXEL_FORMAT_MONO01 (8 pixels/byte) for black/white content.
+	 *   - PIXEL_FORMAT_I_4 (2 pixels/byte) for full black/white/
+	 *     yellow/red content, indexed by JD79661_COLOR_* (see
+	 *     jd79661_regs.h).
 	 */
-	caps->supported_pixel_formats = PIXEL_FORMAT_MONO10;
-	caps->current_pixel_format = PIXEL_FORMAT_MONO10;
+	caps->supported_pixel_formats = PIXEL_FORMAT_MONO01 | PIXEL_FORMAT_I_4;
+	caps->current_pixel_format = data->pixel_format;
 	caps->screen_info = SCREEN_INFO_MONO_MSB_FIRST | SCREEN_INFO_EPD;
+
+#if defined(CONFIG_DISPLAY_COLOR_PALETTE)
+	caps->color_palette[JD79661_COLOR_BLACK] =
+		(struct display_palette_color){.r = 0x00, .g = 0x00, .b = 0x00, .a = 0xFF};
+	caps->color_palette[JD79661_COLOR_WHITE] =
+		(struct display_palette_color){.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
+	caps->color_palette[JD79661_COLOR_YELLOW] =
+		(struct display_palette_color){.r = 0xFF, .g = 0xFF, .b = 0x00, .a = 0xFF};
+	caps->color_palette[JD79661_COLOR_RED] =
+		(struct display_palette_color){.r = 0xFF, .g = 0x00, .b = 0x00, .a = 0xFF};
+#endif
 }
 
 static int jd79661_set_pixel_format(const struct device *dev,
 																		const enum display_pixel_format pf)
 {
-	if (pf == PIXEL_FORMAT_MONO10)
+	struct jd79661_data *data = dev->data;
+
+	if (pf == PIXEL_FORMAT_MONO01 || pf == PIXEL_FORMAT_I_4)
 	{
+		data->pixel_format = pf;
 		return 0;
 	}
 
@@ -741,23 +796,18 @@ static int jd79661_controller_init(const struct device *dev)
 	k_sleep(K_MSEC(JD79661_RESET_DELAY));
 	jd79661_busy_wait(dev);
 
-	data->blanking_on = true;
 	data->profile = JD79661_PROFILE_INVALID;
+	data->pixel_format = PIXEL_FORMAT_MONO01;
 
 	if (jd79661_set_profile(dev, JD79661_PROFILE_FULL))
 	{
 		return -EIO;
 	}
 
-	if (jd79661_write_cmd(dev, JD79661_CMD_PON, NULL, 0))
+	if (jd79661_clear_and_write_buffer(dev, JD79661_COLOR_BYTE(JD79661_COLOR_WHITE), true))
 	{
 		return -EIO;
 	}
-	/*
-		if (jd79661_clear_and_write_buffer(dev, JD79661_COLOR_BYTE(JD79661_COLOR_WHITE), true))
-		{
-			return -EIO;
-		}*/
 
 	return 0;
 }
@@ -782,8 +832,8 @@ static int jd79661_init(const struct device *dev)
 
 	gpio_pin_configure_dt(&config->busy_gpio, GPIO_INPUT);
 
-	if (config->width > JD79661_MAX_WIDTH ||
-			config->height > JD79661_MAX_HEIGHT)
+	if (config->width > config->max_width ||
+			config->height > config->max_height)
 	{
 		LOG_ERR("Display size out of range.");
 		return -EINVAL;
@@ -849,6 +899,8 @@ static DEVICE_API(display, jd79661_driver_api) = {
                                                                                  \
 			.height = DT_PROP(n, height),                                              \
 			.width = DT_PROP(n, width),                                                \
+			.max_width = DT_PROP_OR(n, max_width, JD79661_MAX_WIDTH),                  \
+			.max_height = DT_PROP_OR(n, max_height, JD79661_MAX_HEIGHT),               \
                                                                                  \
 			.softstart = JD79661_ASSIGN_ARRAY(n, softstart),                           \
                                                                                  \

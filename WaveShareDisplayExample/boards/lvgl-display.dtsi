@@ -57,16 +57,17 @@
 		#size-cells = <0>;
 		write-only;
     dc-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
-    reset-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+    reset-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
 
 		epd_jd79661: jd79661aa@0 {
 			compatible = "jadard,jd79661aa";
 			reg = <0>;
 			mipi-max-frequency = <1000000>;
       busy-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
-
-			width = <160>;
-			height = <296>;
+			max-width =<296>;
+			max-height=<160>;
+			width = <296>;
+			height = <160>;
 
 			/*
 			 * Booster soft start (R06h), verbatim from the

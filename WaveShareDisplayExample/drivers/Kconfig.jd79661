@@ -9,6 +9,7 @@ config JD79661
 	depends on DISPLAY
 	depends on DT_HAS_JADARD_JD79661AA_ENABLED
 	select MIPI_DBI
+	select DISPLAY_COLOR_PALETTE
 	help
 	  Enable driver for the JD79661AA all-in-one EPD driver/TCON,
 	  used e.g. on the Waveshare 2.15inch e-Paper (G) panel.
