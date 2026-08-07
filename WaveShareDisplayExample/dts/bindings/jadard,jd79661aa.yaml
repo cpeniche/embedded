@@ -59,8 +59,9 @@ child-binding:
     cdi:
       type: int
       description: |
-        VCOM and data interval (CDI[3:0] of R50h). This value is
-        optional; the VBD/DDX bits always keep their reset default.
+        VCOM and data interval setting (R50h), written verbatim as a
+        full byte (VBD, DDX and CDI[3:0] bits included) - same as the
+        vendor reference driver.
 
     pll:
       type: int

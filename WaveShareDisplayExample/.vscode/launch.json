@@ -17,7 +17,7 @@
       ],
       "showDevDebugOutput": "vscode",
       "searchDir": [],
-      "runToEntryPoint": "main",
+      "runToEntryPoint": "__start",
       "gdbPath": "${config:armGDBPath}",
       "openOCDLaunchCommands": ["init", "nrf52_recover"]
     },
@@ -34,7 +34,7 @@
       ],
       "showDevDebugOutput": "vscode",
       "searchDir": [],
-      "runToEntryPoint": "main",
+      "runToEntryPoint": "__start",
       "gdbPath": "${config:armGDBPath}"
     }
   ]

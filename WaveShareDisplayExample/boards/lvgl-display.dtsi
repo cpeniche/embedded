@@ -83,7 +83,9 @@
 				 * their MTP defaults.
 				 */
 				pwr = [07 00];
-
+				cdi = <0x37>;
+				pll = <0x02>;
+				
 				/* Gate/source non-overlap (R60h): S2G, G2S */
 				tcon = [02 02];
 			};

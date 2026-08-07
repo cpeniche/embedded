@@ -73,8 +73,13 @@
 #define JD79661_PSR_FOPT			BIT(5)
 #define JD79661_PSR_LUT_EN			BIT(7)
 
-/* Reset default: VC_LUTZ=1, TS_AUTO=1, LUT from MTP */
-#define JD79661_PSR2_DEFAULT (JD79661_PSR_VC_LUTZ | JD79661_PSR_TS_AUTO)
+/*
+ * VC_LUTZ=1, TS_AUTO=1, FOPT=1, LUT from MTP. Matches the vendor
+ * reference driver's R00h 2nd byte (0x29); FOPT is not covered by the
+ * documented reset default (0x09) but has been observed necessary on
+ * real panels.
+ */
+#define JD79661_PSR2_DEFAULT (JD79661_PSR_VC_LUTZ | JD79661_PSR_TS_AUTO | JD79661_PSR_FOPT)
 
 /*
  * R01h (PWR) - 1st parameter
@@ -100,7 +105,12 @@
 #define JD79661_CDI_VBD_MASK			GENMASK(7, 5)
 #define JD79661_CDI_VBD_SHIFT			5
 
-/* Reset default: 10 hsync, DDX=1, VBD=Gray0 */
+/*
+ * Reset default: 10 hsync, DDX=1, VBD=Gray0. Informational only - the
+ * "cdi" profile override (see jd79661_set_profile()) writes the
+ * devicetree value verbatim, same as the vendor reference driver,
+ * rather than merging it with this default.
+ */
 #define JD79661_CDI_DEFAULT			0x97
 
 /*
@@ -218,6 +228,33 @@ BUILD_ASSERT(sizeof(struct jd79661_ptl) == 9);
 #define JD79661_UNDOC_E0_VAL			0x00
 #define JD79661_UNDOC_E7_VAL			0x1C
 #define JD79661_UNDOC_E9_VAL			0x01
+
+/*
+ * R41h (TSE) and R65h (GSST) are documented commands (see the
+ * register table above) that the vendor reference driver
+ * (Waveshare's EPD_2in15g.c) always writes with fixed values during
+ * initialization, with no per-board override. Reproduced here
+ * verbatim, same rationale as the JD79661_CMD_UNDOC_* values above.
+ */
+#define JD79661_TSE_VAL				0x00
+
+/* First gate/source position: both S and G start at 0. */
+#define JD79661_GSST_VAL0			0x00
+#define JD79661_GSST_VAL1			0x00
+#define JD79661_GSST_VAL2			0x00
+#define JD79661_GSST_VAL3			0x00
+
+/*
+ * Native 2-bit color codes (R10h/DTM pixel values), matching the
+ * vendor reference driver's EPD_2IN15G_BLACK/WHITE (Waveshare's
+ * EPD_2in15g.h) rather than a plain grayscale ramp: this is a
+ * quad-tone (black/white/yellow/red) panel, not 4 shades of gray.
+ */
+#define JD79661_COLOR_BLACK			0x0U
+#define JD79661_COLOR_WHITE			0x1U
+
+/* Replicate a 2-bit color code across all 4 pixels of a native byte. */
+#define JD79661_COLOR_BYTE(c) (((c) << 6) | ((c) << 4) | ((c) << 2) | (c))
 
 /*
  * R06h (BTST) and R01h (PWR) are board-specific tuning values with no

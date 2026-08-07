@@ -37,15 +37,18 @@ LOG_MODULE_REGISTER(jd79661, CONFIG_DISPLAY_LOG_LEVEL);
  * MSB first, 1=black/0=white) instead and repacks incoming buffers
  * from 8 to 4 pixels/byte itself - see jd79661_write_cmd_packed().
  *
- * Mostly the documented register set is used, plus PFS (0x03) and PWS
- * (0xE3) with the vendor reference driver's values. That same driver
- * also issues six commands (0x4D, 0xB4, 0xB5, 0xE0, 0xE7, 0xE9) whose
- * function isn't covered by the datasheet at all; real panels have
- * been observed to need them, so they are reproduced here verbatim
- * too - see the JD79661_CMD_UNDOC_* comment in jd79661_regs.h. This
- * covers every write in the vendor driver's initialization sequence.
+ * Mostly the documented register set is used, plus PFS (0x03), TSE
+ * (0x41), GSST (0x65) and PWS (0xE3) with the vendor reference
+ * driver's values. That same driver also issues six commands (0x4D,
+ * 0xB4, 0xB5, 0xE0, 0xE7, 0xE9) whose function isn't covered by the
+ * datasheet at all; real panels have been observed to need them, so
+ * they are reproduced here verbatim too - see the JD79661_CMD_UNDOC_*
+ * comment in jd79661_regs.h. jd79661_set_profile() issues every one
+ * of these in the same order as the vendor driver's initialization
+ * sequence.
  *
- * As with the UC81xx driver, first gate/source should be 0.
+ * As with the UC81xx driver, first gate/source should be 0 - see the
+ * GSST write in jd79661_set_profile().
  */
 
 #define JD79661_PIXELS_PER_BYTE 4U
@@ -114,6 +117,29 @@ static inline void jd79661_busy_wait(const struct device *dev)
 	}
 }
 
+/*
+ * Write a single data byte (DC high) as its own, independent SPI
+ * transaction - the vendor reference driver's EPD_2IN15G_SendData()
+ * (Waveshare's EPD_2in15g.c) issues one SPI write per byte, giving
+ * each byte its own chip-select cycle rather than bursting several
+ * bytes under one CS assertion. All multi-byte data writes in this
+ * driver are built out of repeated calls to this function to match
+ * that behavior byte-for-byte.
+ */
+static inline int jd79661_write_data_byte(const struct device *dev, uint8_t byte)
+{
+	const struct jd79661_config *config = dev->config;
+	struct display_buffer_descriptor mipi_desc = {
+			.height = 1,
+			.width = 1,
+			.pitch = 1,
+			.buf_size = 1,
+	};
+
+	return mipi_dbi_write_display(config->mipi_dev, &config->dbi_config,
+														 &byte, &mipi_desc, PIXEL_FORMAT_MONO10);
+}
+
 static inline int jd79661_write_cmd(const struct device *dev, uint8_t cmd,
 																		const uint8_t *data, size_t len)
 {
@@ -123,51 +149,19 @@ static inline int jd79661_write_cmd(const struct device *dev, uint8_t cmd,
 	jd79661_busy_wait(dev);
 
 	err = mipi_dbi_command_write(config->mipi_dev, &config->dbi_config,
-															 cmd, data, len);
-	mipi_dbi_release(config->mipi_dev, &config->dbi_config);
-	return err;
-}
-
-static inline int jd79661_write_cmd_pattern(const struct device *dev,
-																						uint8_t cmd,
-																						uint8_t pattern, size_t len)
-{
-	const struct jd79661_config *config = dev->config;
-	struct display_buffer_descriptor mipi_desc;
-	int err;
-	uint8_t data[64];
-
-	jd79661_busy_wait(dev);
-
-	err = mipi_dbi_command_write(config->mipi_dev, &config->dbi_config,
 															 cmd, NULL, 0);
 	if (err < 0)
 	{
-		return err;
+		goto out;
 	}
 
-	/*
-	 * MIPI display write API requires a display buffer descriptor.
-	 * Create one that describes the buffer we are writing
-	 */
-	mipi_desc.height = 1;
-
-	memset(data, pattern, sizeof(data));
-	while (len)
+	for (size_t i = 0; i < len; i++)
 	{
-		mipi_desc.buf_size = mipi_desc.width = mipi_desc.pitch =
-				MIN(len, sizeof(data));
-
-		err = mipi_dbi_write_display(config->mipi_dev,
-																 &config->dbi_config,
-																 data, &mipi_desc,
-																 PIXEL_FORMAT_MONO10);
+		err = jd79661_write_data_byte(dev, data[i]);
 		if (err < 0)
 		{
 			goto out;
 		}
-
-		len -= mipi_desc.buf_size;
 	}
 
 out:
@@ -177,13 +171,14 @@ out:
 
 /*
  * Pack 4 monochrome pixels (1 = black, 0 = white) into a single
- * JD79661AA data byte: 4 x 2-bit gray levels, MSB first, matching the
- * Pixel1..Pixel4 layout of JD79661_CMD_DTM. Black maps to Gray0 and
- * white to Gray3, the usual ordering for this family's default LUTs.
+ * JD79661AA data byte: 4 x 2-bit color codes, MSB first, matching the
+ * Pixel1..Pixel4 layout of JD79661_CMD_DTM. Black maps to
+ * JD79661_COLOR_BLACK and white to JD79661_COLOR_WHITE - see the
+ * comment there for why this isn't a plain grayscale ramp.
  */
 static inline uint8_t jd79661_pack4(uint8_t p0, uint8_t p1, uint8_t p2, uint8_t p3)
 {
-#define JD79661_GRAY(px) ((px) ? 0x0U : 0x3U)
+#define JD79661_GRAY(px) ((px) ? JD79661_COLOR_BLACK : JD79661_COLOR_WHITE)
 	return (JD79661_GRAY(p0) << 6) | (JD79661_GRAY(p1) << 4) |
 				 (JD79661_GRAY(p2) << 2) | JD79661_GRAY(p3);
 #undef JD79661_GRAY
@@ -196,25 +191,17 @@ static inline uint8_t jd79661_pack4(uint8_t p0, uint8_t p1, uint8_t p2, uint8_t 
 static inline void jd79661_pack_mono_byte(uint8_t mono, uint8_t out[2])
 {
 	out[0] = jd79661_pack4((mono >> 7) & 1, (mono >> 6) & 1,
-												 (mono >> 5) & 1, (mono >> 4) & 1);
+											 (mono >> 5) & 1, (mono >> 4) & 1);
 	out[1] = jd79661_pack4((mono >> 3) & 1, (mono >> 2) & 1,
-												 (mono >> 1) & 1, mono & 1);
+											 (mono >> 1) & 1, mono & 1);
 }
 
-/*
- * Like jd79661_write_cmd(), but the caller's buffer is a standard
- * PIXEL_FORMAT_MONO10 buffer (8 pixels/byte) that gets repacked into
- * the panel's native 2-bit-per-pixel encoding (4 pixels/byte) as it
- * is streamed out, chunk by chunk, to avoid needing a full-frame
- * scratch buffer.
- */
-static inline int jd79661_write_cmd_packed(const struct device *dev, uint8_t cmd,
-																					 const uint8_t *mono_buf, size_t mono_len)
+static inline int jd79661_write_cmd_pattern(const struct device *dev,
+																							uint8_t cmd,
+																							uint8_t pattern, size_t len)
 {
 	const struct jd79661_config *config = dev->config;
-	struct display_buffer_descriptor mipi_desc;
 	int err;
-	uint8_t out[64];
 
 	jd79661_busy_wait(dev);
 
@@ -225,33 +212,58 @@ static inline int jd79661_write_cmd_packed(const struct device *dev, uint8_t cmd
 		return err;
 	}
 
-	mipi_desc.height = 1;
-
-	while (mono_len)
+	while (len--)
 	{
-		size_t chunk = MIN(mono_len, sizeof(out) / 2);
-
-		for (size_t i = 0; i < chunk; i++)
-		{
-			jd79661_pack_mono_byte(mono_buf[i], &out[i * 2]);
-		}
-
-		mipi_desc.buf_size = mipi_desc.width = mipi_desc.pitch = chunk * 2;
-
-		err = mipi_dbi_write_display(config->mipi_dev,
-																 &config->dbi_config,
-																 out, &mipi_desc,
-																 PIXEL_FORMAT_MONO10);
+		err = jd79661_write_data_byte(dev, pattern);
 		if (err < 0)
 		{
-			goto release;
+			goto out;
 		}
-
-		mono_buf += chunk;
-		mono_len -= chunk;
 	}
 
-release:
+out:
+	mipi_dbi_release(config->mipi_dev, &config->dbi_config);
+	return err;
+}
+
+/*
+ * Like jd79661_write_cmd(), but the caller's buffer is a standard
+ * PIXEL_FORMAT_MONO10 buffer (8 pixels/byte) that gets repacked into
+ * the panel's native 2-bit-per-pixel encoding (4 pixels/byte) as it
+ * is streamed out, one native byte at a time.
+ */
+static inline int jd79661_write_cmd_packed(const struct device *dev, uint8_t cmd,
+																								 const uint8_t *mono_buf, size_t mono_len)
+{
+	const struct jd79661_config *config = dev->config;
+	int err;
+
+	jd79661_busy_wait(dev);
+
+	err = mipi_dbi_command_write(config->mipi_dev, &config->dbi_config,
+															 cmd, NULL, 0);
+	if (err < 0)
+	{
+		return err;
+	}
+
+	for (size_t i = 0; i < mono_len; i++)
+	{
+		uint8_t packed[2];
+
+		jd79661_pack_mono_byte(mono_buf[i], packed);
+
+		for (size_t j = 0; j < 2; j++)
+		{
+			err = jd79661_write_data_byte(dev, packed[j]);
+			if (err < 0)
+			{
+				goto out;
+			}
+		}
+	}
+
+out:
 	mipi_dbi_release(config->mipi_dev, &config->dbi_config);
 	return err;
 }
@@ -344,6 +356,14 @@ static int jd79661_set_profile(const struct device *dev,
 	LOG_DBG("Initialize JD79661 controller with profile %d", type);
 
 	/*
+	 * The writes below follow the exact command order and values of
+	 * the vendor reference driver's EPD_2IN15G_Init() (Waveshare's
+	 * EPD_2in15g.c), so that this driver reproduces its init sequence
+	 * command-for-command. Steps sourced from optional devicetree
+	 * profile overrides are skipped if the override isn't present.
+	 */
+
+	/*
 	 * Undocumented vendor init command, see JD79661_CMD_UNDOC_4D in
 	 * jd79661_regs.h.
 	 */
@@ -352,16 +372,18 @@ static int jd79661_set_profile(const struct device *dev,
 		return -EIO;
 	}
 
+	/* Panel settings: MTP LUT, default scan/shift directions, soft reset */
+	LOG_DBG("PSR: %#hhx %#hhx", psr[0], psr[1]);
+	if (jd79661_write_cmd(dev, JD79661_CMD_PSR, psr, sizeof(psr)))
+	{
+		return -EIO;
+	}
+
 	if (p)
 	{
+		/* Power setting */
 		LOG_HEXDUMP_DBG(p->pwr.data, p->pwr.len, "PWR");
 		if (jd79661_write_array_opt(dev, JD79661_CMD_PWR, &p->pwr))
-		{
-			return -EIO;
-		}
-
-		if (jd79661_write_array_opt(dev, JD79661_CMD_BTST,
-																&config->softstart))
 		{
 			return -EIO;
 		}
@@ -381,17 +403,78 @@ static int jd79661_set_profile(const struct device *dev,
 		}
 	}
 
-	/* Panel settings: MTP LUT, default scan/shift directions, soft reset */
-	LOG_DBG("PSR: %#hhx %#hhx", psr[0], psr[1]);
-	if (jd79661_write_cmd(dev, JD79661_CMD_PSR, psr, sizeof(psr)))
+	if (p)
+	{
+		/* Booster soft start */
+		if (jd79661_write_array_opt(dev, JD79661_CMD_BTST,
+																&config->softstart))
+		{
+			return -EIO;
+		}
+
+		if (p->override_pll)
+		{
+			LOG_DBG("PLL: %#hhx", p->pll);
+			if (jd79661_write_cmd_uint8(dev, JD79661_CMD_PLL, p->pll))
+			{
+				return -EIO;
+			}
+		}
+	}
+
+	/*
+	 * Temperature sensor calibration, see JD79661_CMD_TSE in
+	 * jd79661_regs.h.
+	 */
+	if (jd79661_write_cmd_uint8(dev, JD79661_CMD_TSE, JD79661_TSE_VAL))
 	{
 		return -EIO;
+	}
+
+	if (p)
+	{
+		if (p->override_cdi)
+		{
+			/*
+			 * Written verbatim, matching the vendor reference
+			 * driver - see the JD79661_CDI_DEFAULT comment in
+			 * jd79661_regs.h.
+			 */
+			LOG_DBG("CDI: %#hhx", p->cdi);
+			if (jd79661_write_cmd_uint8(dev, JD79661_CMD_CDI, p->cdi))
+			{
+				return -EIO;
+			}
+		}
+
+		if (jd79661_write_array_opt(dev, JD79661_CMD_TCON, &p->tcon))
+		{
+			return -EIO;
+		}
 	}
 
 	/* Set panel resolution */
 	if (jd79661_set_tres(dev))
 	{
 		return -EIO;
+	}
+
+	/*
+	 * Gate/source start setting, see JD79661_CMD_GSST in
+	 * jd79661_regs.h.
+	 */
+	{
+		const uint8_t gsst[4] = {
+				JD79661_GSST_VAL0,
+				JD79661_GSST_VAL1,
+				JD79661_GSST_VAL2,
+				JD79661_GSST_VAL3,
+		};
+
+		if (jd79661_write_cmd(dev, JD79661_CMD_GSST, gsst, sizeof(gsst)))
+		{
+			return -EIO;
+		}
 	}
 
 	/* Undocumented vendor init command, see JD79661_CMD_UNDOC_E7 in jd79661_regs.h. */
@@ -431,42 +514,10 @@ static int jd79661_set_profile(const struct device *dev,
 	}
 
 	/*
-	 * The rest of the configuration is optional and depends on
-	 * having profile overrides specified in the device tree.
+	 * VDCS has no counterpart in the vendor reference driver's init
+	 * sequence; it remains a purely optional extension, applied last.
 	 */
-	if (!p)
-	{
-		return 0;
-	}
-
-	if (jd79661_write_array_opt(dev, JD79661_CMD_TCON, &p->tcon))
-	{
-		return -EIO;
-	}
-
-	if (p->override_cdi)
-	{
-		/* Keep the default VBD/DDX bits, override only the interval */
-		uint8_t cdi = (JD79661_CDI_DEFAULT & ~JD79661_CDI_CDI_MASK) |
-									(p->cdi & JD79661_CDI_CDI_MASK);
-
-		LOG_DBG("CDI: %#hhx", cdi);
-		if (jd79661_write_cmd_uint8(dev, JD79661_CMD_CDI, cdi))
-		{
-			return -EIO;
-		}
-	}
-
-	if (p->override_pll)
-	{
-		LOG_DBG("PLL: %#hhx", p->pll);
-		if (jd79661_write_cmd_uint8(dev, JD79661_CMD_PLL, p->pll))
-		{
-			return -EIO;
-		}
-	}
-
-	if (p->override_vdcs)
+	if (p && p->override_vdcs)
 	{
 		LOG_DBG("VDCS: %#hhx", p->vdcs);
 		if (jd79661_write_cmd_uint8(dev, JD79661_CMD_VDCS, p->vdcs))
@@ -482,12 +533,12 @@ static int jd79661_update_display(const struct device *dev)
 {
 	LOG_DBG("Trigger update sequence");
 
-	/* Turn on: booster, controller, regulators, and sensor. */
+	/* Turn on: booster, controller, regulators, and sensor.
 	if (jd79661_write_cmd(dev, JD79661_CMD_PON, NULL, 0))
 	{
 		return -EIO;
 	}
-
+*/
 	k_sleep(K_MSEC(JD79661_PON_DELAY));
 
 	if (jd79661_write_cmd_uint8(dev, JD79661_CMD_DRF, 0x00))
@@ -497,12 +548,12 @@ static int jd79661_update_display(const struct device *dev)
 
 	k_sleep(K_MSEC(JD79661_BUSY_DELAY));
 
-	/* Turn off: booster, controller, regulators, and sensor. */
+	/* Turn off: booster, controller, regulators, and sensor.
 	if (jd79661_write_cmd(dev, JD79661_CMD_POF, NULL, 0))
 	{
 		return -EIO;
 	}
-
+*/
 	return 0;
 }
 
@@ -698,10 +749,15 @@ static int jd79661_controller_init(const struct device *dev)
 		return -EIO;
 	}
 
-	if (jd79661_clear_and_write_buffer(dev, 0xff, false))
+	if (jd79661_write_cmd(dev, JD79661_CMD_PON, NULL, 0))
 	{
 		return -EIO;
 	}
+	/*
+		if (jd79661_clear_and_write_buffer(dev, JD79661_COLOR_BYTE(JD79661_COLOR_WHITE), true))
+		{
+			return -EIO;
+		}*/
 
 	return 0;
 }
