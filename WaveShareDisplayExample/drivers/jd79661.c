@@ -112,6 +112,16 @@ struct jd79661_data
 	bool blanking_on;
 	enum jd79661_profile_type profile;
 	enum display_pixel_format pixel_format;
+
+	/*
+	 * Union of all windows written while blanking_on is true, used by
+	 * jd79661_blanking_off() to scope the final refresh to what was
+	 * actually touched instead of unconditionally refreshing the
+	 * whole screen. dirty_valid is false when nothing has been
+	 * written yet in the current blanking-on session.
+	 */
+	bool dirty_valid;
+	uint16_t dirty_x1, dirty_y1, dirty_x2, dirty_y2;
 };
 
 static inline void jd79661_busy_wait(const struct device *dev)
@@ -592,10 +602,39 @@ static int jd79661_update_display(const struct device *dev)
 
 static int jd79661_blanking_off(const struct device *dev)
 {
+	const struct jd79661_config *config = dev->config;
 	struct jd79661_data *data = dev->data;
 
 	if (data->blanking_on)
 	{
+		/*
+		 * PTL is stateful: it still holds whatever window the last
+		 * jd79661_write() band left it at. Reset it before the
+		 * refresh below to the union of everything actually written
+		 * during this blanking-on session (tracked by jd79661_write()
+		 * into data->dirty_*), or DRF would only optically update
+		 * that last band's tiny window - the SRAM contents would be
+		 * correct, but the rest of what was written would never
+		 * actually be refreshed. Falls back to the whole screen if
+		 * nothing was written (e.g. blanking was toggled on/off with
+		 * no write in between).
+		 */
+		if (data->dirty_valid)
+		{
+			if (jd79661_set_ptl(dev, data->dirty_x1, data->dirty_y1,
+													data->dirty_x2, data->dirty_y2, false))
+			{
+				return -EIO;
+			}
+		}
+		else
+		{
+			if (jd79661_set_ptl(dev, 0, 0, config->width - 1, config->height - 1, false))
+			{
+				return -EIO;
+			}
+		}
+
 		/* Update EPD panel in normal mode */
 		if (jd79661_update_display(dev))
 		{
@@ -621,6 +660,7 @@ static int jd79661_blanking_on(const struct device *dev)
 	}
 
 	data->blanking_on = true;
+	data->dirty_valid = false;
 
 	return 0;
 }
@@ -677,13 +717,43 @@ static int jd79661_write(const struct device *dev, const uint16_t x, const uint1
 		}
 	}
 
+	if (data->blanking_on)
+	{
+		/*
+		 * Track the union of every window written during this
+		 * blanking-on session, so jd79661_blanking_off() can scope
+		 * its final refresh to what was actually touched instead of
+		 * the whole screen - see the dirty_* comment in
+		 * struct jd79661_data.
+		 */
+		if (!data->dirty_valid)
+		{
+			data->dirty_x1 = x;
+			data->dirty_y1 = y;
+			data->dirty_x2 = x_end_idx;
+			data->dirty_y2 = y_end_idx;
+			data->dirty_valid = true;
+		}
+		else
+		{
+			data->dirty_x1 = MIN(data->dirty_x1, x);
+			data->dirty_y1 = MIN(data->dirty_y1, y);
+			data->dirty_x2 = MAX(data->dirty_x2, x_end_idx);
+			data->dirty_y2 = MAX(data->dirty_y2, y_end_idx);
+		}
+	}
+
 	/*
-	 * Partial mode is only enabled for on-demand writes performed
-	 * while blanking is off. Writes performed while compositing a
-	 * full frame (blanking on) disable it, since JD79661AA ignores
-	 * the window bounds while PMODE is 0.
+	 * The window must be addressed on every write, whether or not
+	 * blanking is on: a full-frame composite is typically streamed
+	 * in multiple bands (one jd79661_write() call per band, each
+	 * covering a different y range), and JD79661AA ignores the
+	 * window bounds while PMODE is 0 - disabling it here would make
+	 * every band land at the same address instead of its own y
+	 * range. blanking_on only controls whether a refresh is fired
+	 * immediately below; the window is always honored.
 	 */
-	if (jd79661_set_ptl(dev, x, y, x_end_idx, y_end_idx, !data->blanking_on))
+	if (jd79661_set_ptl(dev, x, y, x_end_idx, y_end_idx, true))
 	{
 		return -EIO;
 	}
@@ -798,12 +868,19 @@ static int jd79661_controller_init(const struct device *dev)
 
 	data->profile = JD79661_PROFILE_INVALID;
 	data->pixel_format = PIXEL_FORMAT_MONO01;
+	data->blanking_on = true;
 
 	if (jd79661_set_profile(dev, JD79661_PROFILE_FULL))
 	{
 		return -EIO;
 	}
 
+	/*
+	 * Establish a full white baseline. This is also required before
+	 * any windowed (PTL) refresh: partial/windowed refreshes need a
+	 * prior full refresh to behave correctly, or the update can bleed
+	 * outside the intended window - see jd79661_blanking_off().
+	 */
 	if (jd79661_clear_and_write_buffer(dev, JD79661_COLOR_BYTE(JD79661_COLOR_WHITE), true))
 	{
 		return -EIO;

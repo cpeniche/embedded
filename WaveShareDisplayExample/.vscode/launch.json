@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "preLaunchTask": "Kill Debug Session",
+      //"preLaunchTask": "Kill Debug Session",
       "cwd": "${workspaceRoot}",
       "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
       "name": "nrf52 OpenOCD",
@@ -23,7 +23,7 @@
       "openOCDLaunchCommands": ["init", "nrf52_recover"]
     },
     {
-      "preLaunchTask": "Kill Debug Session",
+      //"preLaunchTask": "Kill Debug Session",
       "cwd": "${workspaceRoot}",
       "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
       "name": "nrf52 No Erase OpenOCD",

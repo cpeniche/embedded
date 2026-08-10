@@ -1,4 +1,4 @@
-#include "lvgl-display.dtsi"
+#include "lvgl-display-ssd1683.dtsi"
 #include "sample.dtsi"
 
 

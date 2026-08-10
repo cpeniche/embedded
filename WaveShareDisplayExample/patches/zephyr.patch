@@ -1,0 +1,294 @@
+diff --git a/drivers/display/Kconfig.ssd16xx b/drivers/display/Kconfig.ssd16xx
+index 097351fec5e..09be6380255 100644
+--- a/drivers/display/Kconfig.ssd16xx
++++ b/drivers/display/Kconfig.ssd16xx
+@@ -11,7 +11,8 @@ config SSD16XX
+ 		DT_HAS_SOLOMON_SSD1673_ENABLED || \
+ 		DT_HAS_SOLOMON_SSD1675A_ENABLED || \
+ 		DT_HAS_SOLOMON_SSD1680_ENABLED || \
+-		DT_HAS_SOLOMON_SSD1681_ENABLED
++		DT_HAS_SOLOMON_SSD1681_ENABLED || \
++		DT_HAS_SOLOMON_SSD1683_ENABLED
+ 	select MIPI_DBI
+ 	help
+ 	  Enable driver for SSD16XX compatible controller.
+diff --git a/drivers/display/ssd16xx.c b/drivers/display/ssd16xx.c
+index 7a2979a6c93..9283d040116 100644
+--- a/drivers/display/ssd16xx.c
++++ b/drivers/display/ssd16xx.c
+@@ -64,6 +64,58 @@ struct ssd16xx_quirks {
+ 	 * SSD16XX_CMD_UPDATE_CTRL2 for a partial refresh.
+ 	 */
+ 	uint8_t ctrl2_partial;
++
++	/*
++	 * Some panels' black RAM plane is optically inverted relative to
++	 * the PIXEL_FORMAT_MONO10 contract (1=black, 0=white) the rest of
++	 * this driver assumes - same class of panel-specific quirk as the
++	 * gray-level-to-ink-color mapping on other EPD controllers. The
++	 * driver writes bits through unchanged either way; only the
++	 * declared pixel format changes, so Zephyr's LVGL glue picks the
++	 * correct fill/bit-sense for whichever contract is actually true
++	 * for the panel. Confirmed needed for gooddisplay's SSD1683-based
++	 * 4.2" 300x400 panel; leave false for chips already working
++	 * without it.
++	 */
++	bool inverted;
++
++	/*
++	 * Zephyr's LVGL mono glue (lvgl_transform_buffer() in
++	 * lvgl_display_mono.c) packs its internal render buffer to a
++	 * byte (8-pixel) boundary and lets that padded width leak into
++	 * the width it reports to display_write() when a partial-width
++	 * flush area isn't itself a multiple of 8 - e.g. a 300px-wide
++	 * panel gets sent width=304, tripping this driver's own bounds
++	 * check against the true 300px config->width. Setting this
++	 * forces every flush to use the SCREEN_INFO_X_ALIGNMENT_WIDTH
++	 * path instead (full logical width every time, no rounding),
++	 * which sidesteps the mismatch entirely. Harmless no-op for
++	 * chips whose configured width already happens to be a multiple
++	 * of 8. Confirmed needed for the SSD1683 (300px wide).
++	 */
++	bool full_width_only;
++
++	/*
++	 * Send SSD16XX_CMD_UPDATE_CTRL1 (0x21, "Display Update Control 1")
++	 * with [0x40, 0x00] on every profile switch, matching Waveshare's
++	 * own EPD_4in2_V2.c reference driver for this chip family (sent
++	 * unconditionally in every one of its Init variants). Per the
++	 * SSD16xx-family register map this sets the RED RAM content
++	 * option to "bypass as 0" (upper nibble 0x4) and the BW RAM option
++	 * to "normal" (lower nibble 0x0) - i.e. it tells the controller to
++	 * ignore the second RAM plane entirely for display updates rather
++	 * than factoring it into the driven waveform.
++	 *
++	 * ssd16xx.c has never written this register for any panel
++	 * upstream, for either generation - it relies entirely on the
++	 * panel's power-on/OTP default. That default happens to work for
++	 * whatever panels were tested to add existing quirks entries, but
++	 * produced a stuck-black background on real SSD1683 hardware for
++	 * any full-profile write with real (non-uniform) content, exactly
++	 * the kind of symptom this register's RED-RAM-bypass bit would
++	 * explain. Confirmed against Waveshare's reference bytes.
++	 */
++	bool bypass_red_ram;
+ };
+ 
+ struct ssd16xx_data {
+@@ -564,13 +616,46 @@ static void ssd16xx_get_capabilities(const struct device *dev,
+ 	struct ssd16xx_data *data = dev->data;
+ 
+ 	memset(caps, 0, sizeof(struct display_capabilities));
+-	caps->x_resolution = config->width;
+-	caps->y_resolution = config->height -
+-			     config->height % EPD_PANEL_NUMOF_ROWS_PER_PAGE;
+-	caps->supported_pixel_formats = PIXEL_FORMAT_MONO10;
+-	caps->current_pixel_format = PIXEL_FORMAT_MONO10;
++
++	{
++		const uint16_t panel_h = config->height -
++					 config->height % EPD_PANEL_NUMOF_ROWS_PER_PAGE;
++
++		/*
++		 * ssd16xx_set_window()'s bounds check (in ssd16xx_write())
++		 * transposes which axis desc->width/desc->height get
++		 * validated against for ROTATED_90/270: x/width against
++		 * panel_h, y/height against config->width - the opposite of
++		 * NORMAL/ROTATED_180. Report resolution to match here too,
++		 * so callers (e.g. LVGL) see the actual valid flush bounds
++		 * for the current orientation directly, rather than always
++		 * the un-rotated native ones.
++		 */
++		if (data->orientation == DISPLAY_ORIENTATION_ROTATED_90 ||
++		    data->orientation == DISPLAY_ORIENTATION_ROTATED_270) {
++			caps->x_resolution = panel_h;
++			caps->y_resolution = config->width;
++		} else {
++			caps->x_resolution = config->width;
++			caps->y_resolution = panel_h;
++		}
++	}
++	/*
++	 * The driver writes RAM bits through unchanged; declaring the
++	 * format the other way round for panels whose black RAM plane is
++	 * optically inverted is what actually flips the sense of what
++	 * gets written - see the "inverted" comment on struct
++	 * ssd16xx_quirks.
++	 */
++	caps->supported_pixel_formats = config->quirks->inverted ?
++		PIXEL_FORMAT_MONO01 : PIXEL_FORMAT_MONO10;
++	caps->current_pixel_format = caps->supported_pixel_formats;
+ 	caps->screen_info = SCREEN_INFO_MONO_MSB_FIRST | SCREEN_INFO_EPD;
+ 
++	if (config->quirks->full_width_only) {
++		caps->screen_info |= SCREEN_INFO_X_ALIGNMENT_WIDTH;
++	}
++
+ 	if (data->orientation == DISPLAY_ORIENTATION_NORMAL ||
+ 	    data->orientation == DISPLAY_ORIENTATION_ROTATED_180) {
+ 		caps->screen_info |= SCREEN_INFO_MONO_VTILED;
+@@ -787,6 +872,33 @@ static int ssd16xx_set_profile(const struct device *dev,
+ 		return err;
+ 	}
+ 
++	if (config->quirks->bypass_red_ram) {
++		/*
++		 * Full refresh always drives every pixel to a known target
++		 * state regardless of history, so the RED RAM plane can be
++		 * safely bypassed (upper nibble 0x4). Partial refresh needs
++		 * a proper old-vs-new differential to compute its fast
++		 * waveform, which means RED RAM (holding the shadow-copied
++		 * "old image", see the WRITE_RED_RAM call in
++		 * ssd16xx_write()) must stay in "normal" (not bypassed)
++		 * mode - bypassing it there starves the LUT of old-image
++		 * data and produces a weak/incomplete, faded-looking drive.
++		 * Matches Waveshare's EPD_4in2_V2.c reference exactly: 0x40
++		 * for its Init()/full Display(), 0x00 for
++		 * PartialDisplay().
++		 */
++		const uint8_t ctrl1[] = {
++			type == SSD16XX_PROFILE_FULL ? 0x40 : 0x00,
++			0x00,
++		};
++
++		err = ssd16xx_write_cmd(dev, SSD16XX_CMD_UPDATE_CTRL1, ctrl1,
++					sizeof(ctrl1));
++		if (err < 0) {
++			return err;
++		}
++	}
++
+ 	gdo_len = push_y_param(dev, gdo, last_gate);
+ 	gdo[gdo_len++] = 0U;
+ 	err = ssd16xx_write_cmd(dev, SSD16XX_CMD_GDO_CTRL, gdo, gdo_len);
+@@ -1035,6 +1147,20 @@ static struct ssd16xx_quirks quirks_solomon_ssd1681 = {
+ };
+ #endif
+ 
++#if DT_HAS_COMPAT_STATUS_OKAY(solomon_ssd1683)
++static struct ssd16xx_quirks quirks_solomon_ssd1683 = {
++	.max_width = 300,
++	.max_height = 400,
++	.pp_width_bits = 8,
++	.pp_height_bits = 16,
++	.ctrl2_full = SSD16XX_GEN2_CTRL2_DISPLAY,
++	.ctrl2_partial = SSD16XX_GEN2_CTRL2_DISPLAY | SSD16XX_GEN2_CTRL2_MODE2,
++	.inverted = true,
++	.full_width_only = true,
++	.bypass_red_ram = true,
++};
++#endif
++
+ #define SOFTSTART_ASSIGN(n)						\
+ 		.softstart = {						\
+ 			.data = softstart_##n,				\
+@@ -1127,3 +1253,5 @@ DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1680, SSD16XX_DEFINE,
+ 			     &quirks_solomon_ssd1680);
+ DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1681, SSD16XX_DEFINE,
+ 			     &quirks_solomon_ssd1681);
++DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1683, SSD16XX_DEFINE,
++			     &quirks_solomon_ssd1683);
+diff --git a/dts/bindings/display/solomon,ssd1683.yaml b/dts/bindings/display/solomon,ssd1683.yaml
+new file mode 100644
+index 00000000000..bc6ac39185a
+--- /dev/null
++++ b/dts/bindings/display/solomon,ssd1683.yaml
+@@ -0,0 +1,8 @@
++# Copyright (c) 2026 Marcus Voß
++# SPDX-License-Identifier: Apache-2.0
++
++description: Solomon Systech SSD1683 400x300 EPD display controller
++
++compatible: "solomon,ssd1683"
++
++include: solomon,ssd16xx-common.yaml
+diff --git a/modules/lvgl/lvgl.c b/modules/lvgl/lvgl.c
+index 9da32fb7929..067fae9ea79 100644
+--- a/modules/lvgl/lvgl.c
++++ b/modules/lvgl/lvgl.c
+@@ -186,8 +186,27 @@ static int lvgl_allocate_rendering_buffers(lv_display_t *display)
+ 		break;
+ 	case PIXEL_FORMAT_MONO01:
+ 	case PIXEL_FORMAT_MONO10:
+-		buf_size = buf_nbr_pixels / 8 + 8;
+-		buf_size += (buf_nbr_pixels % 8) == 0 ? 0 : 1;
++		/*
++		 * buf_nbr_pixels total pixels, laid out as
++		 * (buf_nbr_pixels / hor_res) rows of hor_res pixels each -
++		 * the VDB chunking convention (see lvgl_flush_cb_mono()).
++		 * LVGL's own internal per-row stride (lv_draw_buf.c:
++		 * width_to_stride()) rounds EACH ROW's byte count up to a
++		 * whole byte independently, not the flat total pixel count
++		 * - for a hor_res that isn't itself a multiple of 8, that's
++		 * a strictly larger number than buf_nbr_pixels / 8. Using
++		 * the flat total under-allocates whenever hor_res isn't a
++		 * multiple of 8 (every previously-exercised panel's
++		 * hor_res happened to be), overflowing this buffer (and the
++		 * identically-sized mono conversion buffer) once actually
++		 * rendered into at more than one row's height.
++		 */
++		{
++			uint32_t rows = (buf_nbr_pixels + hor_res - 1) / hor_res;
++			uint32_t row_bytes = (hor_res + 7) / 8;
++
++			buf_size = rows * row_bytes + 8;
++		}
+ 		break;
+ 	default:
+ 		return -ENOTSUP;
+diff --git a/modules/lvgl/lvgl_display_mono.c b/modules/lvgl/lvgl_display_mono.c
+index c251930d8c2..945f285e54c 100644
+--- a/modules/lvgl/lvgl_display_mono.c
++++ b/modules/lvgl/lvgl_display_mono.c
+@@ -64,8 +64,24 @@ static void lvgl_transform_buffer(uint8_t **px_map, uint32_t width, uint32_t hei
+ 	*px_map += COLOR_PALETTE_HEADER_SIZE;
+ 
+ 	uint8_t *src_buf = *px_map;
+-	uint32_t stride = (width + CONFIG_LV_DRAW_BUF_STRIDE_ALIGN - 1) &
+-			  ~(CONFIG_LV_DRAW_BUF_STRIDE_ALIGN - 1);
++	/*
++	 * Must match LVGL's own width_to_stride() (lv_draw_buf.c) exactly,
++	 * which is what actually packed this buffer: round the *byte*
++	 * count up first (width in bits -> bits/8, rounded up to a whole
++	 * byte), THEN apply LV_DRAW_BUF_STRIDE_ALIGN, then convert back to
++	 * bits for the bit_idx indexing below. The previous computation
++	 * skipped the whole-byte rounding step entirely, so for any width
++	 * that isn't already a multiple of 8 (every previously-supported
++	 * panel's width happened to be), it under-counted the real
++	 * per-row byte stride LVGL used - e.g. width=300 needs 38
++	 * bytes/row (304 bits), not 300 bits. Reading with the wrong
++	 * stride drifts by a few bits more every row, producing a
++	 * diagonal shear across the image.
++	 */
++	uint32_t stride_bytes = (width + 7) / 8;
++	stride_bytes = (stride_bytes + CONFIG_LV_DRAW_BUF_STRIDE_ALIGN - 1) &
++			~(CONFIG_LV_DRAW_BUF_STRIDE_ALIGN - 1);
++	uint32_t stride = stride_bytes * 8;
+ 
+ 	for (uint32_t y = 0; y < height; y++) {
+ 		for (uint32_t x = 0; x < width; x++) {
+@@ -137,6 +153,24 @@ void lvgl_rounder_cb_mono(lv_event_t *e)
+ 	if (data->cap.screen_info & SCREEN_INFO_X_ALIGNMENT_WIDTH) {
+ 		area->x1 = 0;
+ 		area->x2 = data->cap.x_resolution - 1;
++
++		/*
++		 * X_ALIGNMENT_WIDTH and MONO_VTILED address independent
++		 * axes (X clamped to the full logical width vs. Y rounded
++		 * to a byte boundary for vertically-tiled 1bpp packing) and
++		 * can be combined - e.g. a panel whose width isn't a
++		 * multiple of 8 (forcing X_ALIGNMENT_WIDTH to sidestep
++		 * LVGL's own byte-rounding of invalidated regions, see
++		 * lv_inv_area() in lv_refr.c) that also uses VTILED. Do the
++		 * VTILED Y-rounding here too so it isn't silently skipped
++		 * for that combination; existing X_ALIGNMENT_WIDTH-only
++		 * users (ls0xx, lpm013m126) don't set MONO_VTILED, so this
++		 * is a no-op for them.
++		 */
++		if (data->cap.screen_info & SCREEN_INFO_MONO_VTILED) {
++			area->y1 &= ~0x7;
++			area->y2 |= 0x7;
++		}
+ 	} else {
+ 		if (data->cap.screen_info & SCREEN_INFO_MONO_VTILED) {
+ 			area->y1 &= ~0x7;

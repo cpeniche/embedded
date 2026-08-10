@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2025 Cactus Engineering S.L
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Common devicetree fragment wiring up the Solomon Systech SSD1683
+ * EPD controller (4.2inch e-Paper panel, 400x300 marketed / 300x400
+ * native per the driver's quirks bounds - see the width/height note
+ * below) over MIPI-DBI Mode C (4-wire SPI), using Zephyr's mainline
+ * drivers/display/ssd16xx.c. Support for "solomon,ssd1683" was
+ * backported into the local Zephyr checkout from upstream main (not
+ * yet present in the pinned Zephyr revision this project uses) - see
+ * drivers/display/Kconfig.ssd16xx and drivers/display/ssd16xx.c.
+ *
+ * "spi1" must already be configured (pinctrl, cs-gpios, status =
+ * "okay") by the including board overlay, same as lvgl-display.dtsi
+ * and lvgl-display-uc8176.dtsi require today.
+ *
+ * Only one panel's fragment (this one, lvgl-display.dtsi, or
+ * lvgl-display-uc8176.dtsi) should be included by a given board
+ * overlay - only one chosen zephyr,display can be active per build.
+ */
+
+/ {
+	chosen {
+		zephyr,display = &epd_ssd1683;
+	};
+
+	mipi_dbi_epd_ssd1683: mipi_dbi_epd_ssd1683 {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&spi1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		write-only;
+		dc-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
+
+		epd_ssd1683: ssd1683@0 {
+			compatible = "solomon,ssd1683";
+			reg = <0>;
+			mipi-max-frequency = <4000000>;
+
+			/*
+			 * Unlike JD79661/UC81xx (active low), the BUSY
+			 * pin of SSD16XX is active HIGH per
+			 * solomon,ssd16xx-common.yaml - active high is
+			 * correct here for a direct connection, no
+			 * inversion needed.
+			 */
+			busy-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
+
+			/*
+			 * Selects the controller's internal temperature
+			 * sensor (0x80, matching both Waveshare's official
+			 * EPD_4in2_V2.c reference driver and the real
+			 * "beaglebadge" board upstream that also uses this
+			 * chip family). Without this, ssd16xx.c's
+			 * load_temp/LOAD_TEMPERATURE gating (see
+			 * ssd16xx_update_display() and ssd16xx_load_lut() in
+			 * ssd16xx.c) stays false, so every refresh runs
+			 * without the LOAD_TEMPERATURE bit set in the Display
+			 * Update Control 2 command and falls back to
+			 * ssd16xx_load_ws_from_otp()'s hardcoded generic 25C
+			 * waveform load instead of a real sensor-selected one.
+			 * Confirmed by computing the actual byte our driver
+			 * sends for that command: without tssv it's 0xD7/0xDF
+			 * for full/partial; Waveshare's reference sends
+			 * 0xF7/0xFF for the equivalent calls - the only
+			 * difference is this exact bit.
+			 */
+			tssv = <0x80>;
+
+			/*
+			 * Panel is native 300x400 portrait; keep width/
+			 * height at that native, proven-safe size (matches
+			 * the quirks bounds - see the comment below) rather
+			 * than declaring the swapped 400x300 landscape size
+			 * directly. `rotation` handles the landscape mapping
+			 * instead: it makes ssd16xx_set_window()'s bounds
+			 * check transpose which axis desc->width/height get
+			 * validated against (x/width vs. panel_h,
+			 * config->height rounded to a page boundary; y/height
+			 * vs. config->width - see ssd16xx_write() in
+			 * ssd16xx.c), and ssd16xx_get_capabilities() has been
+			 * updated to report x_resolution/y_resolution
+			 * transposed to match for ROTATED_90/270, so LVGL
+			 * sees a genuine 400x300 (well, panel_h x
+			 * config->width) landscape canvas with no LVGL-side
+			 * rotation needed (that was tried and reverted - see
+			 * main.c and prj.conf: LV_DISPLAY_RENDER_MODE_FULL,
+			 * required by lv_display_set_matrix_rotation(),
+			 * bypasses the rounder callback our
+			 * SCREEN_INFO_X_ALIGNMENT_WIDTH/MONO_VTILED fixes
+			 * depend on).
+			 *
+			 * Direction (90 vs 270) is a guess pending real-
+			 * hardware confirmation - swap if the image comes out
+			 * mirrored or upside-down.
+			 *
+			 * The driver's quirks bounds for this chip are
+			 * max_width=300, max_height=400 - swapped from the
+			 * "400x300" marketed resolution, matching this native
+			 * width/height.
+			 */
+			width = <300>;
+			height = <400>;
+			rotation = <90>;
+
+			full {
+				/*
+				 * Otherwise falls back to OTP defaults, same
+				 * as the reference-driver-free JD79661 full
+				 * profile did before we added overrides.
+				 *
+				 * border-waveform matches Waveshare's
+				 * EPD_4in2_V2.c reference driver, which
+				 * always explicitly sets BorderWaveform
+				 * (0x3C) to 0x05 in its full-refresh Init().
+				 * Left unset, this stays at OTP/power-on
+				 * default, which showed up on real hardware
+				 * as a grayish frame around the screen's
+				 * border after a full refresh (partial
+				 * refresh doesn't show it, matching its own
+				 * different override below).
+				 */
+				border-waveform = <0x05>;
+			};
+
+			partial {
+				/*
+				 * Must be present: per
+				 * solomon,ssd16xx-common.yaml, "partial
+				 * refresh will be disabled unless a partial
+				 * refresh profile has been specified" - this
+				 * is the whole reason this panel was chosen
+				 * over the JD79661, so don't drop this node.
+				 *
+				 * border-waveform matches Waveshare's
+				 * EPD_4in2_V2.c reference driver, which
+				 * always explicitly sets BorderWaveform
+				 * (0x3C) to 0x80 in EPD_4IN2_V2_PartialDisplay().
+				 */
+				border-waveform = <0x80>;
+			};
+		};
+	};
+};
