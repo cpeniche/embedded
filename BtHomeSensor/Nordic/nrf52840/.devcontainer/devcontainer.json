@@ -4,11 +4,18 @@
   "name": "Zephyr",
   "image": "localhost/zephyr:v4.4",
   "runArgs": ["--group-add=keep-groups"],
+  "updateRemoteUserUID": false,
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
   "workspaceFolder": "/home/vscode/project",
   "mounts": ["source=/dev,target=/dev,type=bind"],
+
+  // Persist the west venv on PATH for every terminal/task VS Code spawns in the container,
+  // not just the one-off postCreateCommand shell.
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/.local/share/pipx/venvs/west/bin"
+  },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [3000],
@@ -24,12 +31,14 @@
         "ms-vscode.cpptools",
         "rafaelrenanpacheco.darcula-theme",
         "vscode-icons-team.vscode-icons",
-        "spencerwmiles.vscode-task-buttons"
+        "spencerwmiles.vscode-task-buttons",
+        "anthropic.claude-code",
+        "growthjack.claude-code-usage"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
   },
-  "postCreateCommand": "export PATH=$PATH:/home/vscode/.local/share/pipx/venvs/west/bin"
+  "postCreateCommand": "bash /home/vscode/project/app/patches/apply_patches.sh"
 }
