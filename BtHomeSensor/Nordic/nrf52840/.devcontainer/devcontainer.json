@@ -2,7 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
   "name": "Zephyr",
-  "image": "localhost/zephyr:v4.4",
+  "image": "localhost/zephyr:v4.4-slim",
   "runArgs": ["--group-add=keep-groups"],
   "updateRemoteUserUID": false,
   // Features to add to the dev container. More info: https://containers.dev/features.

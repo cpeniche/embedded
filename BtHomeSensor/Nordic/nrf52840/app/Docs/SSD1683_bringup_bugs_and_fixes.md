@@ -4,13 +4,17 @@ Summary of the issues found and fixed while bringing up the GoodDisplay/Waveshar
 4.2" SSD1683-based e-paper panel (300x400 native, 4-grayscale-capable) on an
 nRF52840 dongle running Zephyr + LVGL.
 
-## 1. Missing SSD1683 devicetree binding
+## 1. Missing SSD1683 devicetree binding *(historical - resolved upstream, see the 2026-08-11 update at the bottom)*
 
 The pinned Zephyr revision didn't include `solomon,ssd1683.yaml`. Backported
 verbatim from upstream Zephyr `main`.
 
 - `zephyr/dts/bindings/display/solomon,ssd1683.yaml` (new)
 - `zephyr/drivers/display/Kconfig.ssd16xx` (added `DT_HAS_SOLOMON_SSD1683_ENABLED`)
+
+No longer needed: current upstream `main` ships the binding, the Kconfig
+symbol, and the `quirks_solomon_ssd1683` driver entry natively, so these two
+files are no longer part of the local patch.
 
 ## 2. Color inversion
 
@@ -53,7 +57,7 @@ lifetime never reaches the rounder. It still gets permanently saved into
 `lv_inv_area()`'s own "skip if already covered" optimization then prevents
 any later, correctly-rounded call from ever overwriting it.
 
-**Fix:** burn a disposable invalidate+render cycle in `main.c` at boot,
+**Fix:** burn a disposable invalidate+render cycle in `display.cpp` at boot,
 before anything meaningful is on screen, so the *next* full-screen render is
 the second invalidation of the program's lifetime (which does reach the
 rounder correctly).
@@ -77,7 +81,7 @@ the wrong stride drifted by a few bits more every row.
 was already on).
 
 **Fix:** explicit `display_blanking_on()` / `display_blanking_off()` pairing
-around full-screen renders in `main.c`.
+around full-screen renders in `display.cpp`.
 
 ## 8. Stuck black background on full-screen refreshes with real content
 
@@ -117,7 +121,7 @@ uniform-content case only by coincidence and made real (non-uniform) content
 worse.
 
 - `zephyr/drivers/display/ssd16xx.c`
-- `project/boards/lvgl-display-ssd1683.dtsi`
+- `boards/lvgl-display-ssd1683.dtsi`
 
 ## 9. Grayish border after a full refresh
 
@@ -159,9 +163,27 @@ report the correct landscape resolution directly to LVGL, keeping the
 existing (already debugged) `PARTIAL`-render-mode pipeline untouched.
 
 - `zephyr/drivers/display/ssd16xx.c`
-- `project/boards/lvgl-display-ssd1683.dtsi`
-- `project/prj.conf`
-- `project/src/main.c`
+- `boards/lvgl-display-ssd1683.dtsi`
+- `prj.conf`
+- `src/display.cpp`
+
+## 12. LVGL mono render-buffer under-allocation for non-byte-aligned widths
+
+A second instance of the same byte-rounding root cause as #3/#6, in a
+different function, previously missing from this changelog:
+`lvgl_allocate_rendering_buffers()` in `modules/lvgl/lvgl.c` sized the MONO
+render and conversion buffers as `buf_nbr_pixels / 8` - the flat total pixel
+count rounded to a byte. LVGL's own per-row stride
+(`width_to_stride()` in `lv_draw_buf.c`) rounds *each row's* byte count up
+independently, which is strictly larger than that flat count whenever the
+panel's width isn't itself a multiple of 8 (300px again), under-allocating
+and overflowing both buffers once rendered into at more than one row's
+height.
+
+**Fix:** compute the buffer size as `rows * row_bytes + 8` (row count times
+per-row byte stride) instead, matching LVGL's real per-row stride.
+
+- `zephyr/modules/lvgl/lvgl.c`
 
 ## Reproducing on a fresh checkout
 
@@ -184,10 +206,11 @@ this checkout with the same logical changes as before - `inverted`,
 `quirks_solomon_ssd1683` entry, the `ssd16xx_get_capabilities()` rotation/
 pixel-format/screen-info changes, the `UPDATE_CTRL1` write in
 `ssd16xx_set_profile()`, and the unchanged LVGL mono buffer-sizing/stride/
-rounder fixes - minus the devicetree binding and `Kconfig.ssd16xx` hunks,
-which upstream now provides natively and no longer need patching. This
-project's own files (`boards/lvgl-display-ssd1683.dtsi`, `prj.conf`,
-`src/main.c`) needed no changes - they already encoded `tssv`,
+rounder fixes in `lvgl.c` and `lvgl_display_mono.c` (#3/#4/#6/#12) - minus
+the devicetree binding and `Kconfig.ssd16xx` hunks (#1), which upstream now
+provides natively and no longer need patching. This project's own files
+(`boards/lvgl-display-ssd1683.dtsi`, `prj.conf`, `src/display.cpp`) needed
+no changes - they already encoded `tssv`,
 `border-waveform`, `rotation`, and the blanking/boot-invalidation
 workarounds independently of the Zephyr-side driver.
 

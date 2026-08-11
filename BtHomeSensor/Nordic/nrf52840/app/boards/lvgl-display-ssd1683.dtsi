@@ -7,10 +7,10 @@
  * EPD controller (4.2inch e-Paper panel, 400x300 marketed / 300x400
  * native per the driver's quirks bounds - see the width/height note
  * below) over MIPI-DBI Mode C (4-wire SPI), using Zephyr's mainline
- * drivers/display/ssd16xx.c. Support for "solomon,ssd1683" was
- * backported into the local Zephyr checkout from upstream main (not
- * yet present in the pinned Zephyr revision this project uses) - see
- * drivers/display/Kconfig.ssd16xx and drivers/display/ssd16xx.c.
+ * drivers/display/ssd16xx.c. Support for "solomon,ssd1683" is now provided
+ * natively by upstream Zephyr `main` - see drivers/display/Kconfig.ssd16xx
+ * and drivers/display/ssd16xx.c. (It previously had to be backported
+ * locally; see Docs/SSD1683_bringup_bugs_and_fixes.md #1.)
  *
  * "spi1" must already be configured (pinctrl, cs-gpios, status =
  * "okay") by the including board overlay, same as lvgl-display.dtsi
