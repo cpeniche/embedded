@@ -1,9 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-  "name": "Zephyr",
+  "name": "Zephyr-v4.4",
   "image": "localhost/zephyr:v4.4",
   "runArgs": ["--group-add=keep-groups"],
+  "updateRemoteUserUID": false,
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",

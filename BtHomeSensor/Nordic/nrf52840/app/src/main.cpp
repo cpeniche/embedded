@@ -14,25 +14,18 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(main_app, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(main_app, LOG_LEVEL_ERR);
 #include "bmp280.h"
 #include "aht20.hpp"
 #include "interface.h"
 #include "bluetooth.h"
-#include "zephyrSpiWrapperBuilder.hpp"
-#include "waveShareDisplayBuilder.hpp"
-#include <lvgl.h>
+#include "display.h"
 
 bmp280_sensors_data_t sensorsData;
 bmp280_handle_t handle;
-// uint8_t displayBuffer[160 * 296] = {0x0};
 
 void DelayFunc(uint32_t ms);
 void screenExample();
-
-/*struct spi_dt_spec displaySpi = SPI_DT_SPEC_GET(DT_NODELABEL(display),
-																								SPI_WORD_SET(8) | SPI_MODE_GET(0));
-*/
 
 int main(int argc, char *argv[])
 {
@@ -42,18 +35,6 @@ int main(int argc, char *argv[])
 	uint16_t bHum = 0;
 	int err = 0;
 	float altitudeHypsometric;
-
-	/*
-	displayInterfaceBuilder<int8_t> *displayBuilder = new waveShareDisplayBuilder<int8_t>();
-	displayInterface<int8_t> *_display = displayBuilder->Build();
-
-	busInterfaceBuilder *interfaceBuilder = new zephyrSpiWrapperBuilder();
-	busInterface *_zephyrSpi = interfaceBuilder->Build();
-	_zephyrSpi->SetDevice((void *)&displaySpi);
-
-	_display->SetBuffer(displayBuffer);
-	_display->SetInterface(_zephyrSpi);
-	_display->Init();*/
 
 	aht20 *aht20Sensor = aht20::getInstance();
 
@@ -102,6 +83,9 @@ int main(int argc, char *argv[])
 			bPress = (uint32_t)(sensorsData.pressure);
 			bHum = (uint32_t)(aht20Sensor->ReadHumidity() * 100);
 			updateBluetoothData((uint8_t *)&bTemp, (uint8_t *)&bPress, (uint8_t *)&bHum);
+			display_update_readings(sensorsData.temperature,
+															sensorsData.pressure,
+															aht20Sensor->ReadHumidity());
 			LOG_DBG("[bmp20]Temperature = %f °C", (double)sensorsData.temperature);
 			LOG_DBG("[bmp20]Pressure = %" PRIu32 "Pa", sensorsData.pressure);
 			LOG_DBG("[bmp20]Altitude (quick) = %f m", (double)sensorsData.altitude);

@@ -1,10 +1,11 @@
+#include "lvgl-display-ssd1683.dtsi"
+
 &{/chosen}{
   zephyr,console = &uart0;        
   zephyr,shell-uart = &uart0;     
 	zephyr,uart-mcumgr = &uart0;    
 	zephyr,bt-mon-uart = &uart0;    
-	zephyr,bt-c2h-uart = &uart0;
-	zephyr,display = &uc8179_waveshare_epaper;
+	zephyr,bt-c2h-uart = &uart0;	
 };
 
 
@@ -90,46 +91,8 @@
 
 &spi1{
 	cs-gpios =<&gpio0 30 GPIO_ACTIVE_LOW>;
-/*		
-	display:display@0{
-		compatible = "waveshare,e-paper-display";
-		reg =<0>;
-		spi-max-frequency = <1000000>;			
-		gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>,
-						<&gpio0 28 GPIO_ACTIVE_HIGH>,
-						<&gpio0 3  GPIO_ACTIVE_HIGH>, 
-						<&gpio1 15 GPIO_ACTIVE_HIGH>;
-		gpio-names = "dc","reset","busy","power";
-	};*/
 };
 
-/{
-	  mipi_dbi_waveshare_epaper {
-		compatible = "zephyr,mipi-dbi-spi";
-		spi-dev = <&spi1>;
-		dc-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
-		write-only;
-		#address-cells = <1>;
-		#size-cells = <0>;
 
-		uc8179_waveshare_epaper: uc8179@0 {
-			compatible = "ultrachip,uc8179","gooddisplay,gdew075t7";
-			mipi-max-frequency = <4000000>;
-			reg = <0>;
-			width = <160>;
-			height = <296>;
-			busy-gpios = <&gpio0 3  GPIO_ACTIVE_HIGH>;
-
-			softstart = [17 17 17 17];
-
-			full {
-				pwr = [07 07 3f 3f];
-				cdi = <07>;
-				tcon = <0x22>;
-			};
-		};
-	};
-};
 
 

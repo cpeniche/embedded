@@ -1,19 +1,5 @@
-diff --git a/drivers/display/Kconfig.ssd16xx b/drivers/display/Kconfig.ssd16xx
-index 097351fec5e..09be6380255 100644
---- a/drivers/display/Kconfig.ssd16xx
-+++ b/drivers/display/Kconfig.ssd16xx
-@@ -11,7 +11,8 @@ config SSD16XX
- 		DT_HAS_SOLOMON_SSD1673_ENABLED || \
- 		DT_HAS_SOLOMON_SSD1675A_ENABLED || \
- 		DT_HAS_SOLOMON_SSD1680_ENABLED || \
--		DT_HAS_SOLOMON_SSD1681_ENABLED
-+		DT_HAS_SOLOMON_SSD1681_ENABLED || \
-+		DT_HAS_SOLOMON_SSD1683_ENABLED
- 	select MIPI_DBI
- 	help
- 	  Enable driver for SSD16XX compatible controller.
 diff --git a/drivers/display/ssd16xx.c b/drivers/display/ssd16xx.c
-index 7a2979a6c93..9283d040116 100644
+index 5648fde1f67..9283d040116 100644
 --- a/drivers/display/ssd16xx.c
 +++ b/drivers/display/ssd16xx.c
 @@ -64,6 +64,58 @@ struct ssd16xx_quirks {
@@ -161,47 +147,16 @@ index 7a2979a6c93..9283d040116 100644
  	gdo_len = push_y_param(dev, gdo, last_gate);
  	gdo[gdo_len++] = 0U;
  	err = ssd16xx_write_cmd(dev, SSD16XX_CMD_GDO_CTRL, gdo, gdo_len);
-@@ -1035,6 +1147,20 @@ static struct ssd16xx_quirks quirks_solomon_ssd1681 = {
- };
- #endif
- 
-+#if DT_HAS_COMPAT_STATUS_OKAY(solomon_ssd1683)
-+static struct ssd16xx_quirks quirks_solomon_ssd1683 = {
-+	.max_width = 300,
-+	.max_height = 400,
-+	.pp_width_bits = 8,
-+	.pp_height_bits = 16,
-+	.ctrl2_full = SSD16XX_GEN2_CTRL2_DISPLAY,
-+	.ctrl2_partial = SSD16XX_GEN2_CTRL2_DISPLAY | SSD16XX_GEN2_CTRL2_MODE2,
+@@ -1043,6 +1155,9 @@ static struct ssd16xx_quirks quirks_solomon_ssd1683 = {
+ 	.pp_height_bits = 16,
+ 	.ctrl2_full = SSD16XX_GEN2_CTRL2_DISPLAY,
+ 	.ctrl2_partial = SSD16XX_GEN2_CTRL2_DISPLAY | SSD16XX_GEN2_CTRL2_MODE2,
 +	.inverted = true,
 +	.full_width_only = true,
 +	.bypass_red_ram = true,
-+};
-+#endif
-+
- #define SOFTSTART_ASSIGN(n)						\
- 		.softstart = {						\
- 			.data = softstart_##n,				\
-@@ -1127,3 +1253,5 @@ DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1680, SSD16XX_DEFINE,
- 			     &quirks_solomon_ssd1680);
- DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1681, SSD16XX_DEFINE,
- 			     &quirks_solomon_ssd1681);
-+DT_FOREACH_STATUS_OKAY_VARGS(solomon_ssd1683, SSD16XX_DEFINE,
-+			     &quirks_solomon_ssd1683);
-diff --git a/dts/bindings/display/solomon,ssd1683.yaml b/dts/bindings/display/solomon,ssd1683.yaml
-new file mode 100644
-index 00000000000..bc6ac39185a
---- /dev/null
-+++ b/dts/bindings/display/solomon,ssd1683.yaml
-@@ -0,0 +1,8 @@
-+# Copyright (c) 2026 Marcus Voß
-+# SPDX-License-Identifier: Apache-2.0
-+
-+description: Solomon Systech SSD1683 400x300 EPD display controller
-+
-+compatible: "solomon,ssd1683"
-+
-+include: solomon,ssd16xx-common.yaml
+ };
+ #endif
+ 
 diff --git a/modules/lvgl/lvgl.c b/modules/lvgl/lvgl.c
 index 9da32fb7929..067fae9ea79 100644
 --- a/modules/lvgl/lvgl.c
@@ -237,7 +192,7 @@ index 9da32fb7929..067fae9ea79 100644
  	default:
  		return -ENOTSUP;
 diff --git a/modules/lvgl/lvgl_display_mono.c b/modules/lvgl/lvgl_display_mono.c
-index c251930d8c2..945f285e54c 100644
+index c251930d8c2..eb4eff77a10 100644
 --- a/modules/lvgl/lvgl_display_mono.c
 +++ b/modules/lvgl/lvgl_display_mono.c
 @@ -64,8 +64,24 @@ static void lvgl_transform_buffer(uint8_t **px_map, uint32_t width, uint32_t hei
@@ -251,14 +206,14 @@ index c251930d8c2..945f285e54c 100644
 +	 * which is what actually packed this buffer: round the *byte*
 +	 * count up first (width in bits -> bits/8, rounded up to a whole
 +	 * byte), THEN apply LV_DRAW_BUF_STRIDE_ALIGN, then convert back to
-+	 * bits for the bit_idx indexing below. The previous computation
-+	 * skipped the whole-byte rounding step entirely, so for any width
-+	 * that isn't already a multiple of 8 (every previously-supported
-+	 * panel's width happened to be), it under-counted the real
-+	 * per-row byte stride LVGL used - e.g. width=300 needs 38
-+	 * bytes/row (304 bits), not 300 bits. Reading with the wrong
-+	 * stride drifts by a few bits more every row, producing a
-+	 * diagonal shear across the image.
++	 * bits for the bit_idx indexing below. Rounding the bit width
++	 * directly (skipping the whole-byte rounding step) under-counts
++	 * the real per-row byte stride LVGL used for any width that isn't
++	 * already a multiple of 8 (every previously-supported panel's
++	 * width happened to be) - e.g. width=300 needs 38 bytes/row (304
++	 * bits), not 300 bits. Reading with the wrong stride drifts by a
++	 * few bits more every row, producing a diagonal shear across the
++	 * image.
 +	 */
 +	uint32_t stride_bytes = (width + 7) / 8;
 +	stride_bytes = (stride_bytes + CONFIG_LV_DRAW_BUF_STRIDE_ALIGN - 1) &

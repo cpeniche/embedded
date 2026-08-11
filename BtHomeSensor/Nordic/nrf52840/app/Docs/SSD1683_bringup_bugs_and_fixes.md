@@ -172,6 +172,25 @@ tracked by this project. `patches/zephyr.patch` and `patches/apply_patches.sh`
 (`/home/vscode/modules/lib/gui/lvgl`) needs no patch: its only local change
 was debugging instrumentation in `lv_refr.c`, since reverted.
 
+**2026-08-11 update:** re-applied against a much newer upstream Zephyr
+checkout (`main`, `v4.4.0-11134-gaeafe3af2a0`) that now natively includes
+SSD1683 devicetree binding and quirks-table support
+(`c8e3417804f "drivers: display: ssd16xx: add support for SSD1683"`) and has
+been through several unrelated `ssd16xx.c` refactors since (MIPI DBI
+conversion, `const` driver API structs, etc.), so the old patch's line
+context no longer matched. `patches/zephyr.patch` was regenerated against
+this checkout with the same logical changes as before - `inverted`,
+`full_width_only`, and `bypass_red_ram` quirks flags on the native
+`quirks_solomon_ssd1683` entry, the `ssd16xx_get_capabilities()` rotation/
+pixel-format/screen-info changes, the `UPDATE_CTRL1` write in
+`ssd16xx_set_profile()`, and the unchanged LVGL mono buffer-sizing/stride/
+rounder fixes - minus the devicetree binding and `Kconfig.ssd16xx` hunks,
+which upstream now provides natively and no longer need patching. This
+project's own files (`boards/lvgl-display-ssd1683.dtsi`, `prj.conf`,
+`src/main.c`) needed no changes - they already encoded `tssv`,
+`border-waveform`, `rotation`, and the blanking/boot-invalidation
+workarounds independently of the Zephyr-side driver.
+
 ## Done
 
 - Diagnostic `printk`/`LOG_ERR` instrumentation added during debugging has

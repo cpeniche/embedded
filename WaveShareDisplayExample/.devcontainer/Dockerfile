@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-# podman build -t zephyr:v4.3.99 --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
+# podman build -t zephyr:v4.4 --build-arg USERNAME=vscode --progress plain --format=docker -f Dockerfile ./
 # Use bash as the default shell
 SHELL ["/bin/bash", "-c"]
 

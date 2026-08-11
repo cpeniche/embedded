@@ -11,6 +11,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(display)
 set(TARGET_NAME app)
 set(sources src/main.c
+    images/dashboard.c
 #[[    User/Config/DEV_Config.c
     User/e-Paper/EPD_2in15g.c
     User/Examples/EPD_2in15g_test.c
