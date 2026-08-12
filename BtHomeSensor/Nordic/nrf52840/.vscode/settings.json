@@ -1,7 +1,8 @@
 {
-  "zephyrSDKVersion":"zephyr-sdk-1.0.1",
-  "armGDBPath":"/home/vscode/${config:zephyrSDKVersion}/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"
-  
+  "zephyrSDKVersion": "zephyr-sdk-1.0.1",
+  "armGDBPath": "/home/vscode/${config:zephyrSDKVersion}/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+  "OpenocdPath": "/home/vscode/zephyr-sdk-1.0.1/hosttools/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
+
   "cortex-debug.variableUseNaturalFormat": false,
   "files.associations": {
     "ff_gen_drv.h": "c",
@@ -40,8 +41,8 @@
       "task": "Clean Build",
       "color": "default",
       "alignment": "left"
-    },
-/*    
+    }
+    /*    
     {
       "label": "$(rocket) Flash",
       "task": "Flash",

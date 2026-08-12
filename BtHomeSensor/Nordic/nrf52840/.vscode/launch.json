@@ -11,9 +11,10 @@
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
+      "serverpath": "${config:OpenocdPath}",
       "configFiles": [
         "${workspaceFolder}/openocd/minimodule-swd.cfg",
-        "target/nordic/nrf52.cfg"
+        "target/nrf52.cfg"
       ],
       "showDevDebugOutput": "vscode",
       "searchDir": [],
@@ -28,9 +29,10 @@
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
+      "serverpath": "${config:OpenocdPath}",
       "configFiles": [
         "${workspaceFolder}/openocd/minimodule-swd.cfg",
-        "target/nordic/nrf52.cfg"
+        "target/nrf52.cfg"
       ],
       "showDevDebugOutput": "vscode",
       "searchDir": [],
