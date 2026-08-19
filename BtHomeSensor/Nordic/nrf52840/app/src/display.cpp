@@ -28,6 +28,7 @@ LV_IMAGE_DECLARE(dashboard);
 static lv_obj_t *temperature_label;
 static lv_obj_t *humidity_label;
 static lv_obj_t *pressure_label;
+bool display_showing_dashes=false;
 
 struct sensor_readings
 {
@@ -46,6 +47,7 @@ void display_update_readings(float temperature_c, uint32_t pressure_pa, float hu
 
   k_msgq_purge(&sensor_readings_msgq);
   k_msgq_put(&sensor_readings_msgq, &readings, K_NO_WAIT);
+  display_showing_dashes = false;
 }
 
 static int round_to_int(float value)
@@ -156,9 +158,9 @@ void displayTask(void *dummy1, void *dummy2, void *dummy3)
     bool changed = false;
 
     if (temperature_c != last_temperature_c)
-    {
+    {      
       lv_label_set_text_fmt(temperature_label, "%d", temperature_c);
-      last_temperature_c = temperature_c;
+      last_temperature_c = temperature_c;      
       changed = true;
     }
 
@@ -178,5 +180,18 @@ void displayTask(void *dummy1, void *dummy2, void *dummy3)
 
     if (changed)
       lv_timer_handler();
+  }
+}
+
+void display_show_dashes()
+{
+  
+  if (!display_showing_dashes)
+  {
+    display_showing_dashes = true;
+    lv_label_set_text(temperature_label, "--");
+    lv_label_set_text(pressure_label, "--");
+    lv_label_set_text(humidity_label, "--");
+    lv_timer_handler();
   }
 }

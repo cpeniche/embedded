@@ -9,3 +9,5 @@
  * changed.
  */
 void display_update_readings(float temperature_c, uint32_t pressure_pa, float humidity_pct);
+void display_show_dashes();
+

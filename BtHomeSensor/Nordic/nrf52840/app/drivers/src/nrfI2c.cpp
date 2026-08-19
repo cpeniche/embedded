@@ -17,12 +17,14 @@ nrfI2c *nrfI2c::getInstance(void)
 
 int8_t nrfI2c::Write(uint8_t *buffer, size_t len)
 {
-  return i2c_write_dt(device, buffer, len);
+  error = i2c_write_dt(device, buffer, len);
+  return error;
 }
 
 int8_t nrfI2c::Read(uint8_t *buffer, size_t len)
 {
-  return i2c_read_dt(device, buffer, len);
+  error = i2c_read_dt(device, buffer, len);
+  return error;
 }
 
 void nrfI2c::SetDevice(void *device)

@@ -19,4 +19,5 @@ private:
 protected:
   nrfI2c(void);
   static nrfI2c *_instance;
+  int8_t error=0;
 };
