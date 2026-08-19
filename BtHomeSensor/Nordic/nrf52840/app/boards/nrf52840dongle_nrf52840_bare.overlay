@@ -8,6 +8,8 @@
 	zephyr,bt-c2h-uart = &uart0;	
 };
 
+/delete-node/ &usbd;
+
 
 &uart0_default{
 		group1 {
@@ -91,8 +93,15 @@
 
 &spi1{
 	cs-gpios =<&gpio0 30 GPIO_ACTIVE_LOW>;
+	clock-frequency = <DT_FREQ_M(8)>;
 };
 
+&reg0{
+	status="disabled";
+};
 
+&reg1{
+	status="okay";
+};
 
 
