@@ -8,6 +8,7 @@
  * display thread redraws a label only when its rounded integer value has
  * changed.
  */
-void display_update_readings(float temperature_c, uint32_t pressure_pa, float humidity_pct);
-void display_show_dashes();
+void display_update_readings(float temperature_c, uint32_t pressure_pa, float humidity_pct, bool);
+void display_bmp280_dashes();
+void display_aht20_dashes();
 

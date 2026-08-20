@@ -12,7 +12,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 LV_IMAGE_DECLARE(dashboard);
 
 #define STACKSIZE 4096
-#define PRIORITY 7
+#define PRIORITY 10
 /*
  * Card layout measured directly from images/dashboard.png (400x300): three
  * 111px-wide cards, each with an icon glyph ending by y=146 and its unit
@@ -28,7 +28,8 @@ LV_IMAGE_DECLARE(dashboard);
 static lv_obj_t *temperature_label;
 static lv_obj_t *humidity_label;
 static lv_obj_t *pressure_label;
-bool display_showing_dashes=false;
+static bool forceUpdate=false;
+bool displayReady=false;
 
 struct sensor_readings
 {
@@ -41,13 +42,13 @@ K_MSGQ_DEFINE(sensor_readings_msgq, sizeof(struct sensor_readings), 1, 4);
 
 void displayTask(void *dummy1, void *dummy2, void *dummy3);
 
-void display_update_readings(float temperature_c, uint32_t pressure_pa, float humidity_pct)
+void display_update_readings(float temperature_c, uint32_t pressure_pa, float humidity_pct, bool update)
 {
   struct sensor_readings readings = {temperature_c, pressure_pa, humidity_pct};
 
   k_msgq_purge(&sensor_readings_msgq);
   k_msgq_put(&sensor_readings_msgq, &readings, K_NO_WAIT);
-  display_showing_dashes = false;
+  forceUpdate = update;
 }
 
 static int round_to_int(float value)
@@ -145,6 +146,8 @@ void displayTask(void *dummy1, void *dummy2, void *dummy3)
   int last_pressure_mbar = 0;
   int last_humidity_pct = 0;
 
+  displayReady=true;
+
   while (1)
   {
     struct sensor_readings readings;
@@ -157,21 +160,21 @@ void displayTask(void *dummy1, void *dummy2, void *dummy3)
     int humidity_pct = round_to_int(readings.humidity_pct);
     bool changed = false;
 
-    if (temperature_c != last_temperature_c)
+    if (temperature_c != last_temperature_c || forceUpdate)
     {      
       lv_label_set_text_fmt(temperature_label, "%d", temperature_c);
       last_temperature_c = temperature_c;      
       changed = true;
     }
 
-    if (pressure_mbar != last_pressure_mbar)
+    if (pressure_mbar != last_pressure_mbar || forceUpdate)
     {
       lv_label_set_text_fmt(pressure_label, "%d", pressure_mbar);
       last_pressure_mbar = pressure_mbar;
       changed = true;
     }
 
-    if (humidity_pct != last_humidity_pct)
+    if (humidity_pct != last_humidity_pct || forceUpdate)
     {
       lv_label_set_text_fmt(humidity_label, "%d", humidity_pct);
       last_humidity_pct = humidity_pct;
@@ -183,15 +186,23 @@ void displayTask(void *dummy1, void *dummy2, void *dummy3)
   }
 }
 
-void display_show_dashes()
+void display_bmp280_dashes()
 {
-  
-  if (!display_showing_dashes)
+  if(displayReady)
   {
-    display_showing_dashes = true;
     lv_label_set_text(temperature_label, "--");
-    lv_label_set_text(pressure_label, "--");
+    lv_label_set_text(pressure_label, "--");  
+    lv_timer_handler();
+  }
+
+}
+
+void display_aht20_dashes()
+{
+  if(displayReady)
+  {
     lv_label_set_text(humidity_label, "--");
     lv_timer_handler();
   }
+
 }

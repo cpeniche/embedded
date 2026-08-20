@@ -26,7 +26,9 @@ aht20 *aht20::getInstance(void)
 
 int8_t aht20::Init()
 {
-  return 0;
+  uint8_t init = INIT;
+  bus->SetDevice(&aht20Device);
+  return bus->Write(&init, 1);
 }
 
 float aht20::ReadHumidity(void)
@@ -42,13 +44,15 @@ float aht20::ReadTemperature(void)
 
 int8_t aht20::TriggerMeasurement(void (*delayFunc)(uint32_t), uint32_t ms)
 {
-  int8_t err = 0;
-  // uint8_t temp[4]={0};
-
+  int8_t err=0;
+  
   bus->SetDevice(&aht20Device);
-  bus->Write(triggerMeasurement, sizeof(triggerMeasurement));
+  if((err = bus->Write(triggerMeasurement, sizeof(triggerMeasurement))) != 0)
+    return err;
   delayFunc(ms);
-  err = bus->Read(_rxBuffer, 7);
+
+  if((err = bus->Read(_rxBuffer, 7)) != 0)
+    return err;
 
   _humidity = BSWAP_32((*((uint32_t *)&_rxBuffer[1]))) >> 12;
   _temperature = (BSWAP_32((*((uint32_t *)&_rxBuffer[3]))) >> 8) & 0x0FFFFF;
@@ -57,9 +61,6 @@ int8_t aht20::TriggerMeasurement(void (*delayFunc)(uint32_t), uint32_t ms)
 
 aht20::aht20()
 {
-  uint8_t init = INIT;
   i2cFactory *factory = new i2cNrfI2cFactory();
-  bus = factory->Factory();
-  bus->SetDevice(&aht20Device);
-  bus->Write(&init, 1);
+  bus = factory->Factory();  
 }
