@@ -25,6 +25,7 @@ LV_IMAGE_DECLARE(dashboard);
 #define CARD3_X 266
 #define VALUE_LABEL_Y 178
 
+const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 static lv_obj_t *temperature_label;
 static lv_obj_t *humidity_label;
 static lv_obj_t *pressure_label;
@@ -75,12 +76,8 @@ static lv_obj_t *create_value_label(lv_obj_t *parent, lv_coord_t x)
   return label;
 }
 
-const struct device *display_dev;
-
 void displayTask(void *dummy1, void *dummy2, void *dummy3)
 {
-
-  const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 
   if (!device_is_ready(display_dev))
   {

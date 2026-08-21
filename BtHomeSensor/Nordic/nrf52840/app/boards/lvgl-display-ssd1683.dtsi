@@ -38,7 +38,7 @@
 		epd_ssd1683: ssd1683@0 {
 			compatible = "solomon,ssd1683";
 			reg = <0>;
-			mipi-max-frequency = <4000000>;
+			mipi-max-frequency = <4000000>;			
 
 			/*
 			 * Unlike JD79661/UC81xx (active low), the BUSY

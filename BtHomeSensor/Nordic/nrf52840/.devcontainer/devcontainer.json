@@ -10,10 +10,10 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
   "workspaceFolder": "/home/vscode/project",
   "mounts": [
-    "source=/dev,target=/dev,type=bind",
+    "source=/dev,target=/dev,type=bind"
     // Persist Claude Code's conversation history/config across container rebuilds.
-    "source=${localWorkspaceFolder}/.devcontainer/.claude-home,target=/home/vscode/.claude,type=bind",
-    "source=${localWorkspaceFolder}/.devcontainer/.claude-home/claude.json,target=/home/vscode/.claude.json,type=bind"
+    //"source=${localWorkspaceFolder}/.devcontainer/.claude-home,target=/home/vscode/.claude,type=bind",
+    //"source=${localWorkspaceFolder}/.devcontainer/.claude-home/claude.json,target=/home/vscode/.claude.json,type=bind"
   ],
 
   // Persist the west venv on PATH for every terminal/task VS Code spawns in the container,
