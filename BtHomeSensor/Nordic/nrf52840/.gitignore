@@ -1,1 +1,11 @@
 build/
+
+# Ignore everything in the Claude Code home mount (credentials, session
+# keys, shell snapshots, raw conversation transcripts, ...) except the
+# curated memory/ folder, so memory can sync across machines via git.
+.devcontainer/.claude-home/*
+!.devcontainer/.claude-home/projects/
+.devcontainer/.claude-home/projects/*
+!.devcontainer/.claude-home/projects/-home-vscode-project/
+.devcontainer/.claude-home/projects/-home-vscode-project/*
+!.devcontainer/.claude-home/projects/-home-vscode-project/memory/
