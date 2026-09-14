@@ -1,0 +1,49 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+  "name": "Zephyr",
+  "image": "localhost/zephyr:v4.4-slim",
+  "runArgs": ["--group-add=keep-groups"],
+  "updateRemoteUserUID": false,
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/project,type=bind",
+  "workspaceFolder": "/home/vscode/project",
+  "mounts": [
+    "source=/dev,target=/dev,type=bind"
+    // Persist Claude Code's conversation history/config across container rebuilds.
+    //"source=${localWorkspaceFolder}/.devcontainer/.claude-home,target=/home/vscode/.claude,type=bind",
+    //"source=${localWorkspaceFolder}/.devcontainer/.claude-home/claude.json,target=/home/vscode/.claude.json,type=bind"
+  ],
+
+  // Persist the west venv on PATH for every terminal/task VS Code spawns in the container,
+  // not just the one-off postCreateCommand shell.
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/.local/share/pipx/venvs/west/bin"
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000],
+
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "webfreak.debug",
+        "ms-vscode.cpptools-extension-pack",
+        "marus25.cortex-debug",
+        "esbenp.prettier-vscode",
+        "ms-vscode.cpptools",
+        "rafaelrenanpacheco.darcula-theme",
+        "vscode-icons-team.vscode-icons",
+        "spencerwmiles.vscode-task-buttons",
+        "anthropic.claude-code",
+        "growthjack.claude-code-usage"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "bash /home/vscode/project/app/patches/apply_patches.sh"
+}

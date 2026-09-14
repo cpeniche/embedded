@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../zephyr"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}

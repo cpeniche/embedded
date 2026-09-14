@@ -1,0 +1,14 @@
+description: GPIOs for the 2.15 Daveshare display
+
+compatible: "waveshare,e-paper-display"
+include: [spi-device.yaml]
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: gpios use for the waveshare e-paper display
+
+  gpio-names:
+    type: string-array
+    required: true
+    description: Names mapping to each GPIO pin in the gpios array.

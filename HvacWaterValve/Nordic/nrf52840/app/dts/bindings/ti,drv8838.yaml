@@ -1,0 +1,9 @@
+description: GPIOs or the DRV8838 motor driver
+
+compatible: "ti,drv8838"
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      gpios use for the drv8838 motor driver.
